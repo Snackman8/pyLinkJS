@@ -78,7 +78,11 @@ async def callback_dispatcher(caller_globals):
                 if func:
                     await func(ctx, *js_data['args'])
                 else:
-                    raise Exception('No function found with name "%s"' % js_data['py_func_name'])
+                    if not js_data['no_error_if_undefined']:
+                        s = 'No function found with name "%s"' % js_data['py_func_name']
+                        js_code = """alert('%s');""" % s
+                        await eval_js_code(ctx, js_code)
+                        raise Exception('No function found with name "%s"' % js_data['py_func_name'])
             except:
                 sys.stderr.write(traceback.format_exc())
 
@@ -93,7 +97,8 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
         context_id = self.request.path
         CONTEXTS[context_id] = {'websocket': self, 'thread_id': threading.get_ident()}
         if 'on_context_open' in self.application.settings:
-            self.application.settings['on_context_open'](context_id)
+            if self.application.settings['on_context_open'] is not None:
+                self.application.settings['on_context_open'](context_id)
 
     def on_message(self, message):
         context_id = self.request.path
@@ -112,7 +117,8 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
         # clean up the context
         context_id = self.request.path
         if 'on_context_close' in self.application.settings:
-            self.application.settings['on_context_close'](context_id)
+            if self.application.settings['on_context_close'] is not None:
+                self.application.settings['on_context_close'](context_id)
         del CONTEXTS[context_id]
         
         
@@ -174,14 +180,5 @@ def run_pylinkjs_app(**kwargs):
     app.settings['on_context_close'] = kwargs.get('onContextClose', None)
     app.settings['on_context_open'] = kwargs.get('onContextOpen', None)
     tornado.ioloop.PeriodicCallback(partial(callback_dispatcher, caller_globals), 1).start()
+    print('Starting app on port %d' % kwargs['port'])
     IOLoop.current().start()
-
-
-# if __name__ =='__main__':
-#     # parse the args
-#     parser = argparse.ArgumentParser(description='Serve a pylinkjs application')
-# #    parser.add_argument('--nobrowser', type=int, help='do not auto launch the browser', default=False)    
-#     parser.add_argument('--port', type=int, help='port to run server on', default=8300)
-#     args = parser.parse_args()
-#     run(vars(args))
-
