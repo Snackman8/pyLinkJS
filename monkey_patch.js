@@ -39,6 +39,16 @@
         };
     });
 
+    function browser_download(filename, text) {
+        var element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(atob(text)));
+        element.setAttribute('download', filename);        
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    }
+
     function call_py(py_func_name, ...args) {
         /** call call_py_ex but throw error if the py_func_name is not defined **/
         call_py_ex(py_func_name, new Boolean(0), ...args);

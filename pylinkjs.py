@@ -2,6 +2,7 @@
 #    Imports
 # --------------------------------------------------
 import asyncio
+import base64
 import inspect
 import json
 import os
@@ -64,22 +65,27 @@ class Code(object):
         self.code = code
 
 
-class PyLinkCSSWrapper(object):
-    def __init__(self, htmlelementwrapper):
+class PyLinkJQueryAttrWrapper(object):
+    def __init__(self, htmlelementwrapper, attr):
         # set the attributes on the super() to avoid  __getattr__
         super().__setattr__('_htmlelementwrapper', htmlelementwrapper)
+        super().__setattr__('_attr', attr)
 
     def __getattr__(self, attr):
         js = self._htmlelementwrapper._generate_selector_code()
-        js += '.css("%s")' % attr
+        js += '.%s("%s")' % (self._attr, attr)
         return self._htmlelementwrapper._jsclient.eval_js_code(js)
 
     def __setattr__(self, attr, newval):
         js = self._htmlelementwrapper._generate_selector_code()
         if isinstance(newval, Code):
-            js += '.css("%s", %s)' % (attr, newval.code)
+            js += '.%s("%s", %s)' % (self._attr, attr, newval.code)
+        elif isinstance(newval, bool):
+            js += '.%s("%s", %s)' % (self._attr, attr, {False: 'false', True: 'true'}[newval])
+        elif isinstance(newval, int) or isinstance(newval, float):
+            js += '.%s("%s", %s)' % (self._attr, attr, str(newval))
         else:
-            js += '.css("%s", %s)' % (attr, backtick_if_string(newval))
+            js += '.%s("%s", %s)' % (self._attr, attr, backtick_if_string(newval))
         return self._htmlelementwrapper._jsclient.eval_js_code(js, blocking=False)
 
 
@@ -93,8 +99,8 @@ class PyLinkHTMLElementWrapper(object):
         return """$('%s')""" % self._selector
 
     def __getattr__(self, attr):
-        if attr == 'css':
-            return PyLinkCSSWrapper(self)
+        if attr in ('css', 'prop'):
+            return PyLinkJQueryAttrWrapper(self, attr)
 
         js = self._generate_selector_code()
         js += '.%s()' % attr
@@ -116,6 +122,9 @@ class PyLinkJSClient(object):
         self.time_offset_ms = None
         self.event_time_ms = None
 
+    def __getitem__(self, key):
+        return PyLinkHTMLElementWrapper(self, key)
+
     def _send_eval_js_websocket_packet(self, js_id, js_code, send_return_value):
         pkt = {'id': js_id,
                'cmd': 'eval_js',
@@ -127,6 +136,12 @@ class PyLinkJSClient(object):
             self._websocket.write_message(json.dumps(pkt))
 
         return 0
+
+    def browser_download(self, filename, filedata, blocking=False):
+        filedata = filedata.encode('ascii')
+        b64filedata = base64.b64encode(filedata).decode()
+        js = """browser_download('%s', "%s");""" % (filename, b64filedata)
+        self.eval_js_code(js, blocking)
 
     def eval_js_code(self, js_code, blocking=True):
         # init
@@ -149,8 +164,21 @@ class PyLinkJSClient(object):
         del RETVALS[js_id]
         return retval
 
-    def __getitem__(self, key):
-        return PyLinkHTMLElementWrapper(self, key)
+    def select_add_option(self, select_selector, value, text):
+        self.eval_js_code("""$('%s').append($('<option>', {value: '%s',text: '%s'}))""" % (select_selector, value,
+                                                                                           text), blocking=False)
+
+    def select_get_selected_option(self, select_selector):
+        return self.eval_js_code("""$('%s').find(":selected").attr("value");""" % (select_selector))
+
+    def select_set_selected_option(self, select_selector, option_value):
+        """ select an option inside a HTML select element
+
+            select_selector - jquery selector for the select element
+            option_value - value of the option to select
+        """
+        self.eval_js_code("""$('%s option[value="%s"]').prop('selected', true)""" % (select_selector, option_value),
+                          blocking=False)
 
 
 # --------------------------------------------------
