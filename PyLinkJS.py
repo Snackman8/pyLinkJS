@@ -330,11 +330,10 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
 
         # correct the time between different client and server
         if js_data['cmd'] == 'synchronize_time':
-            #            CONTEXTS[context_id]['time_offset_ms'] = js_data['event_time_ms'] - time.time() * 1000
             self._contexts[self.request.path].time_offset_ms = js_data['event_time_ms'] - time.time() * 1000
 
-        #        CONTEXTS[context_id]['event_time_ms'] = js_data['event_time_ms'] - CONTEXTS[context_id]['time_offset_ms']
-        self._contexts[self.request.path].event_time_ms = js_data['event_time_ms'] - self._contexts[self.request.path].time_offset_ms
+        self._contexts[self.request.path].event_time_ms = (js_data['event_time_ms'] -
+                                                           self._contexts[self.request.path].time_offset_ms)
         del js_data['event_time_ms']
 
         # put the packet in the queue
@@ -342,7 +341,8 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
             INCOMING_PYCALLBACK_QUEUE.put((self._contexts[self.request.path], js_data), True, None)
 
         if js_data['cmd'] == 'return_py':
-            INCOMING_RETVAL_QUEUE.put((self._contexts[self.request.path], js_data['caller_id'], js_data.get('retval', None)), True, None)
+            INCOMING_RETVAL_QUEUE.put((self._contexts[self.request.path], js_data['caller_id'],
+                                       js_data.get('retval', None)), True, None)
 
     def on_close(self):
         # clean up the context
