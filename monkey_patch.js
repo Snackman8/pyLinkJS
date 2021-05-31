@@ -1,14 +1,21 @@
 <script>
     var ws;
     var pkt_id = 0;
+    var timerID = 0;
     
-    // Add the pylinkjs websocket handlers
-    document.addEventListener("DOMContentLoaded", function(){
+    
+    function connect_ws(reconnect) {
         // create the new websocket
-        ws = new WebSocket("ws://" + location.host + "/websocket/" + Math.random());
+        ws = new WebSocket("ws://" + location.host + "/websocket/" + Math.random() + location.pathname);
         
         // open handler
         ws.onopen = function() {
+            // clear interval for automatic reconnect
+            if (timerID != 0) {
+                clearInterval(timerID);
+                timerID = 0;
+            }
+            
             // synchronize watches
             pkt = {'id': 'js_' + pkt_id,
                    'cmd': 'synchronize_time',
@@ -16,11 +23,17 @@
             ws.send(JSON.stringify(pkt));
             pkt_id = pkt_id + 1
         
-            if (!(typeof pylinkjs_ready === 'undefined')) {
-                pylinkjs_ready();
+            if (reconnect) {
+                if (!(typeof pylinkjs_reconnect === 'undefined')) {
+                    pylinkjs_reconnect();
+                }
+                call_py_optional('reconnect', window.location.origin, window.location.pathname);
+            } else {
+                if (!(typeof pylinkjs_ready === 'undefined')) {
+                    pylinkjs_ready();
+                }
+                call_py_optional('ready', window.location.origin, window.location.pathname);
             }
-            
-            call_py_optional('ready', window.location.origin, window.location.pathname);
         };
         
         ws.onmessage = function (evt) {
@@ -37,7 +50,27 @@
                 send_py_return_value(d['id'], retval)
             }
         };
-    });
+        
+        ws.onclose = function() {        
+            console.log("close!");
+            if (timerID != 0) {
+                clearInterval(timerID);
+                timerID = 0;
+            }            
+            timerID = setInterval(function() {
+                console.log("reconnect!");
+                connect_ws(true);
+            }, 5000)
+        }
+        
+        ws.onerror = function() {
+            console.log("Error!");
+            ws.onclose();
+        }        
+    }
+    
+    // Add the pylinkjs websocket handlers
+    document.addEventListener("DOMContentLoaded", connect_ws(false));
 
     function browser_download(filename, text) {
         var element = document.createElement('a');

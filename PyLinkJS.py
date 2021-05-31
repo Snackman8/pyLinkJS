@@ -23,7 +23,7 @@ from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 # --------------------------------------------------
 #    Constants
 # --------------------------------------------------
-CONTEXTS = {}
+ALL_JSCLIENTS = {}
 RETVALS = {}
 
 
@@ -44,10 +44,6 @@ def backtick_if_string(p):
         return "`%s`" % p
     else:
         return p
-
-
-def get_context_event_time_ms(context_id):
-    return CONTEXTS[context_id]['event_time_ms']
 
 
 # --------------------------------------------------
@@ -125,6 +121,9 @@ class PyLinkJSClient(object):
     def __getitem__(self, key):
         return PyLinkHTMLElementWrapper(self, key)
 
+    def get_pathname(self):
+        return '/' + self._websocket.request.path.partition('/')[2].partition('/')[2].partition('/')[2]
+
     def _send_eval_js_websocket_packet(self, js_id, js_code, send_return_value):
         pkt = {'id': js_id,
                'cmd': 'eval_js',
@@ -136,6 +135,13 @@ class PyLinkJSClient(object):
             self._websocket.write_message(json.dumps(pkt))
 
         return 0
+
+    def get_broadcast_jscs(self):
+        retval = []
+        for jsc in self._websocket._all_jsclients.values():
+            if jsc.get_pathname() == self.get_pathname():
+                retval.append(jsc)
+        return retval
 
     def browser_download(self, filename, filedata, blocking=False):
         filedata = filedata.encode('ascii')
@@ -313,16 +319,21 @@ class MainHandler(tornado.web.RequestHandler):
 
 class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
     def __init__(self, *args, **kwargs):
-        self._contexts = {}
+        self._all_jsclients = None
+        self._jsc = None
         super().__init__(*args, **kwargs)
+
+    def initialize(self, all_jsclients):
+        self._all_jsclients = all_jsclients
 
     def open(self):
         # create a context
         self.set_nodelay(True)
-        self._contexts[self.request.path] = PyLinkJSClient(self, threading.get_ident())
+        self._jsc = PyLinkJSClient(self, threading.get_ident())
+        self._all_jsclients[self.request.path] = self._jsc
         if 'on_context_open' in self.application.settings:
             if self.application.settings['on_context_open'] is not None:
-                self.application.settings['on_context_open'](self._contexts[self.request.path])
+                self.application.settings['on_context_open'](self._jsc)
 
     def on_message(self, message):
         #        context_id = self.request.path
@@ -330,27 +341,39 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
 
         # correct the time between different client and server
         if js_data['cmd'] == 'synchronize_time':
-            self._contexts[self.request.path].time_offset_ms = js_data['event_time_ms'] - time.time() * 1000
+            self._jsc.time_offset_ms = js_data['event_time_ms'] - time.time() * 1000
 
-        self._contexts[self.request.path].event_time_ms = (js_data['event_time_ms'] -
-                                                           self._contexts[self.request.path].time_offset_ms)
+        self._jsc.event_time_ms = (js_data['event_time_ms'] - self._jsc.time_offset_ms)
         del js_data['event_time_ms']
 
         # put the packet in the queue
         if js_data['cmd'] == 'call_py':
-            INCOMING_PYCALLBACK_QUEUE.put((self._contexts[self.request.path], js_data), True, None)
+            INCOMING_PYCALLBACK_QUEUE.put((self._jsc, js_data), True, None)
 
         if js_data['cmd'] == 'return_py':
-            INCOMING_RETVAL_QUEUE.put((self._contexts[self.request.path], js_data['caller_id'],
-                                       js_data.get('retval', None)), True, None)
+            INCOMING_RETVAL_QUEUE.put((self._jsc, js_data['caller_id'], js_data.get('retval', None)), True, None)
 
     def on_close(self):
         # clean up the context
         #        context_id = self.request.path
+        print('websocket closed!')
         if 'on_context_close' in self.application.settings:
             if self.application.settings['on_context_close'] is not None:
-                self.application.settings['on_context_close'](self._contexts[self.request.path])
-        del self._contexts[self.request.path]
+                self.application.settings['on_context_close'](self._jsc)
+        if self.request.path in self._all_jsclients:
+            del self._all_jsclients[self.request.path]
+        del self._jsc
+
+
+# --------------------------------------------------
+#    Functions
+# --------------------------------------------------
+def get_broadcast_jsclients(pathname):
+    retval = []
+    for jsc in ALL_JSCLIENTS.values():
+        if jsc.get_pathname() == pathname:
+            retval.append(jsc)
+    return retval
 
 
 # --------------------------------------------------
@@ -369,7 +392,7 @@ def run_pylinkjs_app(**kwargs):
 
     asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
     app = tornado.web.Application([
-        (r"/websocket/.*", PyLinkJSWebSocketHandler),
+        (r"/websocket/.*", PyLinkJSWebSocketHandler, {'all_jsclients': ALL_JSCLIENTS}),
         (r"/.*", MainHandler), ],
         default_html=kwargs['default_html'],
         html_dir=kwargs['html_dir']
