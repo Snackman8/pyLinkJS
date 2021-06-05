@@ -1,6 +1,6 @@
 import threading
 import time
-from PyLinkJS import run_pylinkjs_app, Code, get_broadcast_jsclients
+from pylinkjs.PyLinkJS import run_pylinkjs_app, Code, get_broadcast_jsclients
 
 
 def ready(jsc, *args):
