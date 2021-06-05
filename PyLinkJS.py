@@ -5,6 +5,7 @@ import asyncio
 import base64
 import inspect
 import json
+import logging
 import os
 import queue
 import random
@@ -409,5 +410,5 @@ def run_pylinkjs_app(**kwargs):
     app.listen(kwargs['port'])
     app.settings['on_context_close'] = kwargs.get('onContextClose', None)
     app.settings['on_context_open'] = kwargs.get('onContextOpen', None)
-    print('Starting app on port %d' % kwargs['port'])
+    logging.info('**** Starting app on port %d' % kwargs['port'])
     IOLoop.current().start()
