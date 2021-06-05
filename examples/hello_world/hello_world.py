@@ -1,3 +1,4 @@
+import logging
 import threading
 import time
 from pylinkjs.PyLinkJS import run_pylinkjs_app, Code, get_broadcast_jsclients
@@ -50,5 +51,6 @@ def start_threaded_automatic_update():
 
 
 # start the thread and the app
+logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
 start_threaded_automatic_update()
 run_pylinkjs_app(default_html='hello_world.html')
