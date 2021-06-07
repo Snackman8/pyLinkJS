@@ -24,7 +24,7 @@ from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 # --------------------------------------------------
 #    Constants
 # --------------------------------------------------
-ALL_JSCLIENTS = {}
+ALL_JSCLIENTS = []
 RETVALS = {}
 
 
@@ -118,6 +118,7 @@ class PyLinkJSClient(object):
         self._thread_id = thread_id
         self.time_offset_ms = None
         self.event_time_ms = None
+        self.tag = {}
 
     def __getitem__(self, key):
         return PyLinkHTMLElementWrapper(self, key)
@@ -331,7 +332,7 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
         # create a context
         self.set_nodelay(True)
         self._jsc = PyLinkJSClient(self, threading.get_ident())
-        self._all_jsclients[self.request.path] = self._jsc
+        self._all_jsclients.append(self._jsc)
         if 'on_context_open' in self.application.settings:
             if self.application.settings['on_context_open'] is not None:
                 self.application.settings['on_context_open'](self._jsc)
@@ -361,8 +362,9 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
         if 'on_context_close' in self.application.settings:
             if self.application.settings['on_context_close'] is not None:
                 self.application.settings['on_context_close'](self._jsc)
-        if self.request.path in self._all_jsclients:
-            del self._all_jsclients[self.request.path]
+        self._all_jsclients.remove(self._jsc)
+#         if self.request.path in self._all_jsclients:
+#             del self._all_jsclients[self.request.path]
         del self._jsc
 
 
@@ -371,10 +373,14 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
 # --------------------------------------------------
 def get_broadcast_jsclients(pathname):
     retval = []
-    for jsc in ALL_JSCLIENTS.values():
+    for jsc in ALL_JSCLIENTS:
         if jsc.get_pathname() == pathname:
             retval.append(jsc)
     return retval
+
+
+def get_all_jsclients():
+    return ALL_JSCLIENTS
 
 
 # --------------------------------------------------
