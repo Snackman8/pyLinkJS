@@ -119,6 +119,7 @@ class PyLinkJSClient(object):
         self.time_offset_ms = None
         self.event_time_ms = None
         self.tag = {}
+        self.user = None
 
     def __getitem__(self, key):
         return PyLinkHTMLElementWrapper(self, key)
@@ -289,7 +290,31 @@ def start_retval_handler_ioloop():
 # --------------------------------------------------
 #    Tornado Request Handlers
 # --------------------------------------------------
-class MainHandler(tornado.web.RequestHandler):
+class BaseHandler(tornado.web.RequestHandler):
+    def get_current_user(self):
+        return self.get_secure_cookie("user")
+
+
+class LoginHandler(tornado.web.RequestHandler):
+    def get(self):
+        filename = self.application.settings['login_html_page']
+        with open(filename, 'r') as f:
+            s = f.read()
+        s = s.replace('{next_url}', self.request.headers.get('Referer', '/'))
+        self.write(s)
+
+    def post(self):
+        self.set_secure_cookie("user", self.get_argument("name"))
+        self.redirect(self.get_argument('next', '/'))
+
+
+class LogoutHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.clear_cookie("user")
+        self.redirect(self.request.headers['Referer'])
+
+
+class MainHandler(BaseHandler):
     def get(self):
         # strip off the leading slash, then combine with web directory
         filename = os.path.abspath(os.path.join(self.application.settings['html_dir'], self.request.path[1:]))
@@ -350,6 +375,7 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
 
         # put the packet in the queue
         if js_data['cmd'] == 'call_py':
+            self._jsc.user = self.get_secure_cookie("user")
             INCOMING_PYCALLBACK_QUEUE.put((self._jsc, js_data), True, None)
 
         if js_data['cmd'] == 'return_py':
@@ -363,8 +389,6 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
             if self.application.settings['on_context_close'] is not None:
                 self.application.settings['on_context_close'](self._jsc)
         self._all_jsclients.remove(self._jsc)
-#         if self.request.path in self._all_jsclients:
-#             del self._all_jsclients[self.request.path]
         del self._jsc
 
 
@@ -396,13 +420,22 @@ def run_pylinkjs_app(**kwargs):
         kwargs['default_html'] = 'index.html'
     if 'html_dir' not in kwargs:
         kwargs['html_dir'] = '.'
+    if 'login_html_page' not in kwargs:
+        kwargs['login_html_page'] = os.path.join(os.path.dirname(__file__), 'login.html')
+    if 'cookie_secret' not in kwargs:
+        logging.warning('COOKIE SECRET IS INSECURE!  PLEASE CHANGE')
+        kwargs['cookie_secret'] = 'GENERIC COOKIE SECRET'
 
     asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
     app = tornado.web.Application([
         (r"/websocket/.*", PyLinkJSWebSocketHandler, {'all_jsclients': ALL_JSCLIENTS}),
+        (r"/login", LoginHandler),
+        (r"/logout", LogoutHandler),
         (r"/.*", MainHandler), ],
         default_html=kwargs['default_html'],
-        html_dir=kwargs['html_dir']
+        html_dir=kwargs['html_dir'],
+        login_html_page=kwargs['login_html_page'],
+        cookie_secret=kwargs['cookie_secret']
     )
 
     caller_globals = inspect.stack()[1][0].f_globals
