@@ -52,6 +52,7 @@ def backtick_if_string(p):
 # --------------------------------------------------
 def signal_handler(_signum, _frame):
     EXIT_EVENT.set()
+    exit()
 
 
 # --------------------------------------------------
