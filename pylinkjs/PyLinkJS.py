@@ -326,6 +326,11 @@ class MainHandler(BaseHandler):
 
         # return 404 if file does not exist or is a directory
         if not os.path.exists(filename):
+            if self.application.settings['on_404']:
+                b = self.application.settings['on_404'](self.request.path[1:])
+                if b is not None:
+                    self.write(b)
+
             raise tornado.web.HTTPError(404)
 
         # load the file
@@ -436,7 +441,8 @@ def run_pylinkjs_app(**kwargs):
         default_html=kwargs['default_html'],
         html_dir=kwargs['html_dir'],
         login_html_page=kwargs['login_html_page'],
-        cookie_secret=kwargs['cookie_secret']
+        cookie_secret=kwargs['cookie_secret'],
+        on_404=kwargs.get('on_404', None)
     )
 
     caller_globals = inspect.stack()[1][0].f_globals
