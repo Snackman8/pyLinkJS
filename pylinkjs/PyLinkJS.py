@@ -194,6 +194,12 @@ class PyLinkJSClient(object):
 # --------------------------------------------------
 #    Thread Workers
 # --------------------------------------------------
+def heartbeat_threadworker(heartbeat_callback, heartbeat_interval):
+    while True:
+        time.sleep(heartbeat_interval)
+        heartbeat_callback()
+
+
 def start_execjs_handler_ioloop():
     async def coro_execjs_handler():
         # This coroutine runs in the EXECJS_HANDLER ioloop
@@ -431,6 +437,10 @@ def run_pylinkjs_app(**kwargs):
     if 'cookie_secret' not in kwargs:
         logging.warning('COOKIE SECRET IS INSECURE!  PLEASE CHANGE')
         kwargs['cookie_secret'] = 'GENERIC COOKIE SECRET'
+    if 'heartbeat_callback' not in kwargs:
+        kwargs['heartbeat_callback'] = None
+    if 'heartbeat_interval' not in kwargs:
+        kwargs['heartbeat_interval'] = None
 
     asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
     app = tornado.web.Application([
@@ -451,6 +461,8 @@ def run_pylinkjs_app(**kwargs):
     threading.Thread(target=start_pycallback_handler_ioloop, args=(caller_globals,), daemon=True).start()
     threading.Thread(target=start_retval_handler_ioloop, args=(), daemon=True).start()
     threading.Thread(target=start_execjs_handler_ioloop, args=(), daemon=True).start()
+    if kwargs['heartbeat_interval']:
+        threading.Thread(target=heartbeat_threadworker, args=(kwargs['heartbeat_callback'], kwargs['heartbeat_interval']), daemon=True).start()
 
     # start the tornado server
     app.listen(kwargs['port'])

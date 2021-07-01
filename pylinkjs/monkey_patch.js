@@ -27,12 +27,12 @@
                 if (!(typeof pylinkjs_reconnect === 'undefined')) {
                     pylinkjs_reconnect();
                 }
-                call_py_optional('reconnect', window.location.origin, window.location.pathname);
+                call_py_optional('reconnect', window.location.origin, window.location.pathname, window.location.search);
             } else {
                 if (!(typeof pylinkjs_ready === 'undefined')) {
                     pylinkjs_ready();
                 }
-                call_py_optional('ready', window.location.origin, window.location.pathname);
+                call_py_optional('ready', window.location.origin, window.location.pathname, window.location.search);
             }
         };
         
