@@ -441,18 +441,29 @@ def run_pylinkjs_app(**kwargs):
         kwargs['heartbeat_callback'] = None
     if 'heartbeat_interval' not in kwargs:
         kwargs['heartbeat_interval'] = None
+    if 'login_handler' not in kwargs:
+        kwargs['login_handler'] = LoginHandler
+    if 'logout_handler' not in kwargs:
+        kwargs['logout_handler'] = LogoutHandler
+    if 'extra_settings' not in kwargs:
+        kwargs['extra_settings'] = {}
 
     asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
-    app = tornado.web.Application([
+
+    request_handlers = [
         (r"/websocket/.*", PyLinkJSWebSocketHandler, {'all_jsclients': ALL_JSCLIENTS}),
-        (r"/login", LoginHandler),
-        (r"/logout", LogoutHandler),
-        (r"/.*", MainHandler), ],
+        (r"/login", kwargs['login_handler']),
+        (r"/logout", kwargs['logout_handler']),
+        (r"/.*", MainHandler), ]
+
+    app = tornado.web.Application(
+        request_handlers,
         default_html=kwargs['default_html'],
         html_dir=kwargs['html_dir'],
         login_html_page=kwargs['login_html_page'],
         cookie_secret=kwargs['cookie_secret'],
-        on_404=kwargs.get('on_404', None)
+        on_404=kwargs.get('on_404', None),
+        **kwargs['extra_settings']
     )
 
     caller_globals = inspect.stack()[1][0].f_globals
