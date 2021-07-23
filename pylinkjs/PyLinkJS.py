@@ -387,7 +387,7 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
 
         # put the packet in the queue
         if js_data['cmd'] == 'call_py':
-            self._jsc.user = self.get_secure_cookie("user")
+            self._jsc.user = self.get_secure_cookie("user").decode()
             INCOMING_PYCALLBACK_QUEUE.put((self._jsc, js_data), True, None)
 
         if js_data['cmd'] == 'return_py':
