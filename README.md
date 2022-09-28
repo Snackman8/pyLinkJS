@@ -121,8 +121,27 @@ jsc.eval_js_code('$("#myelement").html("Hello")')
 ```
 
 ### get_broadcast_jscs
+```python
+def get_broadcast_jscs(self):
+    """ return all JSClient instances known by this server """                    
+```
+
+This is used to broadcast commands to all clients connected to this server.  For example, a chat program, this could be used to update the chat messages on all clients.
+
+```python
+for jsc in jsc.get_broadcast_jscs():
+    jsc.eval_js_code('alert("Hello to All!")')
+```
 
 ### get_pathname
+```python
+def get_pathname(self):
+    """ return the path portion of the url of the browser bound to the JSClient instance
+        
+        For example, if the url of the JSClient is http://www.test.com/origin?query=a then this
+        function would return /origin
+    """
+```
 
 ### select_add_option
 ```python
