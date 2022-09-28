@@ -74,14 +74,88 @@ def reconnect(jsc, origin, pathname, search, *args)
 HTML elements in the browser can be accessed by their ID using the jsc item accessor.  For example if there was an element such as `<div id=x>Hello</div>` in the html page, then it could be accessed in python using `jsc['x']`.
 
 ### browser_download
+```python
+def browser_download(self, filename, filedata, blocking=False):
+    """ download a file from the backend to the users computer through the browser
+    
+        filename - the default name of the file to save as
+        filedata - the binary data of the file to download
+        blocking - if True, then this function will not return until the file has completed downloading
+    """
+```
+
+This function will force a download of a file to the user's computer through the browser.
+
+```python
+# push a download of the file named test.txt containing the text "Hello World!" to the user's browser
+jsc.browser_download('test.txt', "Hello World!")
+```
 
 ### eval_js_code
+```python
+def eval_js_code(self, js_code, blocking=True):
+    """ request that the browser evaluate javascript code
+    
+        js_code - the javascript code to execute
+        blocking - if True, this function will not return until the javascript has completed execution
+        
+        Returns:
+            the data that the executed javascript evaluates to
+    """
+```
+
+Any arbitrary javacode can be run using this function
+
+```python
+# example call to show a messagebox from the browser
+jsc.eval_js_code('alert("Hello");')
+
+# the function will return whatever the javascript code evaluates to, in this case the function will return 6
+jsc.eval_js_code('2 + 4')
+
+# call an javascript function with parameters
+jsc.eval_js_code('call_some_javascript_function(2, 3)')
+
+# execute jquery code
+jsc.eval_js_code('$("#myelement").html("Hello")')
+```
 
 ### get_broadcast_jscs
 
 ### get_pathname
 
 ### select_add_option
+```python
+    def select_add_option(self, select_selector, value, text):
+        """ add an option to an HTML select element
+        
+            select_selector - jquery selector for the select element
+            value - value of the option to add
+            text - text of the option to add
+        """
+```
+In the example below, there is an html element like below
+
+```html
+<select id=myselect>
+    <option value="a">aa</option>
+    <option value="b">bb</option>
+</select>
+```
+
+to add a new optioon to the end of the select
+```python
+jsc.select_add_option('#myselect', 'c', 'cc')
+```
+
+The resulting html will be
+```html
+<select id=myselect>
+    <option value="a">aa</option>
+    <option value="b">bb</option>
+    <option value="c">cc</option>
+</select>
+```
 
 ### select_get_selected_option
 ```python
