@@ -32,3 +32,44 @@ run_pylinkjs_app(default_html='example.html')
   <div id='divout'>?</div>
 </body>
 ```
+
+---
+# Documentation
+
+## Event Handlers
+
+### ready
+```python
+def ready(jsc, origin, pathname, search, *args)
+    """ called when a webpage creates a new connection the first time on load """
+    print('Ready', origin, pathname, search, args)
+```
+&nbsp;&nbsp;&nbsp;&nbsp;This callback is triggered when a page is loaded and ready.  If the url called was http://www.test.com/origin?query=a
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**origin** - contains the origin portion of the calling URL, i.e. "http://www.test.com"
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**pathname** - contains the path portion of the calling URL, i.e. "/"
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**search** - contains the search portion of the calling URL, i.e. "?query=a"
+
+
+### reconnect
+```python
+def reconnect(jsc, origin, pathname, search, *args)
+    """ called when a webpage automatically reconnects a broken connection """
+    print('Reconnect', origin, pathname, search, args)
+```
+&nbsp;&nbsp;&nbsp;&nbsp;This callback is triggered when an existing page reconnects to the backend server from a broken websocket connection.  If the url called was http://www.test.com/origin?query=a
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**origin** - contains the origin portion of the calling URL, i.e. "http://www.test.com"
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**pathname** - contains the path portion of the calling URL, i.e. "/"
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**search** - contains the search portion of the calling URL, i.e. "?query=a"
+
+
+
+
+
+
+
