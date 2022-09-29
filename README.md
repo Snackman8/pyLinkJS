@@ -67,6 +67,47 @@ def reconnect(jsc, origin, pathname, search, *args)
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**search** - contains the search portion of the calling URL, i.e. "?query=a"
 
+## PyLinkJS
+
+### get_broadcast_jsclients
+```python
+def get_broadcast_jsclients(pathname):
+    """ return all JSClient instances known by this server filtered by the pathname
+    
+        pathname - the pathname to filter by, i.e. /
+    
+        Returns
+            a list of JSClient instances with the correct pathname
+    """
+```
+
+This function is used to retrieve JSClient instances from the server application when not in a callback where the jsc is provided.
+
+```python
+for jsc in PyLinkJS.get_broadcast_jsclients('\'):
+    jsc.eval_js_code('alert("Hello to All!")')
+```
+
+### get_all_jsclients
+```python
+def get_all_jsclients():
+    """ return all JSClient instances known by this server
+    
+        Returns
+            a list of JSClient instances
+     """
+```
+
+This function is used to retrieve JSClient instances from the server application when not in a callback where the jsc is provided.
+
+```python
+for jsc in PyLinkJS.get_all_jsclients():
+    jsc.eval_js_code('alert("Hello to All!")')
+```
+
+### run_pylinkjs_app
+
+
 ## JSClient (JSC)
 
 ### \__getitem\__
