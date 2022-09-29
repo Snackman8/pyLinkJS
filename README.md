@@ -69,6 +69,24 @@ def reconnect(jsc, origin, pathname, search, *args)
 
 ## PyLinkJS
 
+### get_all_jsclients
+```python
+def get_all_jsclients():
+    """ return all JSClient instances known by this server
+    
+        Returns
+            a list of JSClient instances
+     """
+```
+
+This function is used to retrieve JSClient instances from the server application when not in a callback where the jsc is provided.
+
+```python
+for jsc in PyLinkJS.get_all_jsclients():
+    jsc.eval_js_code('alert("Hello to All!")')
+```
+
+
 ### get_broadcast_jsclients
 ```python
 def get_broadcast_jsclients(pathname):
@@ -88,25 +106,24 @@ for jsc in PyLinkJS.get_broadcast_jsclients('\'):
     jsc.eval_js_code('alert("Hello to All!")')
 ```
 
-### get_all_jsclients
-```python
-def get_all_jsclients():
-    """ return all JSClient instances known by this server
-    
-        Returns
-            a list of JSClient instances
-     """
-```
-
-This function is used to retrieve JSClient instances from the server application when not in a callback where the jsc is provided.
-
-```python
-for jsc in PyLinkJS.get_all_jsclients():
-    jsc.eval_js_code('alert("Hello to All!")')
-```
 
 ### run_pylinkjs_app
-
+```python
+def run_pylinkjs_app(**kwargs):
+    """ this function runs a pylinkjs application
+    
+        port - port number to run application on, default is 8300
+        default_html - filename for the default html file, defaults to index.html
+        html_dir - directory containing html files, defaults to .
+        login_html_page - filename for the default login html page, defaults to prepackaged login.html
+        cookie_secret - secret cookie string, please set this to a random string
+        heartbeat_callback - heartbeat function name which will be called periodically, defaults to None
+        heartbeat_interval - interval in seconds when the heartbeat_callback function will be called, defaults to None
+        login_handler - tornado handler for login, defaults to built in Login Handler
+        logout_handler - tornado handler for login, defaults to built in Logout Handler
+        extra_settings - dictionary of extra settings that will be made available to the tornado application
+    """
+```
 
 ## JSClient (JSC)
 
