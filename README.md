@@ -28,9 +28,16 @@ run_pylinkjs_app(default_html='example.html')
 </head>
 
 <body>
+  <a href='example2.html'>Click here to go to example 2 page</a>
+  <br>
   <button onclick="call_py('button_clicked', 'param1', 'param2');">Click me</button>
   <div id='divout'>?</div>
 </body>
+```
+
+### example2.html
+```html
+This is the example 2 page
 ```
 
 ---
