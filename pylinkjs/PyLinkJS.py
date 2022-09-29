@@ -385,6 +385,10 @@ class MainHandler(BaseHandler):
             f.close()
             b = b + b'\n' + mps
 
+        # apply proper mime type for css
+        if filename.endswith('.css'):
+            self.set_header("Content-Type", 'text/css; charset="utf-8"')
+
         # serve the page
         self.write(b)
 
