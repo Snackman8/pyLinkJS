@@ -126,6 +126,11 @@ class PyLinkJSClient(object):
         return PyLinkHTMLElementWrapper(self, key)
 
     def get_pathname(self):
+        """ return the path portion of the url of the browser bound to the JSClient instance
+
+            For example, if the url of the JSClient is http://www.test.com/origin?query=a then this
+            function would return /origin
+        """
         return '/' + self._websocket.request.path.partition('/')[2].partition('/')[2].partition('/')[2]
 
     def _send_eval_js_websocket_packet(self, js_id, js_code, send_return_value):
@@ -141,6 +146,7 @@ class PyLinkJSClient(object):
         return 0
 
     def get_broadcast_jscs(self):
+        """ return all JSClient instances known by this server """
         retval = []
         for jsc in self._websocket._all_jsclients.values():
             if jsc.get_pathname() == self.get_pathname():
@@ -148,12 +154,26 @@ class PyLinkJSClient(object):
         return retval
 
     def browser_download(self, filename, filedata, blocking=False):
+        """ download a file from the backend to the users computer through the browser
+
+            filename - the default name of the file to save as
+            filedata - the binary data of the file to download
+            blocking - if True, then this function will not return until the file has completed downloading
+        """
         filedata = filedata.encode('ascii')
         b64filedata = base64.b64encode(filedata).decode()
         js = """browser_download('%s', "%s");""" % (filename, b64filedata)
         self.eval_js_code(js, blocking)
 
     def eval_js_code(self, js_code, blocking=True):
+        """ request that the browser evaluate javascript code
+
+            js_code - the javascript code to execute
+            blocking - if True, this function will not return until the javascript has completed execution
+
+            Returns:
+                the data that the executed javascript evaluates to
+        """
         # init
         js_id = 'py_' + str(random.random())
         if blocking:
@@ -175,10 +195,23 @@ class PyLinkJSClient(object):
         return retval
 
     def select_add_option(self, select_selector, value, text):
+        """ add an option to an HTML select element
+
+            select_selector - jquery selector for the select element
+            value - value of the option to add
+            text - text of the option to add
+        """
         self.eval_js_code("""$('%s').append($('<option>', {value: '%s',text: '%s'}))""" % (select_selector, value,
                                                                                            text), blocking=False)
 
     def select_get_selected_option(self, select_selector):
+        """ get the active option of an HTML select element
+
+            select_selector - jquery selector for the select element
+
+            Returns:
+                the value of the active option
+        """
         return self.eval_js_code("""$('%s').find(":selected").attr("value");""" % (select_selector))
 
     def select_set_selected_option(self, select_selector, option_value):
@@ -410,6 +443,13 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
 #    Functions
 # --------------------------------------------------
 def get_broadcast_jsclients(pathname):
+    """ return all JSClient instances known by this server filtered by the pathname
+
+        pathname - the pathname to filter by, i.e. /
+
+        Returns
+            a list of JSClient instances with the correct pathname
+    """
     retval = []
     for jsc in ALL_JSCLIENTS:
         if jsc.get_pathname() == pathname:
@@ -418,6 +458,11 @@ def get_broadcast_jsclients(pathname):
 
 
 def get_all_jsclients():
+    """ return all JSClient instances known by this server
+
+        Returns
+            a list of JSClient instances
+     """
     return ALL_JSCLIENTS
 
 
@@ -425,6 +470,20 @@ def get_all_jsclients():
 #    Main
 # --------------------------------------------------
 def run_pylinkjs_app(**kwargs):
+    """ this function runs a pylinkjs application
+
+        port - port number to run application on, default is 8300
+        default_html - filename for the default html file, defaults to index.html
+        html_dir - directory containing html files, defaults to .
+        login_html_page - filename for the default login html page, defaults to prepackaged login.html
+        cookie_secret - secret cookie string, please set this to a random string
+        heartbeat_callback - heartbeat function name which will be called periodically, defaults to None
+        heartbeat_interval - interval in seconds when the heartbeat_callback function will be called, defaults to None
+        login_handler - tornado handler for login, defaults to built in Login Handler
+        logout_handler - tornado handler for login, defaults to built in Logout Handler
+        extra_settings - dictionary of extra settings that will be made available to the tornado application
+    """
+
     # exit on Ctrl-C
     signal.signal(signal.SIGINT, signal_handler)
 
