@@ -204,6 +204,14 @@ class PyLinkJSClient(object):
         self.eval_js_code("""$('%s').append($('<option>', {value: '%s',text: '%s'}))""" % (select_selector, value,
                                                                                            text), blocking=False)
 
+    def select_remove_all_options(self, select_selector):
+        """ remove all options from an HTML select element
+
+            select_selector - jquery selector for the select element
+        """
+        self.eval_js_code(f"""$('{select_selector}').find('option').remove()""")
+
+
     def select_get_selected_option(self, select_selector):
         """ get the active option of an HTML select element
 
@@ -388,6 +396,10 @@ class MainHandler(BaseHandler):
         # apply proper mime type for css
         if filename.endswith('.css'):
             self.set_header("Content-Type", 'text/css; charset="utf-8"')
+
+        # apply proper mime type for js
+        if filename.endswith('.js'):
+            self.set_header("Content-Type", 'text/javascript; charset="utf-8"')
 
         # serve the page
         self.write(b)
