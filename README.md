@@ -1,6 +1,20 @@
 # pyLinkJS
 Simple bridge to allow Python to communicate with JavaScript
 
+# Table of Contents
+
+[Basic Example](#basic-example)
+
+[Documentation](#documentation)
+- [Event Handlers](#event-handlers)
+- [PyLinkJS](#pylinkjs-1)
+- [JSClient (Core Methods)](#jsclient-core-methods)
+- [JSClient (Select Element Methods)](#jsclient-select-element-methods)
+
+[Useful Code Examples](#useful-code-examples)
+
+# Basic Example
+
 Create the two files below for a simple example
 
 ### example.py
@@ -132,7 +146,7 @@ def run_pylinkjs_app(**kwargs):
     """
 ```
 
-## JSClient (JSC)
+## JSClient (Core Methods)
 
 ### \__getitem\__
 
@@ -207,6 +221,17 @@ def get_pathname(self):
         function would return /origin
     """
 ```
+
+### tag
+A property bag specific to each jsc which can store application information.  For example if 3 clients connected to the application, each would have it's own instance of a jsClient with their own prospective property bags to store application information.  This can be used to store state for each individual session on the server side.
+
+```python
+    jsc['current_player_level'] = 5
+    jsc['current_player_stats'] = {'xp': 200, 'name': 'bob'}
+```
+
+
+## JSClient (Select Element Methods)
 
 ### select_add_option
 ```python
@@ -291,13 +316,7 @@ to force the select to have the "b" option, active we would use the code below
 jsc.select_set_selected_option('#myselect', 'b')
 ```
 
-### tag
-A property bag specific to each jsc which can store application information.  For example if 3 clients connected to the application, each would have it's own instance of a jsClient with their own prospective property bags to store application information.  This can be used to store state for each individual session on the server side.
-
-```python
-    jsc['current_player_level'] = 5
-    jsc['current_player_stats'] = {'xp': 200, 'name': 'bob'}
-```
+# Useful Code Examples
 
 ## Broadcast to all connected browsers
 This example will update the html of the element with id of divout_broadcast on all connected browsers
