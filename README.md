@@ -291,6 +291,14 @@ to force the select to have the "b" option, active we would use the code below
 jsc.select_set_selected_option('#myselect', 'b')
 ```
 
+### tag
+A property bag specific to each jsc which can store application information.  For example if 3 clients connected to the application, each would have it's own instance of a jsClient with their own prospective property bags to store application information.  This can be used to store state for each individual session on the server side.
+
+```python
+    jsc['current_player_level'] = 5
+    jsc['current_player_stats'] = {'xp': 200, 'name': 'bob'}
+```
+
 ## Broadcast to all connected browsers
 This example will update the html of the element with id of divout_broadcast on all connected browsers
 ```python
