@@ -194,42 +194,59 @@ class PyLinkJSClient(object):
         del RETVALS[js_id]
         return retval
 
-    def select_add_option(self, select_selector, value, text):
-        """ add an option to an HTML select element
+    def select_get_options(self, select_selector):
+        """ retrieve the value / text pair of each option in the selector
 
-            select_selector - jquery selector for the select element
-            value - value of the option to add
-            text - text of the option to add
-        """
-        self.eval_js_code("""$('%s').append($('<option>', {value: '%s',text: '%s'}))""" % (select_selector, value,
-                                                                                           text), blocking=False)
-
-    def select_remove_all_options(self, select_selector):
-        """ remove all options from an HTML select element
-
-            select_selector - jquery selector for the select element
-        """
-        self.eval_js_code(f"""$('{select_selector}').find('option').remove()""")
-
-
-    def select_get_selected_option(self, select_selector):
-        """ get the active option of an HTML select element
-
-            select_selector - jquery selector for the select element
+            Args:
+                select_selector - jquery selector for the select element
 
             Returns:
-                the value of the active option
+                list of options.  each option is a two element list, first element is the value, second element is the text
+                i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
         """
-        return self.eval_js_code("""$('%s').find(":selected").attr("value");""" % (select_selector))
+        js = f"""$('{select_selector} option').map(function(){{return [[$(this).attr("value"), $(this).html()]]}}).get()"""
+        return self.eval_js_code(js)
 
-    def select_set_selected_option(self, select_selector, option_value):
-        """ select an option inside a HTML select element
+    def select_get_selected_options(self, select_selector):
+        """ retrieve the selected options
 
-            select_selector - jquery selector for the select element
-            option_value - value of the option to select
+            Args:
+                select_selector - jquery selector for the select element
+
+            Returns:
+                list of selected options.  each option is a two element list, first element is the value, second element is the text
+                i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
         """
-        self.eval_js_code("""$('%s option[value="%s"]').prop('selected', true)""" % (select_selector, option_value),
-                          blocking=False)
+        js = f"""$('{select_selector} :selected').map(function(){{return [[$(this).attr("value"), $(this).html()]]}}).get()"""
+        return self.eval_js_code(js)
+
+    def select_set_options(self, select_selector, new_options):
+        """ replaces all the options in the select with new options
+
+            Args:
+                select_selector - jquery selector for the select element
+                new_options - list of new options, each option is a two element list of value and text, i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
+        """
+        js = f"""$('{select_selector}').empty();
+                 $.each({new_options}, function(key, value) {{
+                     $('{select_selector}').append($("<option></option>")
+                        .attr("value", value[0]).text(value[1]));
+                 }})
+
+        """
+        return self.eval_js_code(js)
+
+    def select_set_selected_options(self, select_selector, option_values):
+        """ selectes options in the select
+
+            Args:
+                select_selector - jquery selector for the select element
+                option_values - list of options values to select to a single value to select
+        """
+        if type(option_values) is not list:
+            option_values = [option_values]
+        js = f"""$('{select_selector}').val({option_values})"""
+        return self.eval_js_code(js)
 
 
 # --------------------------------------------------
