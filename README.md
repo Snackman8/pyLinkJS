@@ -261,7 +261,8 @@ jsc.select_get_options('#myselect')
                 select_selector - jquery selector for the select element
 
             Returns:
-                list of selected options.  each option is a two element list, first element is the value, second element is the text
+                list of selected options.  each option is a two element list,
+                first element is the value, second element is the text
                 i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
         """
 ```
@@ -279,7 +280,9 @@ jsc.select_get_selected_options('#myselect')
 
             Args:
                 select_selector - jquery selector for the select element
-                new_options - list of new options, each option is a two element list of value and text, i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
+                new_options - list of new options,
+                              each option is a two element list of value and text,
+                              i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
         """
 ```
 Example
