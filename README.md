@@ -233,87 +233,83 @@ A property bag specific to each jsc which can store application information.  Fo
 
 ## JSClient (Select Element Methods)
 
-### select_add_option
+### select_get_options
 ```python
-    def select_add_option(self, select_selector, value, text):
-        """ add an option to an HTML select element
-        
+def select_get_options(self, select_selector):
+    """ retrieve the value / text pair of each option in the selector
+
+        Args:
             select_selector - jquery selector for the select element
-            value - value of the option to add
-            text - text of the option to add
+
+        Returns:
+            list of options.  each option is a two element list, first element is the value, second element is the text
+            i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
+    """
+```
+Example
+```python
+jsc.select_get_options('#myselect')
+# returns [['a_val', 'a_text'], ['b_val', 'b_text']]
+```
+
+### select_get_selected_options
+```python
+    def select_get_selected_options(self, select_selector):
+        """ retrieve the selected options
+
+            Args:
+                select_selector - jquery selector for the select element
+
+            Returns:
+                list of selected options.  each option is a two element list, first element is the value, second element is the text
+                i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
         """
 ```
-In the example below, there is an html element like below
-
-```html
-<select id=myselect>
-    <option value="a">aa</option>
-    <option value="b">bb</option>
-</select>
-```
-
-to add a new optioon to the end of the select
+Example
 ```python
-jsc.select_add_option('#myselect', 'c', 'cc')
+jsc.select_get_selected_options('#myselect')
+# for a multiple select, returns [['a_val', 'a_text'], ['b_val', 'b_text']]
+# for a single select, returns [['a_val', 'a_text']]
 ```
 
-The resulting html will be
-```html
-<select id=myselect>
-    <option value="a">aa</option>
-    <option value="b">bb</option>
-    <option value="c">cc</option>
-</select>
-```
-
-### select_get_selected_option
+### select_set_options
 ```python
-def select_get_selected_option(self, select_selector):
-    """ get the active option of an HTML select element
-       
-        select_selector - jquery selector for the select element
-            
-        Returns:
-            the value of the active option
-    """
-```
-In the example below, there is an html element like below
+    def select_set_options(self, select_selector, new_options):
+        """ replaces all the options in the select with new options
 
-```html
-<select id=myselect>
-    <option value="a">aa</option>
-    <option value="b">bb</option>
-</select>
+            Args:
+                select_selector - jquery selector for the select element
+                new_options - list of new options, each option is a two element list of value and text, i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
+        """
 ```
-
-to retrieve the current active option, use the code below
+Example
 ```python
-jsc.select_get_selected_option('#myselect')
+# will replace all options with two options
+#   <option value='a_val'>a_text</option>
+#   <option value='b_val'>b_text</option>
+jsc.select_set_options('#myselect', [['a_val', 'a_text'], ['b_val', 'b_text']])
 ```
 
-### select_set_selected_option
+### select_set_selected_options
 ```python
-def select_set_selected_option(self, select_selector, option_value):
-    """ select an option inside a HTML select element
-    
-        select_selector - jquery selector for the select element
-        option_value - value of the option to select
-    """
+    def select_set_selected_options(self, select_selector, option_values):
+        """ selectes options in the select
+
+            Args:
+                select_selector - jquery selector for the select element
+                option_values - list of options values to select to a single value to select
+        """
 ```
-
-In the example below, there is an html element like below
-
-```html
-<select id=myselect>
-    <option value="a">aa</option>
-    <option value="b">bb</option>
-</select>
-```
-
-to force the select to have the "b" option, active we would use the code below
-
+Example
 ```python
-jsc.select_set_selected_option('#myselect', 'b')
+# to set multiple selected options
+jsc.select_set_selected_options('#myselect', ['a_val', 'b_val'])
+
+# to set a single selected option, first option with a single item list
+jsc.select_set_selected_options('#myselect', ['a_val'])
+
+# to set a single selected option, second option without the list
+jsc.select_set_selected_options('#myselect', [a_val])
 ```
 
 # Useful Code Examples
