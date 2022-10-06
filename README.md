@@ -1,23 +1,21 @@
 # pyLinkJS
 Simple bridge to allow Python to communicate with JavaScript
 
-# Table of Contents
+### Table of Contents
 
-[Basic Example](#basic-example)
+**[Basic Example](#basic-example)**<br>
+**[Documentation](#documentation)**<br>
+[&nbsp;&nbsp;&nbsp;&nbsp;Event Handlers](#event-handlers)<br>
+[&nbsp;&nbsp;&nbsp;&nbsp;PyLinkJS](#pylinkjs-1)<br>
+[&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Core Methods)](#jsclient-core-methods)<br>
+[&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Select Element Methods)](#jsclient-select-element-methods)<br>
+**[Useful Code Examples](#useful-code-examples)**<br>
 
-[Documentation](#documentation)
-- [Event Handlers](#event-handlers)
-- [PyLinkJS](#pylinkjs-1)
-- [JSClient (Core Methods)](#jsclient-core-methods)
-- [JSClient (Select Element Methods)](#jsclient-select-element-methods)
-
-[Useful Code Examples](#useful-code-examples)
-
-# Basic Example
+## Basic Example
 
 Create the two files below for a simple example
 
-### example.py
+#### example.py
 ```python
 import logging
 import datetime
@@ -35,7 +33,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadNa
 run_pylinkjs_app(default_html='example.html')
 ```
 
-### example.html
+#### example.html
 ```html
 <head>
     <!-- jquery (requires for pyLinkJS) -->
@@ -54,12 +52,15 @@ run_pylinkjs_app(default_html='example.html')
 </body>
 ```
 
-### example2.html
+#### example2.html
 ```html
 This is the example 2 page
 ```
 
----
+<br>
+<br>
+<br>
+
 # Documentation
 
 ## Event Handlers
@@ -319,6 +320,10 @@ jsc.select_set_selected_options('#myselect', ['a_val'])
 # to set a single selected option, second option without the list
 jsc.select_set_selected_options('#myselect', [a_val])
 ```
+
+<br>
+<br>
+<br>
 
 # Useful Code Examples
 
