@@ -194,6 +194,117 @@ class PyLinkJSClient(object):
         del RETVALS[js_id]
         return retval
 
+    def modal_alert(self, title, body, callback=''):
+        """ Shows a modal alert dialog with an OK button
+
+            Args:
+                title - html title to show in the modal dialog
+                body - html body to show in the modal dialog
+                callback - callback in string form for when the OK buttion is clicked,
+                           i.e. onclick="call_py('btn_clicked', 'create_new_item_save');"
+        """
+        self.modal_new(title=f"""<span class=text-danger>{title}</span>""",
+                      body=body,
+                      buttons=[{'text': 'OK', 'classes': 'btn-primary',
+                                'attributes': f"""data-bs-dismiss="modal" {callback} """}])
+
+    def modal_confirm(self, title, body, callback=''):
+        """ Shows a modal confirm dialog with OK and Cancel buttons
+
+            Args:
+                title - html title to show in the modal dialog
+                body - html body to show in the confirm dialog
+                callback - callback in string form for when the OK buttion is clicked,
+                           i.e. onclick="call_py('btn_clicked', 'create_new_item_save');"
+        """
+        self.modal_new(title=f"""<span class=text-danger>{title}</span>""",
+                      body=body,
+                      buttons=[{'text': 'Cancel', 'classes': 'btn-secondary', 'attributes': 'data-bs-dismiss="modal"'},
+                               {'text': 'OK', 'classes': 'btn-danger',
+                                'attributes': f"""data-bs-dismiss="modal" {callback} """}])
+
+    def modal_input(self, title, hint, callback=''):
+        """ Shows a modal input dialog where the user can input text
+
+            Args:
+                title - title to show in the modal dialog
+                hint - hint text to show in the input box before the user begins typing
+                callback - callback in string form for when the OK buttion is clicked,
+                           i.e. onclick="call_py('btn_clicked', 'create_new_item_save');"
+
+            Returns:
+                text from the input box of the last shown modal input
+        """
+        self.modal_new(title=title,
+                      body=f"""<div class="form-group">
+                                   <input class="form-control" id="modal_input" placeholder="{hint}">
+                               </div>""",
+                      buttons=[{'text': 'Cancel', 'classes': 'btn-secondary', 'attributes': 'data-bs-dismiss="modal"'},
+                               {'text': 'OK', 'classes': 'btn-primary', 'attributes': 'data-bs-dismiss="modal" ' + callback}])
+
+    def modal_input_get_text(self):
+        """ return the text from the last modal_input
+
+            Returns:
+                text from the input box of the last shown modal input
+        """
+        self.eval_js_code('$("#modal_input").val()')
+
+    def modal_new(self, title, body, buttons, modal_id='jsclient_modal', autoshow=True):
+        """ create a new modal popup dialog
+
+            Args:
+                title - html to place in the title of the modal
+                body - html to place in the body of the modal
+                buttons - list of button dictionaries with the attributes below
+                            attributes - additional attributes for the button element
+                            classes - additional classes for the button
+                            text - text of the button
+                          i.e. [{'text': 'Cancel', 'classes': 'btn-secondary', 'attributes': 'data-bs-dismiss="modal"'},
+                                {'text': 'OK', 'classes': 'btn-primary', 'attributes': 'onclick="call_py("btn_clicked", "ok_button")'}])
+                modal_id - id of the modal to create
+                autoshow - if True, this modal will be automatically shown, if False, an explicit call to modal_show is needed to show this modal
+        """
+        # generate the html for the buttons
+        html_buttons = ''
+        for x in buttons:
+            html_buttons = html_buttons + f"""<button type="button" class="btn {x.get('classes')}" {x.get('attributes')}>{x.get('text', '')}</button>"""
+
+        # delete existing modal if present
+        js = f"""
+            $('#{modal_id}').remove();
+            $(document.body).append(`
+                <div class="modal fade" id={modal_id} data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">{title}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">{body}</div>
+                            <div class="modal-footer">
+                                {html_buttons}
+                            </div>
+                        </div>
+                    </div>
+                </div>`);
+        """
+
+        # append a new modal
+        self.eval_js_code(js)
+
+        # autoshow
+        if autoshow:
+            self.modal_show(modal_id)
+
+    def modal_show(self, modal_id='jsclient_modal'):
+        """ show a modal created with the modal_new function
+
+            Args:
+                modal_id - id of the modal to show
+        """
+        self.eval_js_code(f"""$('#{modal_id}').modal('show')""")
+
     def select_get_options(self, select_selector):
         """ retrieve the value / text pair of each option in the selector
 
