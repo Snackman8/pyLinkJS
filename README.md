@@ -250,6 +250,15 @@ def modal_alert(self, title, body, callback=''):
                        i.e. onclick="call_py('btn_clicked', 'create_new_item_save');"
     """
 ```
+Example
+```python
+# show a messagebox with an OK button, if callback is specified, a python function can
+# be called when the OK button is clicked
+jsc.modal_alert('title html', 'body html)
+
+# print the response
+print(jsc.modal_input_get_text())
+```
 
 ### modal_confirm
 ```python
@@ -262,6 +271,13 @@ def modal_confirm(self, title, body, callback=''):
             callback - callback in string form for when the OK buttion is clicked,
                        i.e. onclick="call_py('btn_clicked', 'create_new_item_save');"
         """
+```
+Example
+```python
+# show a confirmation dialog with OK and cancel buttons, a python functon can
+# be called when the OK button is clicked
+jsc.modal_confirm('title html', 'body html',
+                  """onclick="call_py('btn_clicked', 'create_new_item_save');" """)
 ```
 
 ### modal_input
@@ -279,6 +295,7 @@ def modal_input(self, title, hint, callback=''):
             text from the input box of the last shown modal input
     """
 ```
+See modal_input_get_text function for example
 
 ### modal_input_get_text
 ```python
@@ -288,6 +305,14 @@ def modal_input_get_text(self):
         Returns:
             text from the input box of the last shown modal input
     """
+```
+Example
+```python
+# show an input modal allowing the user to enter in text
+jsc.modal_input('title html', 'Type your answer in this box')
+
+# print the response
+print(jsc.modal_input_get_text())
 ```
 
 ### modal_new
@@ -309,8 +334,17 @@ def modal_new(self, title, body, buttons, modal_id='jsclient_modal', autoshow=Tr
                        to show this modal
     """
 ```
+Example
+```python
+# create a new modal dialog which will automatically be shown to the user
+# the python function btn_clicked will be called with parameter "ok_btn" when the OK button is clicked
+jsc.modal_new('title html',
+              'body html',
+              [{'text': 'Cancel', 'classes': 'btn-secondary', 'attributes': 'data-bs-dismiss="modal"'},
+               {'text': 'OK', 'classes': 'btn-primary', 'attributes': 'onclick="call_py("btn_clicked", "ok_btn")'}])
+```
 
-### modal_new
+### modal_show
 ```python
 def modal_show(self, modal_id='jsclient_modal'):
     """ show a modal created with the modal_new function
@@ -318,6 +352,20 @@ def modal_show(self, modal_id='jsclient_modal'):
         Args:
             modal_id - id of the modal to show
     """
+```
+Example
+```python
+# create the modal dialog first with autoshow set to False
+jsc.modal_new('title html',
+              'body html',
+              [{'text': 'Cancel', 'classes': 'btn-secondary', 'attributes': 'data-bs-dismiss="modal"'},
+               {'text': 'OK', 'classes': 'btn-primary', 'attributes': 'onclick="call_py("btn_clicked", "ok_btn")'}],
+               autoshow=False)
+
+# modify the dialog classes, styles, etc. using eval_js_code
+
+# show the dialog after modification
+jsc.modal_show()
 ```
 
 ## JSClient (Select Element Methods)
