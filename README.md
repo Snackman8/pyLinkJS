@@ -236,6 +236,89 @@ A property bag specific to each jsc which can store application information.  Fo
     jsc['current_player_stats'] = {'xp': 200, 'name': 'bob'}
 ```
 
+## JSClient (Modal UI Methods)
+
+### modal_alert
+```python
+def modal_alert(self, title, body, callback=''):
+    """ Shows a modal alert dialog with an OK button
+
+        Args:
+            title - html title to show in the modal dialog
+            body - html body to show in the modal dialog
+            callback - callback in string form for when the OK buttion is clicked,
+                       i.e. onclick="call_py('btn_clicked', 'create_new_item_save');"
+    """
+```
+
+### modal_confirm
+```python
+def modal_confirm(self, title, body, callback=''):
+    """ Shows a modal confirm dialog with OK and Cancel buttons
+
+        Args:
+            title - html title to show in the modal dialog
+            body - html body to show in the confirm dialog
+            callback - callback in string form for when the OK buttion is clicked,
+                       i.e. onclick="call_py('btn_clicked', 'create_new_item_save');"
+        """
+```
+
+### modal_input
+```python
+def modal_input(self, title, hint, callback=''):
+    """ Shows a modal input dialog where the user can input text
+
+        Args:
+            title - title to show in the modal dialog
+            hint - hint text to show in the input box before the user begins typing
+            callback - callback in string form for when the OK buttion is clicked,
+                       i.e. onclick="call_py('btn_clicked', 'create_new_item_save');"
+
+        Returns:
+            text from the input box of the last shown modal input
+    """
+```
+
+### modal_input_get_text
+```python
+def modal_input_get_text(self):
+    """ return the text from the last modal_input
+
+        Returns:
+            text from the input box of the last shown modal input
+    """
+```
+
+### modal_new
+```python
+def modal_new(self, title, body, buttons, modal_id='jsclient_modal', autoshow=True):
+    """ create a new modal popup dialog
+
+        Args:
+            title - html to place in the title of the modal
+            body - html to place in the body of the modal
+            buttons - list of button dictionaries with the attributes below
+                      attributes - additional attributes for the button element
+                      classes - additional classes for the button
+                      text - text of the button
+                      i.e. [{'text': 'Cancel', 'classes': 'btn-secondary', 'attributes': 'data-bs-dismiss="modal"'},
+                            {'text': 'OK', 'classes': 'btn-primary', 'attributes': 'onclick="call_py("btn_clicked", "ok_btn")'}])
+            modal_id - id of the modal to create
+            autoshow - if True, this modal will be automatically shown, if False, an explicit call to modal_show is needed
+                       to show this modal
+    """
+```
+
+### modal_new
+```python
+def modal_show(self, modal_id='jsclient_modal'):
+    """ show a modal created with the modal_new function
+
+        Args:
+            modal_id - id of the modal to show
+    """
+```
 
 ## JSClient (Select Element Methods)
 
@@ -260,17 +343,17 @@ jsc.select_get_options('#myselect')
 
 ### select_get_selected_options
 ```python
-    def select_get_selected_options(self, select_selector):
-        """ retrieve the selected options
+def select_get_selected_options(self, select_selector):
+    """ retrieve the selected options
 
-            Args:
-                select_selector - jquery selector for the select element
+        Args:
+            select_selector - jquery selector for the select element
 
-            Returns:
-                list of selected options.  each option is a two element list,
-                first element is the value, second element is the text
-                i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
-        """
+        Returns:
+            list of selected options.  each option is a two element list,
+            first element is the value, second element is the text
+            i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
+    """
 ```
 Example
 ```python
@@ -281,15 +364,15 @@ jsc.select_get_selected_options('#myselect')
 
 ### select_set_options
 ```python
-    def select_set_options(self, select_selector, new_options):
-        """ replaces all the options in the select with new options
+def select_set_options(self, select_selector, new_options):
+    """ replaces all the options in the select with new options
 
-            Args:
-                select_selector - jquery selector for the select element
-                new_options - list of new options,
-                              each option is a two element list of value and text,
-                              i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
-        """
+        Args:
+            select_selector - jquery selector for the select element
+            new_options - list of new options,
+                          each option is a two element list of value and text,
+                          i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
+    """
 ```
 Example
 ```python
@@ -301,13 +384,13 @@ jsc.select_set_options('#myselect', [['a_val', 'a_text'], ['b_val', 'b_text']])
 
 ### select_set_selected_options
 ```python
-    def select_set_selected_options(self, select_selector, option_values):
-        """ selectes options in the select
+def select_set_selected_options(self, select_selector, option_values):
+    """ selectes options in the select
 
-            Args:
-                select_selector - jquery selector for the select element
-                option_values - list of options values to select to a single value to select
-        """
+        Args:
+            select_selector - jquery selector for the select element
+            option_values - list of options values to select to a single value to select
+    """
 ```
 Example
 ```python
