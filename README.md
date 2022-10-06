@@ -8,6 +8,7 @@ Simple bridge to allow Python to communicate with JavaScript
 [&nbsp;&nbsp;&nbsp;&nbsp;Event Handlers](#event-handlers)<br>
 [&nbsp;&nbsp;&nbsp;&nbsp;PyLinkJS](#pylinkjs-1)<br>
 [&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Core Methods)](#jsclient-core-methods)<br>
+[&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Modal UI Methods)](#jsclient-modal-ui-methods)<br>
 [&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Select Element Methods)](#jsclient-select-element-methods)<br>
 **[Useful Code Examples](#useful-code-examples)**<br>
 
