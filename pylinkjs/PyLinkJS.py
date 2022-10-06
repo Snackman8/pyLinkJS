@@ -248,7 +248,7 @@ class PyLinkJSClient(object):
             Returns:
                 text from the input box of the last shown modal input
         """
-        self.eval_js_code('$("#modal_input").val()')
+        return self.eval_js_code('$("#modal_input").val()')
 
     def modal_new(self, title, body, buttons, modal_id='jsclient_modal', autoshow=True):
         """ create a new modal popup dialog
