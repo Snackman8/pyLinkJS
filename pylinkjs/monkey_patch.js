@@ -2,12 +2,16 @@
     var ws;
     var pkt_id = 0;
     var timerID = 0;
-    
-    
+
+
     function connect_ws(reconnect) {
         // create the new websocket
-        ws = new WebSocket("ws://" + location.host + "/websocket/" + Math.random() + location.pathname);
-        
+        var protocol = 'ws';
+        if (location.protocol == 'https:') {
+            protocol = 'wss';
+        }
+        ws = new WebSocket(protocol + "://" + location.host + "/websocket/" + Math.random() + location.pathname);
+
         // open handler
         ws.onopen = function() {
             // clear interval for automatic reconnect
@@ -15,14 +19,14 @@
                 clearInterval(timerID);
                 timerID = 0;
             }
-            
+
             // synchronize watches
             pkt = {'id': 'js_' + pkt_id,
                    'cmd': 'synchronize_time',
                    'event_time_ms': new Date().getTime()}
             ws.send(JSON.stringify(pkt));
             pkt_id = pkt_id + 1
-        
+
             if (reconnect) {
                 if (!(typeof pylinkjs_reconnect === 'undefined')) {
                     pylinkjs_reconnect();
@@ -35,7 +39,7 @@
                 call_py_optional('ready', window.location.origin, window.location.pathname, window.location.search);
             }
         };
-        
+
         ws.onmessage = function (evt) {
             d = JSON.parse(evt.data);
             if (d['cmd'] == 'eval_js') {
@@ -50,32 +54,32 @@
                 send_py_return_value(d['id'], retval)
             }
         };
-        
-        ws.onclose = function() {        
+
+        ws.onclose = function() {
             console.log("close!");
             if (timerID != 0) {
                 clearInterval(timerID);
                 timerID = 0;
-            }            
+            }
             timerID = setInterval(function() {
                 console.log("reconnect!");
                 connect_ws(true);
             }, 5000)
         }
-        
+
         ws.onerror = function() {
             console.log("Error!");
             ws.onclose();
-        }        
+        }
     }
-    
+
     // Add the pylinkjs websocket handlers
     document.addEventListener("DOMContentLoaded", connect_ws(false));
 
     function browser_download(filename, text) {
         var element = document.createElement('a');
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(atob(text)));
-        element.setAttribute('download', filename);        
+        element.setAttribute('download', filename);
         element.style.display = 'none';
         document.body.appendChild(element);
         element.click();
@@ -96,14 +100,14 @@
                'event_time_ms': new Date().getTime(),
                'no_error_if_undefined': no_error_if_undefined}
         ws.send(JSON.stringify(pkt));
-        pkt_id = pkt_id + 1        
+        pkt_id = pkt_id + 1
     }
 
     function call_py_optional(py_func_name, ...args) {
         /** call call_py_ex but no error if the py_func_name is not defined **/
         call_py_ex(py_func_name, new Boolean(1), ...args);
     }
-    
+
     function send_py_return_value(caller_id, retval) {
         pkt = {'id': 'js_' + pkt_id,
                'cmd': 'return_py',
@@ -111,6 +115,6 @@
                'retval': retval,
                'event_time_ms': new Date().getTime(),}
         ws.send(JSON.stringify(pkt));
-        pkt_id = pkt_id + 1        
+        pkt_id = pkt_id + 1
     }
 </script>
