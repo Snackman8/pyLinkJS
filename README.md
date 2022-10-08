@@ -66,6 +66,21 @@ This is the example 2 page
 
 ## Event Handlers
 
+
+### popstate
+```python
+def popstate(jsc, state, target):
+    """ called when the webpage is transitioned to using the back or forward buttons on the browser.
+    
+        For single page apps, the state should be used to change the state of the page to mimic a back
+        or forward button page movement
+        
+        Args:
+            state - state of the page to transition to, i.e. "show_login"
+            target - target url the page is transitioning to, i.e. "https://www.myapp.com/"
+    """
+```
+
 ### ready
 ```python
 def ready(jsc, origin, pathname, search, *args)
@@ -139,6 +154,8 @@ for jsc in PyLinkJS.get_broadcast_jsclients('\'):
 ```python
 def run_pylinkjs_app(**kwargs):
     """ this function runs a pylinkjs application
+    
+        Note: The extra settings are available in the application.settings and in the jsc.tags
     
         port - port number to run application on, default is 8300
         default_html - filename for the default html file, defaults to index.html
