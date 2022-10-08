@@ -71,6 +71,11 @@
             console.log("Error!");
             ws.onclose();
         }
+
+        // Add a handler for onpopstate for Single Page Apps
+        window.onpopstate = function(event) {
+            call_py_optional('popstate', event.state, event.target.location.href);
+        }
     }
 
     // Add the pylinkjs websocket handlers

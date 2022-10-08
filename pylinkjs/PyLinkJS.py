@@ -114,12 +114,12 @@ class PyLinkHTMLElementWrapper(object):
 
 
 class PyLinkJSClient(object):
-    def __init__(self, websocket, thread_id):
+    def __init__(self, websocket, thread_id, extra_settings):
         self._websocket = websocket
         self._thread_id = thread_id
         self.time_offset_ms = None
         self.event_time_ms = None
-        self.tag = {}
+        self.tag = extra_settings.copy()
         self.user = None
 
     def __getitem__(self, key):
@@ -545,7 +545,7 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         # create a context
         self.set_nodelay(True)
-        self._jsc = PyLinkJSClient(self, threading.get_ident())
+        self._jsc = PyLinkJSClient(self, threading.get_ident(), self.application.settings['extra_settings'])
         self._all_jsclients.append(self._jsc)
         if 'on_context_open' in self.application.settings:
             if self.application.settings['on_context_open'] is not None:
@@ -575,7 +575,6 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
     def on_close(self):
         # clean up the context
         #        context_id = self.request.path
-        print('websocket closed!')
         if 'on_context_close' in self.application.settings:
             if self.application.settings['on_context_close'] is not None:
                 self.application.settings['on_context_close'](self._jsc)
@@ -625,7 +624,7 @@ def run_pylinkjs_app(**kwargs):
         heartbeat_interval - interval in seconds when the heartbeat_callback function will be called, defaults to None
         login_handler - tornado handler for login, defaults to built in Login Handler
         logout_handler - tornado handler for login, defaults to built in Logout Handler
-        extra_settings - dictionary of extra settings that will be made available to the tornado application
+        extra_settings - dictionary of extra settings that will be made available to the tornado application and the jsc tag
     """
 
     # exit on Ctrl-C
@@ -668,6 +667,7 @@ def run_pylinkjs_app(**kwargs):
         login_html_page=kwargs['login_html_page'],
         cookie_secret=kwargs['cookie_secret'],
         on_404=kwargs.get('on_404', None),
+        extra_settings=kwargs['extra_settings'],
         **kwargs['extra_settings']
     )
 
