@@ -615,6 +615,8 @@ def get_all_jsclients():
 def run_pylinkjs_app(**kwargs):
     """ this function runs a pylinkjs application
 
+        Note: The extra settings are available in the application.settings and in the jsc.tags
+
         port - port number to run application on, default is 8300
         default_html - filename for the default html file, defaults to index.html
         html_dir - directory containing html files, defaults to .
