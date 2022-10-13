@@ -564,9 +564,12 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
 
         # put the packet in the queue
         if js_data['cmd'] == 'call_py':
-            self._jsc.user = self.get_secure_cookie("user")
-            if self._jsc.user is not None:
-                self._jsc.user = self._jsc.user.decode()
+            self._jsc.user_name = self.get_secure_cookie("user_name")
+            if self._jsc.user_name is not None:
+                self._jsc.user_name = self._jsc.user_name.decode()
+            self._jsc.user_email = self.get_secure_cookie("user_email")
+            if self._jsc.user_email is not None:
+                self._jsc.user_email = self._jsc.user_email.decode()
             INCOMING_PYCALLBACK_QUEUE.put((self._jsc, js_data), True, None)
 
         if js_data['cmd'] == 'return_py':
@@ -626,7 +629,10 @@ def run_pylinkjs_app(**kwargs):
         heartbeat_interval - interval in seconds when the heartbeat_callback function will be called, defaults to None
         login_handler - tornado handler for login, defaults to built in Login Handler
         logout_handler - tornado handler for login, defaults to built in Logout Handler
-        extra_settings - dictionary of extra settings that will be made available to the tornado application and the jsc tag
+        onContextOpen - function handler called when the jsclient context opens
+        onContextClose - function handler called when the jsclient context closes
+        extra_settings - dictionary of properties that will be loaded into the tag property of the jsc client
+        **kwargs - additional named arguments will be placed into the settings property of the tornado app but will not be available to the jsc context
     """
 
     # exit on Ctrl-C
@@ -651,8 +657,17 @@ def run_pylinkjs_app(**kwargs):
         kwargs['login_handler'] = LoginHandler
     if 'logout_handler' not in kwargs:
         kwargs['logout_handler'] = LogoutHandler
+    if 'logout_post_action_url' not in kwargs:
+        kwargs['logout_post_action_url'] = '/'
+
     if 'extra_settings' not in kwargs:
         kwargs['extra_settings'] = {}
+
+    kwargs['plugins'] = kwargs.get('plugins', [])
+
+    # load the plugins
+    for plugin in kwargs['plugins']:
+        plugin.register(kwargs)
 
     asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
 
@@ -669,8 +684,7 @@ def run_pylinkjs_app(**kwargs):
         login_html_page=kwargs['login_html_page'],
         cookie_secret=kwargs['cookie_secret'],
         on_404=kwargs.get('on_404', None),
-        extra_settings=kwargs['extra_settings'],
-        **kwargs['extra_settings']
+        extra_settings=kwargs['extra_settings']
     )
 
     caller_globals = inspect.stack()[1][0].f_globals
@@ -686,5 +700,8 @@ def run_pylinkjs_app(**kwargs):
     app.listen(kwargs['port'])
     app.settings['on_context_close'] = kwargs.get('onContextClose', None)
     app.settings['on_context_open'] = kwargs.get('onContextOpen', None)
+    for k, v in kwargs.items():
+        app.settings[k] = v
+
     logging.info('**** Starting app on port %d' % kwargs['port'])
     IOLoop.current().start()

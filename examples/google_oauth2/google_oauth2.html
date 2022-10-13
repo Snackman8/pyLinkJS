@@ -7,9 +7,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 
-<body>
-  <a href='example2.html'>Click here to go to example 2 page</a>
-  <br>
-  <button onclick="call_py('button_clicked', 'param1', 'param2');">Click me</button>
-  <div id='divout'>?</div>
-</body>
+<body style='padding: 20px;'>
+<h1>PyLinkJS Google OAuth2 Example</h1>
+<br>
+<a href='/login' id=login_link>Login</a>
+<a href='/logout' id=logout_link>Logout</a>
+<br>
+<br>
+<pre>
+User Name: <span id=user_name>?</span>
+User Email: <span id=user_email>?</span>
+</pre>
