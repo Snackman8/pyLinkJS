@@ -1,0 +1,325 @@
+<!DOCTYPE HTML>
+
+<head>
+    <!-- jquery (requires for pyLinkJS) -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+
+    <!-- bootstrap (requires for pyLinkJS UI Helpers) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- highlight js for code syntax highlighting -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.6.0/build/styles/default.min.css">
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.6.0/build/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+
+<body>
+    <div class="container-fluid p-3">
+        <h1>Preamble</h1>
+        <div class="card m-3">
+            <div class="card-body">
+                <div class="card-title"><h4>Place at top of HTML file.</h4></div>
+                <div class="ms-3"><span class='text-danger'>Important!</span><br>The &lt;!DOCTYPE HTML&gt; at the top of the document is required for bootstrap to function properly</div>
+                <div class="row ms-2 mt-2">
+                    <pre class="hljs border px-3 m-2 col-auto rounded-3"><code class="p-0">
+&lt;!DOCTYPE HTML&gt;
+
+&lt;html&gt;
+&lt;head&gt;
+    &lt;!-- jquery (requires for pyLinkJS) --&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js&quot;&gt;&lt;/script&gt;
+
+    &lt;!-- bootstrap (requires for pyLinkJS UI Helpers) --&gt;
+    &lt;link href=&quot;https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css&quot; rel=&quot;stylesheet&quot;&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js&quot;&gt;&lt;/script&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+    &lt;div class=&quot;container-fluid&quot;&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+                    </code></pre>
+                </div>
+            </div>
+        </div>
+
+        <h1>HTML Snippets</h1>
+        <div class="card m-3">
+            <div class="card-body">
+                <div class="card-title"><h4>Code Block</h4></div>
+                <div class="row ms-2 mt-2">
+                    <pre class="hljs border px-3 m-2 col-auto rounded-3"><code class="p-0">
+&lt;pre class=&quot;hljs border px-3 m-2 col-auto rounded-3&quot;&gt;&lt;code class=&quot;p-0&quot;&gt;
+        a = a + 1
+&lt;/code&gt;&lt;/pre&gt;
+                    </code></pre>
+                    <div class="ms-2">Example Output</div>
+                    <pre class="hljs border px-3 m-2 col-auto rounded-3"><code class="p-0">
+a = a + 1
+                    </code></pre>
+                </div>
+            </div>
+        </div>
+
+        <h1>Colors</h1>
+        <div class="card m-3">
+            <div class="card-body">
+
+                <div class="card-title"><h4>Background Colors</h4></div>
+                <div class="row ms-2 mt-2">
+                    {% for x in ['text-bg-primary', 'text-bg-secondary', 'text-bg-success', 'text-bg-danger', 'text-bg-warning', 'text-bg-info', 'text-bg-light', 'text-bg-dark',] %}
+                        <div class="col-2"><h5 class="{{x}} p-2 m-1">{{x}}</h5></div>
+                    {% end %}
+                </div>
+
+                <div class="card-title mt-2"><h4>Text Colors</h4></div>
+                <div class="row ms-2 mt-2">
+                    {% for x in ['text-primary', 'text-secondary', 'text-success', 'text-danger', 'text-warning bg-dark', 'text-info bg-dark', 'text-light bg-dark', 'text-dark', 'text-body', 'text-muted', 'text-white bg-dark', 'text-black-50', 'text-white-50 bg-dark', ] %}
+                        <div class="col-2"><h5 class="{{x}} p-2 m-1">{{x}}</h5></div>
+                    {% end %}
+                </div>
+
+
+            </div>
+        </div>
+
+        <h1>Borders</h1>
+        <div class="card m-3">
+            <div class="card-body">
+                <div class="card-title"><h4>Add Borders</h4></div>
+                <div class="row ms-2 mt-2">
+                    {% for x in ['border', 'border-top', 'border-end', 'border-bottom', 'border-start'] %}
+                        <div class="col-2 p-2"><div class="{{x}} border-dark border-3" style="background-color: lightgrey;">&nbsp;</div><nobr>{{x}}</nobr></div>
+                    {% end %}
+                </div>
+
+                <div class="card-title mt-2"><h4>Subtract Borders</h4></div>
+                <div class="row ms-2 mt-2">
+                    {% for x in ['border-0', 'border-top-0', 'border-end-0', 'border-bottom-0', 'border-start-0'] %}
+                        <div class="col-2 p-2"><div class="border {{x}} border-dark border-3" style="background-color: lightgrey;">&nbsp;</div><nobr>{{x}}</nobr></div>
+                    {% end %}
+                </div>
+
+                <div class="card-title mt-2"><h4>Border Widths</h4></div>
+                <div class="row ms-2 mt-2">
+                    {% for x in ['border-1', 'border-2', 'border-3', 'border-4', 'border-5'] %}
+                        <div class="col-2 p-2"><div class="border {{x}} border-dark" style="background-color: lightgrey;">&nbsp;</div><nobr>{{x}}</nobr></div>
+                    {% end %}
+                </div>
+
+                <div class="card-title mt-2"><h4>Border Color</h4></div>
+                <div class="row ms-2 mt-2">
+                    {% for x in ['border-primary', 'border-secondary', 'border-success', 'border-danger', 'border-warning', 'border-info', 'border-light', 'border-dark', 'border-white',] %}
+                        <div class="col-2 p-2"><div class="border border-5 {{x}}" style="background-color: lightgrey;">&nbsp;</div><nobr>{{x}}</nobr></div>
+                    {% end %}
+                </div>
+            </div>
+        </div>
+
+        <h1>Miscellaneous</h1>
+        <div class="card m-3">
+            <div class="card-body">
+
+                <div class="card-title"><h4>Margins (m, mt, mb, ms, me, mx, my)</h4></div>
+                <div class="row ms-2 mt-2">
+                    {% for x in ['m-0', 'm-1', 'm-2', 'm-3', 'm-4', 'm-5'] %}
+                        <div class="col-2">
+                            <div class="text-bg-secondary border m-2 p-0">
+                                <div class="{{x}} text-bg-dark">{{x}}</div>
+                            </div>
+                        </div>
+                    {% end %}
+                </div>
+
+                <div class="card-title"><h4>Padding (p, pt, pb, ps, pe, px, py)</h4></div>
+                <div class="row ms-2 mt-2">
+                    {% for x in ['p-0', 'p-1', 'p-2', 'p-3', 'p-4', 'p-5'] %}
+                        <div class="col-2">
+                            <div class="text-bg-secondary border m-2 {{x}}">
+                                <div class="text-bg-dark">{{x}}</div>
+                            </div>
+                        </div>
+                    {% end %}
+                </div>
+
+                <div class="card-title"><h4>Shadows</h4></div>
+                <div class="row ms-2 mt-2">
+                    {% for x in ['shadow-none', 'shadow-sm', 'shadow', 'shadow-lg'] %}
+                        <div class="col-2 p-2"><div class="{{x}} rounded p-2">{{x}}</div></div>
+                    {% end %}
+                </div>
+            </div>
+        </div>
+
+        <h1>Components</h1>
+        <div class="card m-3">
+            <div class="card-body">
+
+                <div class="card-title"><h4>Tooltips</h4></div>
+                <p class="card-text ms-3">The script below must be added to the html page in order to initialize tooltips</p>
+                <div class="row ms-2 mt-2">
+
+                    <pre class="hljs border px-3 m-2 col-auto rounded-3"><code class="p-0">
+&lt;script&gt;
+    const tooltipTriggerList = document.querySelectorAll(&#x27;[data-bs-toggle=&quot;tooltip&quot;]&#x27;)
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl =&gt; new bootstrap.Tooltip(tooltipTriggerEl))
+&lt;/script&gt;
+
+&lt;button type=&quot;button&quot; class=&quot;btn btn-primary&quot; data-bs-toggle=&quot;tooltip&quot; title=&quot;Hooray!&quot;&gt;Hover over me!&lt;/button&gt;
+                    </code></pre>
+
+                </div>
+
+                <h5 class="ms-3 mt-3">Example Output:</h5>
+
+                <div class="col-auto ms-5 mt-3">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="tooltip" title="Hooray!">Hover over me!</button>
+                </div>
+
+                <div class="card-title mt-5"><h4>Card</h4></div>
+                <div class="row ms-2 mt-2">
+                    <pre class="hljs border px-3 m-2 col-auto rounded-3"><code class="p-0">
+&lt;div class=&quot;card m-3 col-auto&quot;&gt;
+    &lt;h4 class=&quot;card-header&quot;&gt;Card Header&lt;/h4&gt;
+    &lt;div class=&quot;card-body&quot;&gt;
+        &lt;h5 class=&quot;card-title&quot;&gt;Card Title&lt;/h5&gt;
+        &lt;p class=&quot;card-text&quot;&gt;
+            Lorem ipsum dolor sit amet. Ea porro itaque qui molestias velit in reprehenderit
+            dolorem sit velit distinctio. Sed quae facere et rerum assumenda aut voluptatibus
+            internos est architecto asperiores est sint modi non commodi neque et accusamus
+            sint. In quae nostrum et commodi voluptas qui ducimus expedita hic ipsam laborum.
+            Sit minus dolore aut voluptas laboriosam eum incidunt adipisci est labore iusto et
+            eaque nobis?
+        &lt;/p&gt;
+    &lt;/div&gt;
+    &lt;h4 class=&quot;card-footer&quot;&gt;Card Footer&lt;/h4&gt;
+&lt;/div&gt;
+
+                    </code></pre>
+
+                    <h5 class="ms-3 mt-3">Example Output:</h5>
+
+                    <div class="container">
+                        <div class="card m-3 col-auto">
+                            <h4 class="card-header">Card Header</h4>
+                            <div class="card-body">
+                                <h5 class="card-title">Card Title</h5>
+                                <p class="card-text">
+                                    Lorem ipsum dolor sit amet. Ea porro itaque qui molestias velit in reprehenderit
+                                    dolorem sit velit distinctio. Sed quae facere et rerum assumenda aut voluptatibus
+                                    internos est architecto asperiores est sint modi non commodi neque et accusamus
+                                    sint. In quae nostrum et commodi voluptas qui ducimus expedita hic ipsam laborum.
+                                    Sit minus dolore aut voluptas laboriosam eum incidunt adipisci est labore iusto et
+                                    eaque nobis?
+                                </p>
+                            </div>
+                            <h4 class="card-footer">Card Footer</h4>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="card-title"><h4>Accordion</h4></div>
+                <div class="row ms-2 mt-2">
+
+                    <pre class="hljs border px-3 m-2 col-auto rounded-3"><code class="p-0">
+&lt;div class=&quot;accordion&quot; id=&quot;accordionExample&quot;&gt;
+  &lt;div class=&quot;accordion-item&quot;&gt;
+    &lt;h2 class=&quot;accordion-header&quot;&gt;
+      &lt;button class=&quot;accordion-button&quot; type=&quot;button&quot; data-bs-toggle=&quot;collapse&quot; data-bs-target=&quot;#collapseOne&quot;&gt;
+        Accordion Item #1
+      &lt;/button&gt;
+    &lt;/h2&gt;
+    &lt;div id=&quot;collapseOne&quot; class=&quot;accordion-collapse collapse show&quot; data-bs-parent=&quot;#accordionExample&quot;&gt;
+      &lt;div class=&quot;accordion-body&quot;&gt;Accordion Body&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+                    </code></pre>
+
+                </div>
+
+                <h5 class="ms-3 mt-3">Example Output:</h5>
+
+                <div class="row ms-4">
+                    <div class="accordion" id="accordionExample">
+                      <div class="accordion-item">
+                        <h2 class="accordion-header">
+                          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                            Accordion Item #1
+                          </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                          <div class="accordion-body">Accordion Body</div>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+
+                <div class="card-title"><h4>Collapse</h4></div>
+                <div class="row ms-2 mt-2">
+
+                    <pre class="hljs border px-3 m-2 col-auto rounded-3"><code class="p-0">
+&lt;p&gt;
+    &lt;a class=&quot;btn btn-primary&quot; data-bs-toggle=&quot;collapse&quot; href=&quot;#collapseExample&quot;&gt;
+        Link with href
+    &lt;/a&gt;
+    &lt;button class=&quot;btn btn-primary&quot; data-bs-toggle=&quot;collapse&quot; data-bs-target=&quot;#collapseExample&quot;&gt;
+        Button with data-bs-target
+    &lt;/button&gt;
+&lt;/p&gt;
+&lt;div class=&quot;collapse&quot; id=&quot;collapseExample&quot;&gt;
+    &lt;div class=&quot;card card-body&quot;&gt;text&lt;/div&gt;
+&lt;/div&gt;
+                    </code></pre>
+
+                </div>
+
+                <h5 class="ms-3 mt-3">Example Output:</h5>
+
+                <div class="row ms-4">
+                <p>
+                  <a class="btn btn-primary" data-bs-toggle="collapse" href="#collapseExample">
+                    Link with href
+                  </a>
+                  <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#collapseExample">
+                    Button with data-bs-target
+                  </button>
+                  </p>
+                <div class="collapse" id="collapseExample">
+                  <div class="card card-body">text</div>
+                </div>
+                </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            </div>
+        </div>
+    </div>
+    <script>
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+    </script>
+</body>

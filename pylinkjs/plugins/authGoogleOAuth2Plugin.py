@@ -9,7 +9,7 @@ import urllib
 # --------------------------------------------------
 #    Plugin
 # --------------------------------------------------
-class GoogleOAuth2Plugin:
+class pluginGoogleOAuth2:
     def __init__(self, client_id, secret, port, logout_post_action_url='/'):
         self._kwargs = {
             'login_handler': GoogleOAuth2LoginHandler,

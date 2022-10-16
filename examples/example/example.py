@@ -9,6 +9,7 @@ def button_clicked(jsc, a, b):
     jsc['#divout'].click = Code('function() { alert("AA"); }')
 
 
-# start the thread and the app
-logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-run_pylinkjs_app(default_html='example.html')
+if __name__ == '__main__':
+    # start the thread and the app
+    logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
+    run_pylinkjs_app(default_html='example.html')

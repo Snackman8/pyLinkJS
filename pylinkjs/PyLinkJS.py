@@ -15,6 +15,7 @@ import threading
 import traceback
 import time
 
+import tornado.template
 import tornado.web
 import tornado.websocket
 from tornado.ioloop import IOLoop
@@ -520,6 +521,10 @@ class MainHandler(BaseHandler):
             mps = f.read()
             f.close()
             b = b + b'\n' + mps
+
+            t = tornado.template.Template(b)
+            self.write(t.generate(name='John2'))
+            return
 
         # apply proper mime type for css
         if filename.endswith('.css'):
