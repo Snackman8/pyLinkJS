@@ -144,8 +144,21 @@ a = a + 1
                     {% end %}
                 </div>
 
-                <div class="card-title"><h4>Shadows</h4></div>
-                <div class="row ms-2 mt-2">
+                <div class="card-title"><h4>Gutter (g, gx, gy)</h4></div>
+                <div class="container">
+                    {% for x in ['g-0', 'g-1', 'g-2', 'g-3', 'g-4', 'g-5'] %}
+                        <div class="row mt-3 p-3 {{x}} border">
+                            {% for _ in range(0, 12) %}
+                                <div class="col-2">
+                                    <div class="text-bg-dark">{{x}}</div>
+                                </div>
+                            {% end %}
+                        </div>
+                    {% end %}
+                </div>
+
+                <div class="card-title mt-4"><h4>Shadows</h4></div>
+                <div class="row ms-2">
                     {% for x in ['shadow-none', 'shadow-sm', 'shadow', 'shadow-lg'] %}
                         <div class="col-2 p-2"><div class="{{x}} rounded p-2">{{x}}</div></div>
                     {% end %}

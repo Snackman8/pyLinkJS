@@ -17,6 +17,10 @@ class pluginGoogleOAuth2:
             'logout_post_action_url': logout_post_action_url,
             'google_oauth': {"key": client_id, "secret": secret},
             'google_oauth_redirect_uri': f'http://localhost:{port}/login'}
+
+    @property
+    def auth_method(self):
+        return 'GoogleOAuth2'
     
     def register(self, kwargs):
         # merge the dictionaries

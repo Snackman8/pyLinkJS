@@ -22,7 +22,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
 
     # define the port
-    port = 8300
+    port = 8301
 
     # init the formBuilder plugin
     formBuilder = pluginFormBuilder()

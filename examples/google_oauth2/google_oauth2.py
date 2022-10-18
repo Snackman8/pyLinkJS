@@ -4,7 +4,7 @@
 import argparse
 import logging
 from pylinkjs.PyLinkJS import run_pylinkjs_app
-from pylinkjs.plugins import authGoogleOAuth2Plugin.GoogleOAuth2Plugin
+from pylinkjs.plugins.authGoogleOAuth2Plugin import pluginGoogleOAuth2
 
 
 # --------------------------------------------------
@@ -23,8 +23,8 @@ def ready(jsc, *args):
 if __name__ == '__main__':
     # parse the arguments
     parser = argparse.ArgumentParser(description='PyLinkJS Google Oauth2 Example')
-    parser.add_argument('--oauth2_clientid', help='google oath2 client id')
-    parser.add_argument('--oauth2_secret', help='google oath2 secret')
+    parser.add_argument('--oauth2_clientid', help='google oath2 client id', required=True)
+    parser.add_argument('--oauth2_secret', help='google oath2 secret', required=True)
     args = vars(parser.parse_args())
 
     # configure logger
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     port = 8300
     
     # init the google oauth2 plugin
-    google_oauth2_plugin = authGoogleOAuth2Plugin(client_id=args['oauth2_clientid'],
+    google_oauth2_plugin = pluginGoogleOAuth2(client_id=args['oauth2_clientid'],
                                               secret=args['oauth2_secret'],
                                               port=port,
                                               logout_post_action_url='/')
