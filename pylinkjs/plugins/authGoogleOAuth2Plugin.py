@@ -41,7 +41,7 @@ class GoogleOAuth2LoginHandler(tornado.web.RequestHandler,
             user = await self.oauth2_request("https://www.googleapis.com/oauth2/v1/userinfo", access_token=access_token)
             self.set_secure_cookie("user_name", user['name'])
             self.set_secure_cookie("user_email", user['email'])
-            self.set_secure_cookie("access_token", access_token)
+            self.set_secure_cookie("user_access_token", access_token)
             self.redirect(urllib.parse.parse_qs(self.get_argument('state', '')).get('next', ['/'])[0])
         else:
             self.authorize_redirect(
@@ -58,7 +58,7 @@ class GoogleOAuth2LoginHandler(tornado.web.RequestHandler,
 class GoogleOAuth2LogoutHandler(tornado.web.RequestHandler):
     async def get(self):
         # read the user and the access token
-        access_token = self.get_secure_cookie('access_token')
+        access_token = self.get_secure_cookie('user_acess_token')
         if access_token is None:
             access_token = b''
         access_token = access_token.decode()
@@ -68,6 +68,7 @@ class GoogleOAuth2LogoutHandler(tornado.web.RequestHandler):
         requests.post(url, headers=headers)
         self.clear_cookie('user_name')
         self.clear_cookie('user_email')
-        self.clear_cookie('access_token')
+        self.clear_cookie('user_auth_method')
+        self.clear_cookie('user_acess_token')
 
         self.redirect(self.application.settings['logout_post_action_url'])
