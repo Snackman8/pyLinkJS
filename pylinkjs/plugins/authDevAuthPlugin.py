@@ -30,7 +30,7 @@ class DevAuthLoginHandler(tornado.web.RequestHandler):
         self.write(f.read())
 
     async def post(self):
-        self.set_secure_cookie("user_name", self.request.arguments['username'][0])
+        self.set_secure_cookie("user_auth_username", self.request.arguments['username'][0])
         self.set_secure_cookie("user_auth_method", 'DevAuth')
         self.redirect('/')
 
@@ -41,7 +41,7 @@ class DevAuthLoginHandler(tornado.web.RequestHandler):
 class DevAuthLogoutHandler(tornado.web.RequestHandler):
     async def get(self):
         # read the user and the access token
-        self.clear_cookie('user_name')
+        self.clear_cookie('user_auth_username')
         self.clear_cookie('user_auth_method')
 
         self.redirect(self.application.settings['logout_post_action_url'])

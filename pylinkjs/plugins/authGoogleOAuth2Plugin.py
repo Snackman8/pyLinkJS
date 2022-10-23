@@ -39,9 +39,10 @@ class GoogleOAuth2LoginHandler(tornado.web.RequestHandler,
                 code=self.get_argument('code'))
             access_token = access["access_token"]
             user = await self.oauth2_request("https://www.googleapis.com/oauth2/v1/userinfo", access_token=access_token)
-            self.set_secure_cookie("user_name", user['name'])
-            self.set_secure_cookie("user_email", user['email'])
-            self.set_secure_cookie("user_access_token", access_token)
+            self.set_secure_cookie("user_auth_access_token", access_token)
+            self.set_secure_cookie('user_auth_method', 'GoogleOAuth2')
+            self.set_secure_cookie("user_auth_name", user['name'])
+            self.set_secure_cookie("user_auth_username", user['email'])
             self.redirect(urllib.parse.parse_qs(self.get_argument('state', '')).get('next', ['/'])[0])
         else:
             self.authorize_redirect(
@@ -58,7 +59,7 @@ class GoogleOAuth2LoginHandler(tornado.web.RequestHandler,
 class GoogleOAuth2LogoutHandler(tornado.web.RequestHandler):
     async def get(self):
         # read the user and the access token
-        access_token = self.get_secure_cookie('user_acess_token')
+        access_token = self.get_secure_cookie('user_auth_acess_token')
         if access_token is None:
             access_token = b''
         access_token = access_token.decode()
@@ -66,9 +67,9 @@ class GoogleOAuth2LogoutHandler(tornado.web.RequestHandler):
         url = f'https://oauth2.googleapis.com/revoke?token={access_token}'
         headers = {'content-type': 'application/x-www-form-urlencoded'}
         requests.post(url, headers=headers)
-        self.clear_cookie('user_name')
-        self.clear_cookie('user_email')
+        self.clear_cookie('user_auth_access_token')
         self.clear_cookie('user_auth_method')
-        self.clear_cookie('user_acess_token')
+        self.clear_cookie('user_auth_name')
+        self.clear_cookie('user_auth_username')
 
         self.redirect(self.application.settings['logout_post_action_url'])

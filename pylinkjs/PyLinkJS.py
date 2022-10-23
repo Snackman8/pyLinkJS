@@ -569,15 +569,11 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
 
         # put the packet in the queue
         if js_data['cmd'] == 'call_py':
-            self._jsc.user_name = self.get_secure_cookie("user_name")
-            if self._jsc.user_name is not None:
-                self._jsc.user_name = self._jsc.user_name.decode()
-            self._jsc.user_email = self.get_secure_cookie("user_email")
-            if self._jsc.user_email is not None:
-                self._jsc.user_email = self._jsc.user_email.decode()
-            self._jsc.user_auth_method = self.get_secure_cookie("user_auth_method")
-            if self._jsc.user_auth_method is not None:
-                self._jsc.user_auth_method = self._jsc.user_auth_method.decode()
+            props = ['user_auth_username', 'user_auth_method']
+            for p in props:
+                setattr(self._jsc, p, self.get_secure_cookie(p))
+                if getattr(self._jsc, p) is not None:
+                    setattr(self._jsc, p, getattr(self._jsc, p).decode())
             INCOMING_PYCALLBACK_QUEUE.put((self._jsc, js_data), True, None)
 
         if js_data['cmd'] == 'return_py':
