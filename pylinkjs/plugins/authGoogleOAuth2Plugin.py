@@ -10,13 +10,13 @@ import urllib
 #    Plugin
 # --------------------------------------------------
 class pluginGoogleOAuth2:
-    def __init__(self, client_id, secret, port, logout_post_action_url='/'):
+    def __init__(self, client_id, secret, redirect_url, logout_post_action_url='/'):
         self._kwargs = {
             'login_handler': GoogleOAuth2LoginHandler,
             'logout_handler': GoogleOAuth2LogoutHandler,
             'logout_post_action_url': logout_post_action_url,
             'google_oauth': {"key": client_id, "secret": secret},
-            'google_oauth_redirect_uri': f'http://localhost:{port}/login'}
+            'google_oauth_redirect_uri': redirect_url}
 
     @property
     def auth_method(self):
