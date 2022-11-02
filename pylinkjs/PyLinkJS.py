@@ -1,8 +1,11 @@
+""" pylinkjs library """
+
 # --------------------------------------------------
 #    Imports
 # --------------------------------------------------
 import asyncio
 import base64
+from  functools import partial
 import inspect
 import json
 import logging
@@ -14,6 +17,7 @@ import sys
 import threading
 import traceback
 import time
+from types import ModuleType
 
 import tornado.template
 import tornado.web
@@ -116,6 +120,7 @@ class PyLinkHTMLElementWrapper(object):
 
 class PyLinkJSClient(object):
     def __init__(self, websocket, thread_id, extra_settings):
+        """ init """
         self._websocket = websocket
         self._thread_id = thread_id
         self.time_offset_ms = None
@@ -123,8 +128,37 @@ class PyLinkJSClient(object):
         self.tag = extra_settings.copy()
         self.user = None
 
+    def __getattr__(self, key):
+        """ if the attribute does not exist intrinsicly on this instance, search the plugins for exposed functions
+            which match the attribute name
+
+            Args:
+                key - name of the function
+
+            Returns:
+                the function which is exposed by a plugin
+        """
+        plugins = self._websocket.application.settings.get('plugins', [])
+        for p in plugins:
+            jsc_exposed_funcs = getattr(p, 'jsc_exposed_funcs', [])
+            if key in jsc_exposed_funcs:
+                return partial(jsc_exposed_funcs[key], self)
+
+        raise AttributeError(key)
+
     def __getitem__(self, key):
         return PyLinkHTMLElementWrapper(self, key)
+
+    def get_setting(self, setting_name):
+        """ return a setting that was passed into the application on startup
+
+            Args:
+                setting_name - name of the setting to return
+
+            Returns:
+                setting value
+        """
+        return self._websocket.application.settings.get(setting_name, None)
 
     def get_pathname(self):
         """ return the path portion of the url of the browser bound to the JSClient instance
@@ -414,23 +448,45 @@ def start_pycallback_handler_ioloop(caller_globals):
 
             if js_data['cmd'] == 'call_py':
                 try:
-                    func = None
-                    if js_data['py_func_name'] in caller_globals:
-                        func = caller_globals[js_data['py_func_name']]
-                    if js_data['py_func_name'] in locals():
-                        func = locals()[js_data['py_func_name']]
-                    elif js_data['py_func_name'] in globals():
-                        func = globals()[js_data['py_func_name']]
-                    if func:
-                        func(jsc, *js_data['args'])
+                    # split the function into modules and function name
+                    parts = js_data['py_func_name'].split('.')
+
+                    # init the search space
+                    new_search_space = [caller_globals, locals(), globals()]
+
+                    # search through the search space
+                    for p in parts:
+                        # init the search_space and new_search_space
+                        search_space, new_search_space = new_search_space, None
+
+                        # abandon if we have no search space
+                        if search_space is None:
+                            break
+
+                        # search for the next level
+                        for ss in search_space:
+                            if isinstance(ss, ModuleType):
+                                if hasattr(ss, p):
+                                    new_search_space = [getattr(ss, p)]
+                            else:
+                                if p in ss:
+                                    new_search_space = [ss[p]]
+                                    break
+
+                    # error if nothing was found in the final new_search_space
+                    if new_search_space is None:
+                        s = 'No function found with name "%s"' % js_data['py_func_name']
+                        js_code = """alert('%s');""" % s
+                        jsc.eval_js_code(js_code)
                     else:
-                        if not js_data['no_error_if_undefined']:
-                            s = 'No function found with name "%s"' % js_data['py_func_name']
-                            js_code = """alert('%s');""" % s
-                            jsc.eval_js_code(js_code)
-                            raise Exception('No function found with name "%s"' % js_data['py_func_name'])
-                except Exception:
+                        # call the function
+                        func = new_search_space[0]
+                        func(jsc, *js_data['args'])
+                except Exception as e:
                     sys.stderr.write(traceback.format_exc())
+                    js_code = """alert("%s");""" % str(e)
+                    print(js_code)
+                    jsc.eval_js_code(js_code)
 
     # start the thread
     pycallbackhandler_ioloop = asyncio.new_event_loop()
