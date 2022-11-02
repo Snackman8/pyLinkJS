@@ -272,7 +272,7 @@ class PyLinkJSClient(object):
         """
         self.modal_new(title=title,
                       body=f"""<div class="form-group">
-                                   <input class="form-control" id="modal_input" placeholder="{hint}">
+                                   <input class="form-control" id="modal_input" placeholder="{hint}"  autocomplete="off">
                                </div>""",
                       buttons=[{'text': 'Cancel', 'classes': 'btn-secondary', 'attributes': 'data-bs-dismiss="modal"'},
                                {'text': 'OK', 'classes': 'btn-primary', 'attributes': 'data-bs-dismiss="modal" ' + callback}])
