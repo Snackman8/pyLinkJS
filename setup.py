@@ -8,5 +8,5 @@ setup(name='pylinkjs',
       author='Lawrence Yu',
       author_email='lawy888@gmail.com',
       url='https://github.com/Snackman8/pyLinkJS',
-      packages=['pylinkjs'],
+      packages=['pylinkjs', 'pylinkjs.plugins'],
       include_package_data=True)
