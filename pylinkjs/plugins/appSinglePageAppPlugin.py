@@ -28,3 +28,16 @@ class pluginSinglePageApp:
 
         # change the history state since this is a Single Page App
         jsc.eval_js_code(f"""history.pushState({{'pane': '{pane_id}'}}, '', '/')""")
+
+
+def popstate(jsc, state, target):
+    """ called when the webpage is transitioned to using the back or forward buttons on the browser.
+
+        For single page apps, the state should be used to change the state of the page to mimic a back
+        or forward button page movement
+
+        Args:
+            state - state of the page to transition to, i.e. "show_login"
+            target - target url the page is transitioning to, i.e. "https://www.myapp.com/"
+    """
+    jsc.show_pane(state.get('pane'))
