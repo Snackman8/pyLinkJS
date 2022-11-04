@@ -17,13 +17,13 @@ class pluginSinglePageApp:
         # merge the dictionaries
         kwargs.update(self._kwargs)
     
-    def show_pane(self, jsc, pane_id):
+    def show_pane(self, jsc, pane_id, **kwargs):
         """ exposed function to bind to the jsc """
         # show and hide the correct panes
         for p in jsc.get_setting('SinglePageApp_Panes'):
             if p.__name__ == pane_id:
                 if hasattr(p, 'init_pane'):
-                    p.init_pane(jsc)
+                    p.init_pane(jsc, **kwargs)
             jsc.eval_js_code(f"""$('#{p.__name__}').css('display', '{"block" if p.__name__ == pane_id else "none"}')""")
 
         # change the history state since this is a Single Page App
