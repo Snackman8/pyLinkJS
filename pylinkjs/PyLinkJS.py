@@ -605,7 +605,8 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
 
     def open(self):
         # create a context
-        logging.info(f'pylinkjs: websocket connect {self.request.remote_ip}')
+        remote_ip = self.request.headers.get("X-Real-IP") or self.request.headers.get("X-Forwarded-For") or self.request.remote_ip
+        logging.info(f'pylinkjs: websocket connect {remote_ip}')
         self.set_nodelay(True)
         self._jsc = PyLinkJSClient(self, threading.get_ident(), self.application.settings['extra_settings'])
         self._all_jsclients.append(self._jsc)
@@ -758,7 +759,7 @@ def run_pylinkjs_app(**kwargs):
         threading.Thread(target=heartbeat_threadworker, args=(kwargs['heartbeat_callback'], kwargs['heartbeat_interval']), daemon=True).start()
 
     # start the tornado server
-    app.listen(kwargs['port'])
+    app.listen(kwargs['port'], xheaders=True)
     app.settings['on_context_close'] = kwargs.get('onContextClose', None)
     app.settings['on_context_open'] = kwargs.get('onContextOpen', None)
     for k, v in kwargs.items():
