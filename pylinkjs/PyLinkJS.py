@@ -605,6 +605,7 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
 
     def open(self):
         # create a context
+        logging.info(f'pylinkjs: websocket connect {self.request.remote_ip}')
         self.set_nodelay(True)
         self._jsc = PyLinkJSClient(self, threading.get_ident(), self.application.settings['extra_settings'])
         self._all_jsclients.append(self._jsc)
