@@ -15,28 +15,43 @@
         // open handler
         ws.onopen = function() {
             // clear interval for automatic reconnect
+            console.log('ws.onopen')
             if (timerID != 0) {
+                console.log('ws.onopen-1')
                 clearInterval(timerID);
                 timerID = 0;
             }
 
             // synchronize watches
+                console.log('ws.onopen-2')
             pkt = {'id': 'js_' + pkt_id,
                    'cmd': 'synchronize_time',
                    'event_time_ms': new Date().getTime()}
+            console.log('ws.onopen-3')
             ws.send(JSON.stringify(pkt));
+            console.log('ws.onopen-4')
             pkt_id = pkt_id + 1
 
             if (reconnect) {
+                console.log('ws.onopen-5')
                 if (!(typeof pylinkjs_reconnect === 'undefined')) {
+                    console.log('ws.onopen-6')
                     pylinkjs_reconnect();
+                    console.log('ws.onopen-7')
                 }
+                console.log('ws.onopen-8')
                 call_py_optional('reconnect', window.location.origin, window.location.pathname, window.location.search);
+                console.log('ws.onopen-9')
             } else {
+                console.log('ws.onopen-10')
                 if (!(typeof pylinkjs_ready === 'undefined')) {
+                    console.log('ws.onopen-11')
                     pylinkjs_ready();
+                    console.log('ws.onopen-12')
                 }
+                console.log('ws.onopen-13')
                 call_py_optional('ready', window.location.origin, window.location.pathname, window.location.search);
+                console.log('ws.onopen-14')
             }
         };
 

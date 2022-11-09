@@ -608,11 +608,18 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
         remote_ip = self.request.headers.get("X-Real-IP") or self.request.headers.get("X-Forwarded-For") or self.request.remote_ip
         logging.info(f'pylinkjs: websocket connect {remote_ip}')
         self.set_nodelay(True)
+        logging.info(f'pylinkjs: websocket connect-1 {remote_ip}')
         self._jsc = PyLinkJSClient(self, threading.get_ident(), self.application.settings['extra_settings'])
+        logging.info(f'pylinkjs: websocket connect-2 {remote_ip}')
         self._all_jsclients.append(self._jsc)
+        logging.info(f'pylinkjs: websocket connect-3 {remote_ip}')
         if 'on_context_open' in self.application.settings:
+            logging.info(f'pylinkjs: websocket connect-4 {remote_ip}')
             if self.application.settings['on_context_open'] is not None:
+                logging.info(f'pylinkjs: websocket connect-5 {remote_ip}')
                 self.application.settings['on_context_open'](self._jsc)
+                logging.info(f'pylinkjs: websocket connect-6 {remote_ip}')
+        logging.info(f'pylinkjs: websocket connect-7 {remote_ip}')
 
     def on_message(self, message):
         #        context_id = self.request.path
