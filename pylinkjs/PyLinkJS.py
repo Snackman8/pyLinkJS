@@ -24,6 +24,7 @@ import tornado.web
 import tornado.websocket
 from tornado.ioloop import IOLoop
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
+from tornado.websocket import WebSocketClosedError
 
 
 # --------------------------------------------------
@@ -426,8 +427,7 @@ def start_execjs_handler_ioloop():
             except Exception as e:
                 # there may be a problem here
                 logging.info(f'pylinkjs: exception coro_execjs_handler')
-                logging.info(e)
-                raise(e)
+                logging.exception(e)
 
     # thread to handle when python code wants to send javascript code to browser
     execjs_ioloop = asyncio.new_event_loop()
