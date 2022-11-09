@@ -421,7 +421,13 @@ def start_execjs_handler_ioloop():
             jsclient, evt, js_id, js_code = OUTGOING_EXECJS_QUEUE.get()
             RETVALS[js_id] = (evt, None)
 
-            jsclient._send_eval_js_websocket_packet(js_id, js_code, evt is not None)
+            try:
+                jsclient._send_eval_js_websocket_packet(js_id, js_code, evt is not None)
+            except Exception as e:
+                # there may be a problem here
+                logging.info(f'pylinkjs: exception coro_execjs_handler')
+                logging.info(e)
+                raise(e)
 
     # thread to handle when python code wants to send javascript code to browser
     execjs_ioloop = asyncio.new_event_loop()
@@ -646,11 +652,17 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
 
     def on_close(self):
         # clean up the context
-        #        context_id = self.request.path
+        remote_ip = self.request.headers.get("X-Real-IP") or self.request.headers.get("X-Forwarded-For") or self.request.remote_ip
+        logging.info(f'pylinkjs: websocket close {remote_ip}')
         if 'on_context_close' in self.application.settings:
+            logging.info(f'pylinkjs: websocket close-1 {remote_ip}')
             if self.application.settings['on_context_close'] is not None:
+                logging.info(f'pylinkjs: websocket close-2 {remote_ip}')
                 self.application.settings['on_context_close'](self._jsc)
+                logging.info(f'pylinkjs: websocket close-3 {remote_ip}')
+        logging.info(f'pylinkjs: websocket close-4 {remote_ip}')
         self._all_jsclients.remove(self._jsc)
+        logging.info(f'pylinkjs: websocket close-5 {remote_ip}')
         del self._jsc
 
 
