@@ -62,7 +62,7 @@
                     retval = eval(d['js_code']);
                 } catch (err) {
                     alert(err + '\n\n' + d['js_code'])
-                    throw err
+                    retval = err.toString();
                 }
             }
             if (d['send_return_value']) {
