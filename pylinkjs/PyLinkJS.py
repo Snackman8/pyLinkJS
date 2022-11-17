@@ -170,16 +170,30 @@ class PyLinkJSClient(object):
         return '/' + self._websocket.request.path.partition('/')[2].partition('/')[2].partition('/')[2]
 
     def _send_eval_js_websocket_packet(self, js_id, js_code, send_return_value):
+        # throw exception of websocket is closed
+        if self._websocket.close_code is not None:
+            raise WebSocketClosedError()
+
         pkt = {'id': js_id,
                'cmd': 'eval_js',
                'js_code': js_code,
                'send_return_value': send_return_value}
         if self._thread_id != threading.get_ident():
-            IOLoop.instance().add_callback(self._websocket.write_message, json.dumps(pkt))
+            IOLoop.instance().add_callback(self._websocket_write_message_callback, js_id, json.dumps(pkt))
         else:
             self._websocket.write_message(json.dumps(pkt))
 
         return 0
+
+    def _websocket_write_message_callback(self, js_id, data):
+        try:
+            self._websocket.write_message(data)
+        except WebSocketClosedError:
+            logging.info('********** Detect websocket closed in callback')
+        finally:
+            if js_id in RETVALS:
+                if RETVALS[js_id][0]:
+                    RETVALS[js_id][0].set()
 
     def get_broadcast_jscs(self):
         """ return all JSClient instances known by this server """
@@ -225,9 +239,11 @@ class PyLinkJSClient(object):
             return
 
         # wait for the return value then return
-        evt.wait()
-        retval = RETVALS[js_id][1]
-        del RETVALS[js_id]
+        evt.wait(timeout=1.0)
+        retval = None
+        if js_id in RETVALS:
+            retval = RETVALS[js_id][1]
+            del RETVALS[js_id]
         return retval
 
     def modal_alert(self, title, body, callback=''):
@@ -424,10 +440,15 @@ def start_execjs_handler_ioloop():
 
             try:
                 jsclient._send_eval_js_websocket_packet(js_id, js_code, evt is not None)
+            except WebSocketClosedError:
+                logging.info('********** Detect websocket closed in callback')
             except Exception as e:
-                # there may be a problem here
                 logging.info(f'pylinkjs: exception coro_execjs_handler')
                 logging.exception(e)
+            finally:
+                if js_id in RETVALS:
+                    if RETVALS[js_id][0]:
+                        RETVALS[js_id][0].set()
 
     # thread to handle when python code wants to send javascript code to browser
     execjs_ioloop = asyncio.new_event_loop()
@@ -516,10 +537,11 @@ def start_retval_handler_ioloop():
                 continue
 
             _jsclient, caller_id, retval = INCOMING_RETVAL_QUEUE.get()
-            evt, _ = RETVALS[caller_id]
-            RETVALS[caller_id] = (evt, retval)
-            if evt is not None:
-                evt.set()
+            if caller_id in RETVALS:
+                evt, _ = RETVALS[caller_id]
+                RETVALS[caller_id] = (evt, retval)
+                if evt is not None:
+                    evt.set()
 
     retval_ioloop = asyncio.new_event_loop()
     retval_ioloop.create_task(coro_retval_handler())
@@ -614,18 +636,11 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
         remote_ip = self.request.headers.get("X-Real-IP") or self.request.headers.get("X-Forwarded-For") or self.request.remote_ip
         logging.info(f'pylinkjs: websocket connect {remote_ip}')
         self.set_nodelay(True)
-        logging.info(f'pylinkjs: websocket connect-1 {remote_ip}')
         self._jsc = PyLinkJSClient(self, threading.get_ident(), self.application.settings['extra_settings'])
-        logging.info(f'pylinkjs: websocket connect-2 {remote_ip}')
         self._all_jsclients.append(self._jsc)
-        logging.info(f'pylinkjs: websocket connect-3 {remote_ip}')
         if 'on_context_open' in self.application.settings:
-            logging.info(f'pylinkjs: websocket connect-4 {remote_ip}')
             if self.application.settings['on_context_open'] is not None:
-                logging.info(f'pylinkjs: websocket connect-5 {remote_ip}')
                 self.application.settings['on_context_open'](self._jsc)
-                logging.info(f'pylinkjs: websocket connect-6 {remote_ip}')
-        logging.info(f'pylinkjs: websocket connect-7 {remote_ip}')
 
     def on_message(self, message):
         #        context_id = self.request.path
@@ -655,14 +670,9 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
         remote_ip = self.request.headers.get("X-Real-IP") or self.request.headers.get("X-Forwarded-For") or self.request.remote_ip
         logging.info(f'pylinkjs: websocket close {remote_ip}')
         if 'on_context_close' in self.application.settings:
-            logging.info(f'pylinkjs: websocket close-1 {remote_ip}')
             if self.application.settings['on_context_close'] is not None:
-                logging.info(f'pylinkjs: websocket close-2 {remote_ip}')
                 self.application.settings['on_context_close'](self._jsc)
-                logging.info(f'pylinkjs: websocket close-3 {remote_ip}')
-        logging.info(f'pylinkjs: websocket close-4 {remote_ip}')
         self._all_jsclients.remove(self._jsc)
-        logging.info(f'pylinkjs: websocket close-5 {remote_ip}')
         del self._jsc
 
 
