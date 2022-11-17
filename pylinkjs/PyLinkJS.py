@@ -188,12 +188,14 @@ class PyLinkJSClient(object):
     def _websocket_write_message_callback(self, js_id, data):
         try:
             self._websocket.write_message(data)
-        except WebSocketClosedError:
-            logging.info('********** Detect websocket closed in callback')
-        finally:
+        except Exception as e:
             if js_id in RETVALS:
                 if RETVALS[js_id][0]:
                     RETVALS[js_id][0].set()
+            if e.__class__ == WebSocketClosedError:
+                logging.info('********** Detect websocket closed in callback')
+            else:
+                raise(e)
 
     def get_broadcast_jscs(self):
         """ return all JSClient instances known by this server """
@@ -440,15 +442,15 @@ def start_execjs_handler_ioloop():
 
             try:
                 jsclient._send_eval_js_websocket_packet(js_id, js_code, evt is not None)
-            except WebSocketClosedError:
-                logging.info('********** Detect websocket closed in callback')
             except Exception as e:
-                logging.info(f'pylinkjs: exception coro_execjs_handler')
-                logging.exception(e)
-            finally:
                 if js_id in RETVALS:
                     if RETVALS[js_id][0]:
                         RETVALS[js_id][0].set()
+                if e.__class__ == WebSocketClosedError:
+                    logging.info('********** Detect websocket closed in callback')
+                else:
+                    logging.info(f'pylinkjs: exception coro_execjs_handler')
+                    logging.exception(e)
 
     # thread to handle when python code wants to send javascript code to browser
     execjs_ioloop = asyncio.new_event_loop()
