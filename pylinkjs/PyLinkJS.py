@@ -48,6 +48,8 @@ OUTGOING_EXECJS_QUEUE = queue.Queue()
 # --------------------------------------------------
 def backtick_if_string(p):
     if type(p) == str:
+        # special case for backslash
+        p = p.replace('\\', '\\\\')
         return "`%s`" % p
     else:
         return p
