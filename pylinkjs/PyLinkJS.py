@@ -506,9 +506,11 @@ def start_pycallback_handler_ioloop(caller_globals):
 
                     # error if nothing was found in the final new_search_space
                     if new_search_space is None:
-                        s = 'No function found with name "%s"' % js_data['py_func_name']
-                        js_code = """alert('%s');""" % s
-                        jsc.eval_js_code(js_code)
+                        # check if we should emit this error or not
+                        if not js_data.get('no_error_if_undefined', False):
+                            s = 'No function found with name "%s"' % js_data['py_func_name']
+                            js_code = """alert('%s');""" % s
+                            jsc.eval_js_code(js_code)
                     else:
                         # call the function
                         func = new_search_space[0]
