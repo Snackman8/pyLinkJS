@@ -593,11 +593,18 @@ class MainHandler(BaseHandler):
         # return 404 if file does not exist or is a directory
         if not os.path.exists(filename):
             if self.application.settings['on_404']:
-                b = self.application.settings['on_404'](self.request.path[1:])
-                if b is not None:
-                    self.write(b)
-
-            raise tornado.web.HTTPError(404)
+                handle_result = self.application.settings['on_404'](self.request.path[1:], self.request.uri)
+                if handle_result is not None:
+                    html, content_type, status_code = handle_result
+                    if html is not None:
+                        self.write(html)
+                    if content_type is not None:
+                        self.set_header("Content-Type", f'{content_type}; charset="utf-8"')
+                    if status_code is not None:
+                        self.set_status(status_code)
+                    return
+                else:
+                    raise tornado.web.HTTPError(404)
 
         # load the file
         f = open(filename, 'rb')
@@ -613,7 +620,7 @@ class MainHandler(BaseHandler):
             b = b + b'\n' + mps
 
             t = tornado.template.Template(b)
-            self.write(t.generate(name='John2'))
+            self.write(t.generate())
             return
 
         # apply proper mime type for css
