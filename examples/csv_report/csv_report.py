@@ -15,7 +15,7 @@ def ready(jsc, *args):
     """ called when a webpage creates a new connection the first time on load """
 
     # handle when the /random_data page loads
-    if args[1] == '/random_data':
+    if args[1] == '/random_data.html':
         # look at data and generate filter options
         jsc.select_set_options('#select_rows', [[10, '10 rows'], [20, '20 rows'], [30, '30 rows']])
         jsc.select_set_options('#select_cols', [[3, '3 cols'], [6, '6 cols'], [9, '9 cols']])
@@ -57,7 +57,7 @@ def btn_get_data_random_data(jsc, *args):
 
 def handle_404(path, uri, *args):
     # handle URLS that do not have html pages
-    if path.startswith('random_data/csv'):
+    if path.startswith('random_data.html/csv'):
         # init
         content_type = 'text/plain'
         status_code = 200
@@ -65,7 +65,6 @@ def handle_404(path, uri, *args):
         # parse the URL
         parts = urlparse(uri)
         params = parse_qs(parts.query)
-        print(params)
 
         # extract parameters
         rows = int(params['rows'][0])
@@ -79,6 +78,7 @@ def handle_404(path, uri, *args):
 
         # return the data to the handler
         return (html, content_type, status_code)
+
 
 # --------------------------------------------------
 #    Main
