@@ -91,24 +91,30 @@
 
     function call_py(py_func_name, ...args) {
         /** call call_py_ex but throw error if the py_func_name is not defined **/
-        call_py_ex(py_func_name, new Boolean(0), ...args);
+        call_py_ex(py_func_name, new Boolean(0), new Boolean(0), ...args);
     }
 
-    function call_py_ex(py_func_name, no_error_if_undefined, ...args) {
+    function call_py_ex(py_func_name, no_error_if_undefined, new_thread, ...args) {
         // use the websocket to proxy the function call to python
         pkt = {'id': 'js_' + pkt_id,
                'cmd': 'call_py',
                'py_func_name': py_func_name,
                'args': args,
                'event_time_ms': new Date().getTime(),
-               'no_error_if_undefined': no_error_if_undefined}
+               'no_error_if_undefined': no_error_if_undefined,
+               'new_thread': new_thread}
         ws.send(JSON.stringify(pkt));
         pkt_id = pkt_id + 1
     }
 
+    function call_py_new_thread(py_func_name, ...args) {
+        /** call call_py_ex but have the python processing take place in a new thread **/
+        call_py_ex(py_func_name, new Boolean(0), new Boolean(1), ...args);
+    }
+
     function call_py_optional(py_func_name, ...args) {
         /** call call_py_ex but no error if the py_func_name is not defined **/
-        call_py_ex(py_func_name, new Boolean(1), ...args);
+        call_py_ex(py_func_name, new Boolean(1), new Boolean(0), ...args);
     }
 
     function send_py_return_value(caller_id, retval) {

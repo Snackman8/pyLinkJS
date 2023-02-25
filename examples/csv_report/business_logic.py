@@ -3,6 +3,7 @@
 # --------------------------------------------------
 import random
 import pandas as pd
+import time
 
 
 # --------------------------------------------------
@@ -14,19 +15,22 @@ def get_random_data(rows, cols):
         Args:
             rows - number of rows int he dataframe
             cols - number of columns in the dataframe
-        
+
         Returns:
             datafarme containing random data
     """
-    data = []    
-    for _ in range(0, rows):        
+    data = []
+    for _ in range(0, rows):
         r = []
         for _ in range(0, cols):
             r.append(random.randint(0, 1000))
         data.append(r)
-    
+
     # convert to dataframe
     df = pd.DataFrame(data)
-    
+
+    # pretend this takes a long time
+    time.sleep(4)
+
     # success!
     return df

@@ -22,6 +22,10 @@ def ready(jsc, *args):
 
 
 def btn_get_data_random_data(jsc, *args):
+    # change to wait cursor
+    jsc.eval_js_code("""$("*").css("cursor", "progress");""")
+    jsc['#data_div'].html = '<span style="color:orange">Geting Data, this may take a while...</span>'
+
     # get the rows and columns value from the web page
     rows = jsc.select_get_selected_options('#select_rows')
     cols = jsc.select_get_selected_options('#select_cols')
@@ -46,6 +50,9 @@ def btn_get_data_random_data(jsc, *args):
 
     # push the random data to the web page
     jsc['#data_div'].html = html
+
+    # change to default cursor
+    jsc.eval_js_code("""$("*").css("cursor", "default");""")
 
 
 def handle_404(path, uri, *args):

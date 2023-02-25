@@ -12,6 +12,7 @@
 Rows <select id=select_rows></select>
 Columns <select id=select_cols></select>
 
-<button onclick="call_py('btn_get_data_random_data');">Get Data</button>
+<!-- because we know this data will take a long time to retrieve, we will retrieve data in a new thread -->
+<button onclick="call_py_new_thread('btn_get_data_random_data');">Get Data</button>
 
 <div id=data_div>Press "Get Data" button to load data</div>

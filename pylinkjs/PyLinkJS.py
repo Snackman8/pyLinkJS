@@ -514,7 +514,11 @@ def start_pycallback_handler_ioloop(caller_globals):
                     else:
                         # call the function
                         func = new_search_space[0]
-                        func(jsc, *js_data['args'])
+                        if not js_data.get('new_thread', False):
+                            func(jsc, *js_data['args'])
+                        else:
+                            t = threading.Thread(target=lambda func, jsc, args: func(jsc, *args), args=(func, jsc, js_data['args']))
+                            t.start()
                 except Exception as e:
                     sys.stderr.write(traceback.format_exc())
                     js_code = """alert("%s");""" % str(e)
