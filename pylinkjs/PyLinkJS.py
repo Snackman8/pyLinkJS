@@ -9,6 +9,7 @@ from  functools import partial
 import inspect
 import json
 import logging
+from multiprocessing import Process, Queue
 import os
 import queue
 import random
@@ -586,7 +587,7 @@ class LogoutHandler(tornado.web.RequestHandler):
 
 
 class MainHandler(BaseHandler):
-    def get(self):
+    async def get(self):
         # strip off the leading slash, then combine with web directory
         filename = os.path.abspath(os.path.join(self.application.settings['html_dir'], self.request.path[1:]))
 
@@ -597,7 +598,7 @@ class MainHandler(BaseHandler):
         # return 404 if file does not exist or is a directory
         if not os.path.exists(filename):
             if self.application.settings['on_404']:
-                handle_result = self.application.settings['on_404'](self.request.path[1:], self.request.uri)
+                handle_result = await IOLoop.current().run_in_executor(None, self.application.settings['on_404'], self.request.path[1:], self.request.uri)
                 if handle_result is not None:
                     html, content_type, status_code = handle_result
                     if html is not None:
@@ -609,6 +610,8 @@ class MainHandler(BaseHandler):
                     return
                 else:
                     raise tornado.web.HTTPError(404)
+            else:
+                raise tornado.web.HTTPError(404)
 
         # load the file
         f = open(filename, 'rb')
@@ -696,6 +699,20 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
 # --------------------------------------------------
 #    Functions
 # --------------------------------------------------
+def _mp_wrapper(func, args, kwargs, q):
+    retval = func(*args, **kwargs)
+    q.put(retval)
+
+
+def execute_in_subprocess(func, *args, **kwargs):
+    q = Queue()
+    p = Process(target=_mp_wrapper, args=(func, args, kwargs, q))
+    p.start()
+    retval = q.get()
+    p.join()
+    return retval
+
+
 def get_broadcast_jsclients(pathname):
     """ return all JSClient instances known by this server filtered by the pathname
 

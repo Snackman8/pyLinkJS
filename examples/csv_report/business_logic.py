@@ -1,6 +1,7 @@
 # --------------------------------------------------
 #    Imports
 # --------------------------------------------------
+import os
 import random
 import pandas as pd
 import time
@@ -29,8 +30,12 @@ def get_random_data(rows, cols):
     # convert to dataframe
     df = pd.DataFrame(data)
 
+    # show process id to prove we are running in different processes
+    df['pid'] = os.getpid()
+
     # pretend this takes a long time
-    time.sleep(4)
+    time.sleep(5)
+    df['time'] = str(time.time())
 
     # success!
     return df

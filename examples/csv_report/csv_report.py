@@ -5,7 +5,7 @@ import logging
 from urllib.parse import urlparse, parse_qs
 import pretty_html_table
 import business_logic
-from pylinkjs.PyLinkJS import run_pylinkjs_app
+from pylinkjs.PyLinkJS import run_pylinkjs_app, execute_in_subprocess
 
 
 # --------------------------------------------------
@@ -43,7 +43,10 @@ def btn_get_data_random_data(jsc, *args):
     cols = int(cols)
 
     # generate the random data
-    df_data = business_logic.get_random_data(rows, cols)
+    #
+    #    Execute the get_random_data in a seperate process on a different core
+    #
+    df_data = execute_in_subprocess(business_logic.get_random_data, rows, cols)
 
     # convert the dataframe to pretty html
     html = pretty_html_table.build_table(df_data, 'blue_light')
@@ -71,7 +74,10 @@ def handle_404(path, uri, *args):
         cols = int(params['cols'][0])
 
         # generate the random data
-        df_data = business_logic.get_random_data(rows, cols)
+        #
+        #    Execute the get_random_data in a seperate process on a different core
+        #
+        df_data = execute_in_subprocess(business_logic.get_random_data, rows, cols)
 
         # convert the dataframe to pretty html
         html = df_data.to_csv()
