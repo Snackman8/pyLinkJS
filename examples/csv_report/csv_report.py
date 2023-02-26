@@ -9,6 +9,12 @@ from pylinkjs.PyLinkJS import run_pylinkjs_app, execute_in_subprocess
 
 
 # --------------------------------------------------
+#    Constants
+# --------------------------------------------------
+PORT = 9150
+
+
+# --------------------------------------------------
 #    Handlers
 # --------------------------------------------------
 def ready(jsc, *args):
@@ -91,4 +97,4 @@ def handle_404(path, uri, *args):
 # --------------------------------------------------
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-    run_pylinkjs_app(default_html='index.html', on_404=handle_404)
+    run_pylinkjs_app(default_html='index.html', on_404=handle_404, port=PORT)
