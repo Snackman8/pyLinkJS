@@ -438,6 +438,8 @@ def select_set_options(self, select_selector, new_options):
             new_options - list of new options,
                           each option is a two element list of value and text,
                           i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
+                          each option can also just be one value which be both value and text
+                          i.e. ['a', 'b', 'c']
     """
 ```
 Example
