@@ -395,6 +395,16 @@ class PyLinkJSClient(object):
                 select_selector - jquery selector for the select element
                 new_options - list of new options, each option is a two element list of value and text, i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
         """
+        # convert if new_options is a single list
+        new_options2 = []
+        for x in new_options:
+            if (type(x) is not list) and (type(x) is not tuple):
+                x = [x, x]
+            new_options2.append(x)
+
+        # convert tuples to lists for javascript
+        new_options = [list(x) for x in new_options2]
+
         js = f"""$('{select_selector}').empty();
                  $.each({new_options}, function(key, value) {{
                      $('{select_selector}').append($("<option></option>")
