@@ -448,6 +448,11 @@ Example
 #   <option value='a_val'>a_text</option>
 #   <option value='b_val'>b_text</option>
 jsc.select_set_options('#myselect', [['a_val', 'a_text'], ['b_val', 'b_text']])
+
+# will replace all options with two options
+#   <option value='a'>a</option>
+#   <option value='b'>b</option>
+jsc.select_set_options('#myselect', ['a', 'b']])
 ```
 
 ### select_set_selected_options
