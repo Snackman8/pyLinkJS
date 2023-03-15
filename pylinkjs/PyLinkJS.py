@@ -608,7 +608,8 @@ class MainHandler(BaseHandler):
         # return 404 if file does not exist or is a directory
         if not os.path.exists(filename):
             if self.application.settings['on_404']:
-                handle_result = await IOLoop.current().run_in_executor(None, self.application.settings['on_404'], self.request.path[1:], self.request.uri)
+                handle_result = await IOLoop.current().run_in_executor(None, self.application.settings['on_404'], self.request.path[1:],
+                                                                       self.request.uri, self.request.headers['host'], self.settings['extra_settings'])
                 if handle_result is not None:
                     html, content_type, status_code = handle_result
                     if html is not None:
