@@ -2,6 +2,7 @@
     var ws;
     var pkt_id = 0;
     var timerID = 0;
+    var request_path = "{{request_path}}";
 
 
     function connect_ws(reconnect) {
@@ -10,7 +11,10 @@
         if (location.protocol == 'https:') {
             protocol = 'wss';
         }
-        ws = new WebSocket(protocol + "://" + location.host + "/websocket/" + Math.random() + location.pathname);
+        if (location.pathname.endsWith(request_path)) {
+            reverse_proxy_dir = location.pathname.substring(0,location.pathname.length - request_path.length)
+        }
+        ws = new WebSocket(protocol + "://" + location.host + reverse_proxy_dir + "/websocket/" + Math.random() + request_path);
 
         // open handler
         ws.onopen = function() {
@@ -36,7 +40,7 @@
                 if (!(typeof pylinkjs_ready === 'undefined')) {
                     pylinkjs_ready();
                 }
-                call_py_optional('ready', window.location.origin, window.location.pathname, window.location.search);
+                call_py_optional('ready', window.location.origin, request_path, window.location.search);
             }
         };
 

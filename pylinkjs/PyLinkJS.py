@@ -638,7 +638,7 @@ class MainHandler(BaseHandler):
             b = b + b'\n' + mps
 
             t = tornado.template.Template(b)
-            self.write(t.generate())
+            self.write(t.generate(request_path=self.request.path))
             return
 
         # apply proper mime type for css

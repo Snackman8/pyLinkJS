@@ -21,6 +21,7 @@ def ready(jsc, *args):
     """ called when a webpage creates a new connection the first time on load """
 
     # handle when the /random_data page loads
+    print(args[1])
     if args[1] == '/random_data.html':
         # look at data and generate filter options
         jsc.select_set_options('#select_rows', [[10, '10 rows'], [20, '20 rows'], [30, '30 rows']])
