@@ -11,6 +11,7 @@ Simple bridge to allow Python to communicate with JavaScript
 [&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Modal UI Methods)](#jsclient-modal-ui-methods)<br>
 [&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Select Element Methods)](#jsclient-select-element-methods)<br>
 **[Useful Code Examples](#useful-code-examples)**<br>
+**[Apache2 Reverse Proxy](#to-use-pylinkjs-behind-an-apache-reverse-proxy-subdirectory-foo)**<br>
 
 ## Basic Example
 
@@ -511,8 +512,8 @@ t = threading.Thread(target=thread_worker, daemon=True)
 t.start()
 ```
 
-## To use pyLinkJS behind an Apache Reverse Proxy subdirectory /foo
-The application will run on port 9150 on localhost, apache will reverseproxy the application from http://localhost/foo
+# To use pyLinkJS behind an Apache Reverse Proxy subdirectory /foo
+The application will run on port 9150 on localhost, apache will reverse proxy the application from http://localhost/foo
 ```python
 ProxyPreserveHost On
 ProxyRequests Off
