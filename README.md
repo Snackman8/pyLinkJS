@@ -511,6 +511,16 @@ t = threading.Thread(target=thread_worker, daemon=True)
 t.start()
 ```
 
+## To use pyLinkJS behind an Apache Reverse Proxy subdirectory /foo
+The application will run on port 9150 on localhost, apache will reverseproxy the application from http://localhost/foo
+```python
+ProxyPreserveHost On
+ProxyRequests Off
+ProxyPassMatch /foo/(websocket/0\..*) ws://127.0.0.1:9150/$1
+ProxyPassReverse /foo/(websocket/0\..*) ws://127.0.0.1:9150/$1
+ProxyPass /foo/ http://127.0.0.1:9150/
+ProxyPassReverse /foo/ http://127.0.0.1:9150/
+```
 
 
 
