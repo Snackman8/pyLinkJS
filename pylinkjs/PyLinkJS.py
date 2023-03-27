@@ -13,7 +13,9 @@ from multiprocessing import Process, Queue
 import os
 import queue
 import random
+import shutil
 import signal
+import subprocess
 import sys
 import threading
 import traceback
@@ -799,6 +801,17 @@ def run_pylinkjs_app(**kwargs):
     if 'extra_settings' not in kwargs:
         kwargs['extra_settings'] = {}
 
+    if 'app_top' not in kwargs:
+        kwargs['app_top'] = 0
+    if 'app_left' not in kwargs:
+        kwargs['app_left'] = 0
+    if 'app_height' not in kwargs:
+        kwargs['app_height'] = 400
+    if 'app_width' not in kwargs:
+        kwargs['app_width'] = 800
+    if 'app_mode' not in kwargs:
+        kwargs['app_mode'] = False
+
     kwargs['plugins'] = kwargs.get('plugins', [])
 
     # load the plugins
@@ -833,11 +846,38 @@ def run_pylinkjs_app(**kwargs):
         threading.Thread(target=heartbeat_threadworker, args=(kwargs['heartbeat_callback'], kwargs['heartbeat_interval']), daemon=True).start()
 
     # start the tornado server
-    app.listen(kwargs['port'], xheaders=True)
+    server = app.listen(kwargs['port'], xheaders=True)
     app.settings['on_context_close'] = kwargs.get('onContextClose', None)
     app.settings['on_context_open'] = kwargs.get('onContextOpen', None)
     for k, v in kwargs.items():
         app.settings[k] = v
 
     logging.info('**** Starting app on port %d' % kwargs['port'])
-    IOLoop.current().start()
+    eventLoopThread = threading.Thread(target=IOLoop.current().start)
+    eventLoopThread.daemon = True
+    eventLoopThread.start()
+
+    # launch the browser if needed
+    if kwargs['app_mode']:
+        logging.info('Starting app mode')
+        top = kwargs['app_top']
+        left = kwargs['app_left']
+        width = kwargs['app_width']
+        height = kwargs['app_height']
+        url = f"http://localhost:{kwargs['port']}"
+        exe = shutil.which('chromium')
+        my_env = os.environ.copy()
+        my_env["XAUTHORITY"] = os.path.expanduser('~/.Xauthority')
+        p = subprocess.Popen(f'{exe} --window-size="{width},{height}" --window-position="{left},{top}" --user-data-dir="/tmp/{time.time()}" --app={url} ',
+                             env=my_env, close_fds=True, start_new_session=True, shell=True)
+
+        while p.poll() is None:
+            time.sleep(1)
+
+        # terminate all ioloops
+        EXIT_EVENT.set()
+        server.stop()
+        IOLoop.instance().stop()
+    else:
+        while True:
+            time.sleep(1)
