@@ -640,7 +640,7 @@ class MainHandler(BaseHandler):
             b = b + b'\n' + mps
 
             t = tornado.template.Template(b)
-            template_vars = self.application.settings['global_template_vars']
+            template_vars = self.application.settings.get('global_template_vars', {})
             template_vars['request_path'] = self.request.path
             self.write(t.generate(**template_vars))
             return
