@@ -640,7 +640,9 @@ class MainHandler(BaseHandler):
             b = b + b'\n' + mps
 
             t = tornado.template.Template(b)
-            self.write(t.generate(request_path=self.request.path))
+            template_vars = self.application.settings['global_template_vars']
+            template_vars['request_path'] = self.request.path
+            self.write(t.generate(**template_vars))
             return
 
         # apply proper mime type for css
@@ -770,6 +772,13 @@ def run_pylinkjs_app(**kwargs):
         onContextOpen - function handler called when the jsclient context opens
         onContextClose - function handler called when the jsclient context closes
         extra_settings - dictionary of properties that will be loaded into the tag property of the jsc client
+        on_404 - handler if a URL does not have a matching .html file.  Allows dynamic generation of pages
+        app_mode - if True, enables single page app mode, default is False
+        app_top - position in pixels for the top of the application
+        app_left - position in pixels for the left of the application
+        app_height - position in pixels for the height of the application
+        app_width - position in pixels for the width of the application        
+        onQueryTemplateVariables - handler to provide variables for the template before rendering
         **kwargs - additional named arguments will be placed into the settings property of the tornado app but will not be available to the jsc context
     """
 
