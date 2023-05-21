@@ -20,6 +20,7 @@ import sys
 import threading
 import traceback
 import time
+import uuid
 from types import ModuleType
 
 import tornado.template
@@ -56,6 +57,32 @@ def backtick_if_string(p):
         return "`%s`" % p
     else:
         return p
+
+
+def search_for_magic_function(func_name):
+    try:
+        frames = []
+        cf = inspect.currentframe()
+
+        while cf is not None:
+            # handle circular references
+            if cf in frames:
+                break
+            frames.append(cf)
+
+            # look for the function name
+            cf_name = cf.f_globals['__name__']
+            m = sys.modules[cf_name]
+            if hasattr(m, func_name):
+                f = getattr(m, func_name)
+                if callable(f):
+                    return f
+
+            # move up
+            cf = cf.f_back
+    finally:
+        for f in frames:
+            del f
 
 
 # --------------------------------------------------
@@ -125,9 +152,10 @@ class PyLinkHTMLElementWrapper(object):
 
 
 class PyLinkJSClient(object):
-    def __init__(self, websocket, thread_id, extra_settings):
+    def __init__(self, websocket, jsc_id, thread_id, extra_settings):
         """ init """
         self._websocket = websocket
+        self._jsc_id = jsc_id
         self._thread_id = thread_id
         self.time_offset_ms = None
         self.event_time_ms = None
@@ -642,6 +670,7 @@ class MainHandler(BaseHandler):
             t = tornado.template.Template(b)
             template_vars = self.application.settings.get('global_template_vars', {})
             template_vars['request_path'] = self.request.path
+            template_vars['jsc_id'] = str(uuid.uuid4())
             self.write(t.generate(**template_vars))
             return
 
@@ -671,11 +700,11 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
         remote_ip = self.request.headers.get("X-Real-IP") or self.request.headers.get("X-Forwarded-For") or self.request.remote_ip
         logging.info(f'pylinkjs: websocket connect {remote_ip}')
         self.set_nodelay(True)
-        self._jsc = PyLinkJSClient(self, threading.get_ident(), self.application.settings['extra_settings'])
+        jsc_id = self.request.uri.split('/')[2]
+        self._jsc = PyLinkJSClient(self, jsc_id, threading.get_ident(), self.application.settings['extra_settings'])
         self._all_jsclients.append(self._jsc)
-        if 'on_context_open' in self.application.settings:
-            if self.application.settings['on_context_open'] is not None:
-                self.application.settings['on_context_open'](self._jsc)
+        for func in self.application.settings['on_context_open']:
+            func(self._jsc)
 
     def on_message(self, message):
         #        context_id = self.request.path
@@ -704,9 +733,9 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
         # clean up the context
         remote_ip = self.request.headers.get("X-Real-IP") or self.request.headers.get("X-Forwarded-For") or self.request.remote_ip
         logging.info(f'pylinkjs: websocket close {remote_ip}')
-        if 'on_context_close' in self.application.settings:
-            if self.application.settings['on_context_close'] is not None:
-                self.application.settings['on_context_close'](self._jsc)
+
+        for func in self.application.settings['on_context_close']:
+            func(self._jsc)
         self._all_jsclients.remove(self._jsc)
         del self._jsc
 
@@ -769,15 +798,13 @@ def run_pylinkjs_app(**kwargs):
         heartbeat_interval - interval in seconds when the heartbeat_callback function will be called, defaults to None
         login_handler - tornado handler for login, defaults to built in Login Handler
         logout_handler - tornado handler for login, defaults to built in Logout Handler
-        onContextOpen - function handler called when the jsclient context opens
-        onContextClose - function handler called when the jsclient context closes
         extra_settings - dictionary of properties that will be loaded into the tag property of the jsc client
         on_404 - handler if a URL does not have a matching .html file.  Allows dynamic generation of pages
         app_mode - if True, enables single page app mode, default is False
         app_top - position in pixels for the top of the application
         app_left - position in pixels for the left of the application
         app_height - position in pixels for the height of the application
-        app_width - position in pixels for the width of the application        
+        app_width - position in pixels for the width of the application
         onQueryTemplateVariables - handler to provide variables for the template before rendering
         **kwargs - additional named arguments will be placed into the settings property of the tornado app but will not be available to the jsc context
     """
@@ -854,10 +881,21 @@ def run_pylinkjs_app(**kwargs):
     if kwargs['heartbeat_interval']:
         threading.Thread(target=heartbeat_threadworker, args=(kwargs['heartbeat_callback'], kwargs['heartbeat_interval']), daemon=True).start()
 
+    # handle magic functions
+    for magic_func_name in ['on_context_close', 'on_context_open']:
+        app.settings[magic_func_name] = []
+        if magic_func_name in kwargs:
+            app.settings[magic_func_name].append(kwargs.get[magic_func_name])
+        else:
+            if (func := search_for_magic_function(magic_func_name)):
+                app.settings[magic_func_name].append(func)
+
+        for plugin in kwargs['plugins']:
+            if hasattr(plugin, magic_func_name):
+                app.settings[magic_func_name].append(getattr(plugin, magic_func_name))
+
     # start the tornado server
     server = app.listen(kwargs['port'], xheaders=True)
-    app.settings['on_context_close'] = kwargs.get('onContextClose', None)
-    app.settings['on_context_open'] = kwargs.get('onContextOpen', None)
     for k, v in kwargs.items():
         app.settings[k] = v
 
