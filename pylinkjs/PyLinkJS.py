@@ -670,7 +670,7 @@ class MainHandler(BaseHandler):
             t = tornado.template.Template(b)
             template_vars = self.application.settings.get('global_template_vars', {})
             template_vars['request_path'] = self.request.path
-            template_vars['jsc_id'] = str(uuid.uuid4())
+            template_vars['jsc_id'] = '0.' + str(uuid.uuid4())
             self.write(t.generate(**template_vars))
             return
 
