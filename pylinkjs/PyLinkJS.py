@@ -160,6 +160,7 @@ class PyLinkJSClient(object):
         self.time_offset_ms = None
         self.event_time_ms = None
         self.tag = extra_settings.copy()
+        self._tornado_ioloop = IOLoop.current()
         self.user = None
 
     def __getattr__(self, key):
@@ -212,7 +213,7 @@ class PyLinkJSClient(object):
                'js_code': js_code,
                'send_return_value': send_return_value}
         if self._thread_id != threading.get_ident():
-            IOLoop.instance().add_callback(self._websocket_write_message_callback, js_id, json.dumps(pkt))
+            self._tornado_ioloop.add_callback(self._websocket_write_message_callback, js_id, json.dumps(pkt))
         else:
             self._websocket.write_message(json.dumps(pkt))
 
