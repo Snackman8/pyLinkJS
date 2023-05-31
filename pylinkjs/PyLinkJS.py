@@ -478,7 +478,7 @@ def start_execjs_handler_ioloop():
 
             # sleep if no incoming callbacks are available
             if OUTGOING_EXECJS_QUEUE.empty():
-                await asyncio.sleep(0.001)
+                await asyncio.sleep(0.01)
                 continue
 
             jsclient, evt, js_id, js_code = OUTGOING_EXECJS_QUEUE.get()
@@ -514,7 +514,7 @@ def start_pycallback_handler_ioloop(caller_globals):
 
             # sleep if no incoming callbacks are available
             if INCOMING_PYCALLBACK_QUEUE.empty():
-                await asyncio.sleep(0.001)
+                await asyncio.sleep(0.01)
                 continue
 
             jsc, js_data = INCOMING_PYCALLBACK_QUEUE.get()
@@ -585,7 +585,7 @@ def start_retval_handler_ioloop():
 
             # sleep if no incoming callbacks are available
             if INCOMING_RETVAL_QUEUE.empty():
-                await asyncio.sleep(0.001)
+                await asyncio.sleep(0.01)
                 continue
 
             _jsclient, caller_id, retval = INCOMING_RETVAL_QUEUE.get()
