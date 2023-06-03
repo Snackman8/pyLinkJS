@@ -329,6 +329,25 @@ class pluginBokeh:
         return p
 
     @classmethod
+    def _create_varea_chart_data(cls, pv):
+        return {'cds': bokeh.models.ColumnDataSource(pv['df'])}
+
+    @classmethod
+    def _create_varea_chart(cls, pv, **kwargs):
+        """ Create a vertical stacked area chart """
+        # create the data
+        data = cls._create_varea_chart_data(pv)
+
+        # create the figure
+        p = bokeh.plotting.figure(**pv['figure_kwargs'])
+
+        # create the vertical area
+        p.varea_stack(stackers=pv['df'].columns, x='X', source=data['cds'], color=pv['palette'], legend_label=[str(c) for c in pv['df'].columns])
+
+        # success!
+        return p
+
+    @classmethod
     def _create_vbar_chart_data(cls, pv):
         return cls._create_hbar_chart_data(pv, flip_factors=False)
 
@@ -421,6 +440,10 @@ class pluginBokeh:
                 jsc.eval_js_code(js)
 
             if chart_type == 'table':
+                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
+                jsc.eval_js_code(js)
+
+            if chart_type == 'varea':
                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
                 jsc.eval_js_code(js)
 
