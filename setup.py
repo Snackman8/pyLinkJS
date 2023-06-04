@@ -24,6 +24,7 @@ setup(name='pylinkjs',
       author_email='lawy888@gmail.com',
       url='https://github.com/Snackman8/pyLinkJS',
       packages=['pylinkjs', 'pylinkjs.plugins'],
+      package_data={'': ['plugins/*.html']},
       include_package_data=True,
       install_requires=["tornado", ],
       )
