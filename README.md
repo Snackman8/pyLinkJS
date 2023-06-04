@@ -3,6 +3,7 @@ Simple bridge to allow Python to communicate with JavaScript
 
 ### Table of Contents
 
+**[Installation](#installation)**<br>
 **[Basic Example](#basic-example)**<br>
 **[Documentation](#documentation)**<br>
 [&nbsp;&nbsp;&nbsp;&nbsp;Event Handlers](#event-handlers)<br>
@@ -12,6 +13,16 @@ Simple bridge to allow Python to communicate with JavaScript
 [&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Select Element Methods)](#jsclient-select-element-methods)<br>
 **[Useful Code Examples](#useful-code-examples)**<br>
 **[Apache2 Reverse Proxy](#to-use-pylinkjs-behind-an-apache-reverse-proxy-subdirectory-foo)**<br>
+
+## Installation
+
+The easiest way to install is to clone this repository to your home directory and then pip3 install
+```
+cd ~
+git clone https://github.com/Snackman8/pyLinkJS
+cd pyLinkJS
+sudo pip3 install .
+```
 
 ## Basic Example
 
