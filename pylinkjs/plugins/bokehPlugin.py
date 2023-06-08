@@ -11,7 +11,7 @@ import bokeh.embed
 import bokeh.models.widgets
 import bokeh.plotting
 import bokeh.transform
-
+import bokeh.models.formatters
 
 # --------------------------------------------------
 #    Plugin
@@ -166,7 +166,9 @@ class pluginBokeh:
 
         # compute the figure_kwargs
         figure_kwargs = cls._extract_targetclass_kwargs(bokeh.plotting.figure, kwargs, delete=True)
-        figure_kwargs.update(cls._promote_kwargs_prefix(['__figure__'], figure_kwargs))
+        figure_kwargs.update(cls._promote_kwargs_prefix(['__figure__'], kwargs))
+        # if 'x_axis_type' in kwargs:
+        #     figure_kwargs['x_axis_type'] = kwargs['x_axis_type']
         pv['figure_kwargs'] = figure_kwargs
 
         # success!
@@ -269,6 +271,9 @@ class pluginBokeh:
             line_kwargs = dict(source=data['cds'], x='X', y=c, color=pv['palette'][i], legend_label=c)
             line_kwargs.update(cls._promote_kwargs_prefix(['__line__', f'__line_{i}__'], kwargs))
             p.line(**line_kwargs)
+
+        p.y_range.start = 0
+        p.yaxis.formatter=bokeh.models.formatters.NumeralTickFormatter(format="0,0")
 
         # success!
         return p
