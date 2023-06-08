@@ -369,7 +369,7 @@ class pluginBokeh:
         # success!
         return p
 
-    def _create_chart(self, chart_type, jsc_id, **kwargs):
+    def _create_chart(self, chart_type, jsc_id, jsc_sequence_number=0, **kwargs):
         # create the document if needed
         if jsc_id not in self.BOKEH_CONTEXT:
             self.BOKEH_CONTEXT[jsc_id] = {}
@@ -383,7 +383,7 @@ class pluginBokeh:
             if self._get_data_handler:
                 if 'df' not in kwargs:
                     kwargs['__creation'] = True
-                    kwargs['df'] = self._get_data_handler(**kwargs)
+                    kwargs['df'] = self._get_data_handler(jsc_id, jsc_sequence_number=jsc_sequence_number, **kwargs)
 
             # prep for the chart
             pv = self._prep_for_chart(**kwargs)

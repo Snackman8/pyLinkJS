@@ -11,44 +11,86 @@ from pylinkjs.plugins.bokehPlugin import pluginBokeh
 # --------------------------------------------------
 #    Globals
 # --------------------------------------------------
-INITIAL_DF = pd.DataFrame(np.random.randint(0,100,size=(4, 3)), columns=list('ABC'))
+DATA_CACHE = {}
 
 # --------------------------------------------------
 #    Functions
 # --------------------------------------------------
-def get_data(**kwargs):
+def get_data(jsc_id, jsc_sequence_number, **kwargs):
+    if jsc_id not in DATA_CACHE:
+        print('Creating cache continer', jsc_id)
+        DATA_CACHE[jsc_id] = {'sequence_number': -1}
+    if DATA_CACHE[jsc_id]['sequence_number'] != jsc_sequence_number:
+        # invalidate the data cache and incremenet to the new sequence number
+        print ('Cache Invalidate  ', DATA_CACHE[jsc_id]['sequence_number'], jsc_sequence_number)
+        for k in list(DATA_CACHE[jsc_id].keys()):
+            del DATA_CACHE[jsc_id][k]
+        DATA_CACHE[jsc_id]['sequence_number'] = jsc_sequence_number
+
+    if 'cached_chart_data' not in DATA_CACHE[jsc_id]:
+        print ('Cache Miss', jsc_id, jsc_sequence_number)
+        DATA_CACHE[jsc_id]['cached_chart_data'] = pd.DataFrame(np.random.randint(0,100,size=(4, 3)), columns=list('ABC'))
+    else:
+        print ('Cache Hit', jsc_id, jsc_sequence_number)
+
+    df = DATA_CACHE[jsc_id]['cached_chart_data']
+
+    if kwargs['name'] == 'df_display':
+        return df
     if kwargs['name'] == 'chart_sample_hbar':
-        return INITIAL_DF
+        return df
     if kwargs['name'] == 'chart_sample_line':
-        return INITIAL_DF
+        return df
     if kwargs['name'] == 'chart_sample_pie':
-        return INITIAL_DF
+        return df
     if kwargs['name'] == 'chart_sample_table':
-        return INITIAL_DF
+        return df
     if kwargs['name'] == 'chart_sample_vbar':
-        return INITIAL_DF
+        return df
 
 
 # --------------------------------------------------
 #    Event Handlers
 # --------------------------------------------------
-def btn_refresh_data_clicked(jsc):
-    """ simple example of a button click """
-    # update with random data
-    df = pd.DataFrame(np.random.randint(0,100,size=(4, 3)), columns=list('ABC'))
+def on_context_close(jsc):
+    print('CONTEXT CLOSE deleting cache', jsc.get_id())
+    del DATA_CACHE[jsc.get_id()]
 
-    # update the data
+def on_context_open(jsc):
+    print ('CONTEXT OPEN', jsc.get_id())
+
+def btn_refresh_charts_with_new_data_clicked(jsc):
+    """ refresh charts with new data, invalidate the data cache to retrieve new data """
+    # invalidate the cache
+    jsc.increment_sequence_number()
+
+    # update the dataframe display
+    df = get_data(jsc.get_id(), jsc.get_sequence_number(), name='df_display')
     jsc['#df_display'].html = df.to_string()
-    jsc.update_chart('chart_sample_hbar', df)
-    jsc.update_chart('chart_sample_line', df)
-    jsc.update_chart('chart_sample_pie', df)
-    jsc.update_chart('chart_sample_table', df)
-    jsc.update_chart('chart_sample_vbar', df)
+
+    # update the charts
+    for chart_name in ['chart_sample_hbar', 'chart_sample_line', 'chart_sample_pie', 'chart_sample_table', 'chart_sample_vbar']:
+        df = get_data(jsc.get_id(), jsc.get_sequence_number(), name=chart_name)
+        jsc.update_chart(chart_name, df)
+
+
+def btn_refresh_charts_with_cached_data_clicked(jsc):
+    """ refresh charts with cached data, reuse the same sequence number """
+    # update the dataframe display
+    df = get_data(jsc.get_id(), jsc.get_sequence_number(), name='df_display')
+    jsc['#df_display'].html = df.to_string()
+
+    # update the charts
+    for chart_name in ['chart_sample_hbar', 'chart_sample_line', 'chart_sample_pie', 'chart_sample_table', 'chart_sample_vbar']:
+        df = get_data(jsc.get_id(), jsc.get_sequence_number(), name=chart_name)
+        jsc.update_chart(chart_name, df)
 
 
 def ready(jsc, *args):
     """ called when a webpage creates a new connection the first time on load """
-    jsc['#df_display'].html = INITIAL_DF.to_string()
+    # sequence number is still zero from initial loading so this data will stay in sync
+    df = get_data(jsc.get_id(), jsc.get_sequence_number(), name='df_display')
+    jsc['#df_display'].html = df.to_string()
 
 
 # --------------------------------------------------

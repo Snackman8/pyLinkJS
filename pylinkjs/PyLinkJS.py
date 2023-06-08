@@ -156,6 +156,8 @@ class PyLinkJSClient(object):
         """ init """
         self._websocket = websocket
         self._jsc_id = jsc_id
+        # jsc sequence number 0 is shared with template creation
+        self._sequence_number = 0
         self._thread_id = thread_id
         self.time_offset_ms = None
         self.event_time_ms = None
@@ -281,6 +283,18 @@ class PyLinkJSClient(object):
             retval = RETVALS[js_id][1]
             del RETVALS[js_id]
         return retval
+
+    def get_id(self):
+        return self._jsc_id
+
+    def get_sequence_number(self):
+        return self._sequence_number
+
+    def increment_sequence_number(self):
+        """ incremenet the jsc sequence number
+            the sequence number is useful for data caching for separate data fetches happening in the same request
+        """
+        self._sequence_number = self._sequence_number + 1
 
     def modal_alert(self, title, body, callback=''):
         """ Shows a modal alert dialog with an OK button
@@ -672,6 +686,7 @@ class MainHandler(BaseHandler):
             template_vars = self.application.settings.get('global_template_vars', {})
             template_vars['request_path'] = self.request.path
             template_vars['jsc_id'] = '0.' + str(uuid.uuid4())
+            template_vars['jsc_sequence_number'] = 0
             self.write(t.generate(**template_vars))
             return
 
