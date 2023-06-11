@@ -698,6 +698,10 @@ class MainHandler(BaseHandler):
         if filename.endswith('.js'):
             self.set_header("Content-Type", 'text/javascript; charset="utf-8"')
 
+        # apply proper mime type for js
+        if filename.endswith('.svg'):
+            self.set_header("Content-Type", 'image/svg+xml')
+
         # serve the page
         self.write(b)
 
