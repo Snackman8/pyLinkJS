@@ -682,6 +682,10 @@ class MainHandler(BaseHandler):
             f.close()
             b = b + b'\n' + mps
 
+            for p in self.settings['plugins']:
+                if hasattr(p, 'inject_javascript'):
+                    b = b + b'\n<script>\n' + p.inject_javascript() + b'\n</script>\n'
+
             t = tornado.template.Template(b)
             template_vars = self.application.settings.get('global_template_vars', {})
             template_vars['request_path'] = self.request.path
