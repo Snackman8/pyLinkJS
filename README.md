@@ -262,8 +262,8 @@ def get_pathname(self):
 A property bag specific to each jsc which can store application information.  For example if 3 clients connected to the application, each would have it's own instance of a jsClient with their own prospective property bags to store application information.  This can be used to store state for each individual session on the server side.
 
 ```python
-    jsc['current_player_level'] = 5
-    jsc['current_player_stats'] = {'xp': 200, 'name': 'bob'}
+    jsc.tag['current_player_level'] = 5
+    jsc.tag['current_player_stats'] = {'xp': 200, 'name': 'bob'}
 ```
 
 ## JSClient (Modal UI Methods)
