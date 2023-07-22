@@ -19,7 +19,7 @@ def button_clicked(jsc, a, b, c):
     retval = jsc.eval_js_code(77)
     print('GOT BACK', retval)
     print('TEST', jsc['#divout'].html)
-    jsc['#divout'].html = 'AS"\'DF2'
+    jsc['#divout'].html = 'AS"\'DF2' + str(time.time())
     jsc['#divout'].css.color = 'red'
     jsc['#divout'].click = Code('function() { console.log("AA"); }')
 
@@ -53,4 +53,4 @@ def start_threaded_automatic_update():
 # start the thread and the app
 logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
 start_threaded_automatic_update()
-run_pylinkjs_app(default_html='hello_world.html')
+run_pylinkjs_app(default_html='hello_world.html', internal_polling_interval=0.025)

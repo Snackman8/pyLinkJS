@@ -45,7 +45,7 @@ EXIT_EVENT = threading.Event()
 INCOMING_PYCALLBACK_QUEUE = queue.Queue()
 INCOMING_RETVAL_QUEUE = queue.Queue()
 OUTGOING_EXECJS_QUEUE = queue.Queue()
-
+INTERNAL_POLLING_INTERVAL = 0.015
 
 # --------------------------------------------------
 #    Functions
@@ -492,7 +492,7 @@ def start_execjs_handler_ioloop():
 
             # sleep if no incoming callbacks are available
             if OUTGOING_EXECJS_QUEUE.empty():
-                await asyncio.sleep(0.01)
+                await asyncio.sleep(INTERNAL_POLLING_INTERVAL)
                 continue
 
             jsclient, evt, js_id, js_code = OUTGOING_EXECJS_QUEUE.get()
@@ -528,7 +528,7 @@ def start_pycallback_handler_ioloop(caller_globals):
 
             # sleep if no incoming callbacks are available
             if INCOMING_PYCALLBACK_QUEUE.empty():
-                await asyncio.sleep(0.01)
+                await asyncio.sleep(INTERNAL_POLLING_INTERVAL)
                 continue
 
             jsc, js_data = INCOMING_PYCALLBACK_QUEUE.get()
@@ -599,7 +599,7 @@ def start_retval_handler_ioloop():
 
             # sleep if no incoming callbacks are available
             if INCOMING_RETVAL_QUEUE.empty():
-                await asyncio.sleep(0.01)
+                await asyncio.sleep(INTERNAL_POLLING_INTERVAL)
                 continue
 
             _jsclient, caller_id, retval = INCOMING_RETVAL_QUEUE.get()
@@ -830,8 +830,11 @@ def run_pylinkjs_app(**kwargs):
         app_height - position in pixels for the height of the application
         app_width - position in pixels for the width of the application
         onQueryTemplateVariables - handler to provide variables for the template before rendering
+        internal_polling_interval - internal polling interval, decrease for less cpu usage with higher latency.  default is 0.015 seconds
         **kwargs - additional named arguments will be placed into the settings property of the tornado app but will not be available to the jsc context
     """
+
+    global INTERNAL_POLLING_INTERVAL
 
     # exit on Ctrl-C
     signal.signal(signal.SIGINT, signal_handler)
@@ -872,7 +875,12 @@ def run_pylinkjs_app(**kwargs):
     if 'app_mode' not in kwargs:
         kwargs['app_mode'] = False
 
+    if 'internal_polling_interval' not in kwargs:
+        kwargs['internal_polling_interval'] = 0.015
+
     kwargs['plugins'] = kwargs.get('plugins', [])
+
+    INTERNAL_POLLING_INTERVAL = kwargs['internal_polling_interval']
 
     # load the plugins
     for plugin in kwargs['plugins']:
