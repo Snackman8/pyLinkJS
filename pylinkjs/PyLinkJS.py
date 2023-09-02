@@ -29,6 +29,7 @@ import tornado.websocket
 from tornado.ioloop import IOLoop
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 from tornado.websocket import WebSocketClosedError
+import pyppeteer
 
 
 # --------------------------------------------------
@@ -57,6 +58,65 @@ def backtick_if_string(p):
         return "`%s`" % p
     else:
         return p
+
+
+async def print_to_pdf(url, timeout=5, orientation='landscape', force_scale=None, force_fit=False):
+    """
+        print url to pdf.
+        
+        The renderer will autoscale between 96pi to 144dpi to automatically fill the page width
+    
+        Args:
+            url - url to print
+            timeout - number of seconds to wait for page to complete before printing
+            orientation - landscape or portrait.  Default is landscape
+            autoscale - if True, will attempt to scale the page up to fit the paper
+    """
+    # create a headless pyppeteer browser and navigate to the url
+    browserObj = await pyppeteer.launch(headless=True,
+                                        handleSIGINT=False,
+                                        handleSIGTERM=False,
+                                        handleSIGHUP=False,
+                                        args=['--no-sandbox',
+                                              '--disable-setuid-sandbox',
+                                              '--disable-dev-shm-usage',
+                                              '--disable-gpu',
+                                              '--ignore-certificate-errors'])    
+    page = await browserObj.newPage()
+    await page.goto(url)
+    
+    # wait for page to load
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            ready_finished = await page.evaluate('''() => ready_finished''')
+            if ready_finished:
+                print('READY!')
+                break
+        except:
+            pass
+
+    # calculate if force_fit
+    if force_fit:
+        # get the dimensions
+        dimensions = await page.evaluate('''() => {
+            return {
+                width: document.documentElement.clientWidth,
+                height: document.documentElement.clientHeight,
+                deviceScaleFactor: window.devicePixelRatio, }}''')
+    
+        # calculate the scale factor        
+        if orientation == 'landscape':
+            force_scale = 1584 / dimensions['width']
+        else:
+            force_scale = 1224 / dimensions['width']
+
+    # save to pdf
+    if force_scale:
+        pdf_bytes = await page.pdf({'landscape': (orientation == 'landscape'), 'scale': force_scale})
+    else:
+        pdf_bytes = await page.pdf({'landscape': (orientation == 'landscape')})    
+    return pdf_bytes
 
 
 def search_for_magic_function(func_name):
@@ -642,7 +702,16 @@ class LogoutHandler(tornado.web.RequestHandler):
 
 
 class MainHandler(BaseHandler):
+    def print_to_pdf_thread_worker(self, url, pdf_timeout=5, pdf_orientation='landscape', pdf_force_scale=None, pdf_force_fit=False):
+        pdf_bytes = asyncio.new_event_loop().run_until_complete(print_to_pdf(url=url, timeout=pdf_timeout, orientation=pdf_orientation,
+                                                                             force_scale=pdf_force_scale, force_fit=pdf_force_fit))        
+        self.set_header("Content-Type", 'application/pdf; charset="utf-8"')
+        self.write(pdf_bytes)
+        self.finish()
+
     async def get(self):
+        self._auto_finish = False
+        
         # strip off the leading slash, then combine with web directory
         filename = os.path.abspath(os.path.join(self.application.settings['html_dir'], self.request.path[1:]))
 
@@ -676,6 +745,24 @@ class MainHandler(BaseHandler):
 
         # monkey patch in the websocket hooks
         if filename.endswith('.html'):
+            if 'output' in self.request.query_arguments:
+                if self.request.query_arguments.get('output', '')[0].lower() == b'pdf':
+                    # build and remove pdf_arguments
+                    pdf_kwargs = {}
+                    uri = self.request.uri
+                    for name in ['output', 'pdf_timeout', 'pdf_orientation', 'pdf_force_scale', 'pdf_force_fit']:
+                        if name in self.request.query_arguments:                            
+                            pdf_kwargs[name] = self.request.query_arguments[name][0].decode()
+                            uri = uri.replace(f'{name}={pdf_kwargs[name]}', '')                            
+                    url = self.request.protocol + "://" + self.request.host + uri
+                    pdf_kwargs['url'] = url
+                    del pdf_kwargs['output']
+
+                    # print to pdf in another thread
+                    t = threading.Thread(target=self.print_to_pdf_thread_worker, kwargs=pdf_kwargs)
+                    t.start()
+                    return                    
+                
             monkeypatch_filename = os.path.join(os.path.dirname(__file__), 'monkey_patch.js')
             f = open(monkeypatch_filename, 'rb')
             mps = f.read()
@@ -692,6 +779,7 @@ class MainHandler(BaseHandler):
             template_vars['jsc_id'] = '0.' + str(uuid.uuid4())
             template_vars['jsc_sequence_number'] = 0
             self.write(t.generate(**template_vars))
+            self.finish()
             return
 
         # apply proper mime type for css
@@ -708,6 +796,7 @@ class MainHandler(BaseHandler):
 
         # serve the page
         self.write(b)
+        self.finish()
 
 
 class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):

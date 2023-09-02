@@ -4,6 +4,7 @@
     var timerID = 0;
     var request_path = "{{request_path}}";
     var jsc_id = "{{jsc_id}}"
+    var ready_finished = 0;
 
 
     function connect_ws(reconnect) {
@@ -43,6 +44,7 @@
                 }
                 call_py_optional('ready', window.location.origin, request_path, window.location.search);
             }
+            ready_finished = 1;
         };
 
         ws.onmessage = function (evt) {
