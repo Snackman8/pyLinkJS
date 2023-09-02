@@ -60,7 +60,7 @@ def backtick_if_string(p):
         return p
 
 
-async def print_to_pdf(url, timeout=5, orientation='landscape', force_scale=None, force_fit=False, extra_delay=1):
+async def print_url(url, output_type, timeout=5, orientation='landscape', force_scale=None, force_fit=False, extra_delay=1):
     """
         print url to pdf.
 
@@ -68,9 +68,12 @@ async def print_to_pdf(url, timeout=5, orientation='landscape', force_scale=None
 
         Args:
             url - url to print
-            timeout - number of seconds to wait for page to complete before printing
+            output_type - pdf or png, default is pdf
+            timeout - number of seconds to wait for page to complete before printing, default is 5
             orientation - landscape or portrait.  Default is landscape
-            autoscale - if True, will attempt to scale the page up to fit the paper
+            force_scale - scale to force printing at, default is None
+            force_fit - force printout scaling to fit width to page
+            extra_delay - extra time to add after web page is rendering to allow rendering to complete, default is 1
     """
     # create a headless pyppeteer browser and navigate to the url
     browserObj = await pyppeteer.launch(headless=True,
@@ -99,6 +102,10 @@ async def print_to_pdf(url, timeout=5, orientation='landscape', force_scale=None
             pass
     time.sleep(extra_delay)
 
+    # handle png
+    if output_type == 'png':
+        return await page.screenshot({'fullPage': True}), 'image/png'
+
     # calculate if force_fit
     if force_fit:
         # get the dimensions
@@ -119,7 +126,7 @@ async def print_to_pdf(url, timeout=5, orientation='landscape', force_scale=None
         pdf_bytes = await page.pdf({'landscape': (orientation == 'landscape'), 'scale': force_scale})
     else:
         pdf_bytes = await page.pdf({'landscape': (orientation == 'landscape')})
-    return pdf_bytes
+    return pdf_bytes, 'application/pdf; charset="utf-8"'
 
 
 def search_for_magic_function(func_name):
@@ -705,12 +712,14 @@ class LogoutHandler(tornado.web.RequestHandler):
 
 
 class MainHandler(BaseHandler):
-    def print_to_pdf_thread_worker(self, url, pdf_timeout=5, pdf_orientation='landscape', pdf_force_scale=None, pdf_force_fit=False, pdf_extra_delay=1):
-        pdf_bytes = asyncio.new_event_loop().run_until_complete(print_to_pdf(url=url, timeout=pdf_timeout, orientation=pdf_orientation,
-                                                                             force_scale=pdf_force_scale, force_fit=pdf_force_fit,
-                                                                             extra_delay=pdf_extra_delay))
-        self.set_header("Content-Type", 'application/pdf; charset="utf-8"')
-        self.write(pdf_bytes)
+    def print_thread_worker(self, url, print_output_type='pdf', print_timeout=5, print_orientation='landscape', print_force_scale=None, print_force_fit=False,
+                            print_extra_delay=1):
+        print_bytes, content_type = asyncio.new_event_loop().run_until_complete(print_url(url=url, output_type=print_output_type, timeout=print_timeout,
+                                                                                          orientation=print_orientation, force_scale=print_force_scale,
+                                                                                          force_fit=print_force_fit, extra_delay=print_extra_delay))
+        self.set_header("Content-Type", content_type)
+        self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        self.write(print_bytes)
         self.finish()
 
     async def get(self):
@@ -750,20 +759,21 @@ class MainHandler(BaseHandler):
         # monkey patch in the websocket hooks
         if filename.endswith('.html'):
             if 'output' in self.request.query_arguments:
-                if self.request.query_arguments.get('output', '')[0].lower() == b'pdf':
+                if self.request.query_arguments.get('output', '')[0].lower() in [b'pdf', b'png']:
                     # build and remove pdf_arguments
                     pdf_kwargs = {}
                     uri = self.request.uri
-                    for name in ['output', 'pdf_timeout', 'pdf_orientation', 'pdf_force_scale', 'pdf_force_fit', 'pdf_extra_delay']:
+                    for name in ['output', 'print_timeout', 'print_orientation', 'print_force_scale', 'print_force_fit', 'print_extra_delay']:
                         if name in self.request.query_arguments:
                             pdf_kwargs[name] = self.request.query_arguments[name][0].decode()
                             uri = uri.replace(f'{name}={pdf_kwargs[name]}', '')
                     url = self.request.protocol + "://" + self.request.host + uri
                     pdf_kwargs['url'] = url
+                    pdf_kwargs['print_output_type'] = pdf_kwargs['output']
                     del pdf_kwargs['output']
 
                     # print to pdf in another thread
-                    t = threading.Thread(target=self.print_to_pdf_thread_worker, kwargs=pdf_kwargs)
+                    t = threading.Thread(target=self.print_thread_worker, kwargs=pdf_kwargs)
                     t.start()
                     return
 
