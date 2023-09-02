@@ -60,12 +60,12 @@ def backtick_if_string(p):
         return p
 
 
-async def print_to_pdf(url, timeout=5, orientation='landscape', force_scale=None, force_fit=False):
+async def print_to_pdf(url, timeout=5, orientation='landscape', force_scale=None, force_fit=False, extra_delay=1):
     """
         print url to pdf.
-        
+
         The renderer will autoscale between 96pi to 144dpi to automatically fill the page width
-    
+
         Args:
             url - url to print
             timeout - number of seconds to wait for page to complete before printing
@@ -81,10 +81,10 @@ async def print_to_pdf(url, timeout=5, orientation='landscape', force_scale=None
                                               '--disable-setuid-sandbox',
                                               '--disable-dev-shm-usage',
                                               '--disable-gpu',
-                                              '--ignore-certificate-errors'])    
+                                              '--ignore-certificate-errors'])
     page = await browserObj.newPage()
     await page.goto(url)
-    
+
     # wait for page to load
     start_time = time.time()
     while time.time() - start_time < timeout:
@@ -92,20 +92,23 @@ async def print_to_pdf(url, timeout=5, orientation='landscape', force_scale=None
             ready_finished = await page.evaluate('''() => ready_finished''')
             if ready_finished:
                 print('READY!')
-                break
+                if INCOMING_PYCALLBACK_QUEUE.empty() and INCOMING_RETVAL_QUEUE.empty() and OUTGOING_EXECJS_QUEUE.empty():
+                    print('QUEUES EMPTY')
+                    break
         except:
             pass
+    time.sleep(extra_delay)
 
     # calculate if force_fit
     if force_fit:
         # get the dimensions
         dimensions = await page.evaluate('''() => {
             return {
-                width: document.documentElement.clientWidth,
-                height: document.documentElement.clientHeight,
+                width: document.body.scrollWidth,
+                height: document.body.scrollHeight,
                 deviceScaleFactor: window.devicePixelRatio, }}''')
-    
-        # calculate the scale factor        
+
+        # calculate the scale factor
         if orientation == 'landscape':
             force_scale = 1584 / dimensions['width']
         else:
@@ -115,7 +118,7 @@ async def print_to_pdf(url, timeout=5, orientation='landscape', force_scale=None
     if force_scale:
         pdf_bytes = await page.pdf({'landscape': (orientation == 'landscape'), 'scale': force_scale})
     else:
-        pdf_bytes = await page.pdf({'landscape': (orientation == 'landscape')})    
+        pdf_bytes = await page.pdf({'landscape': (orientation == 'landscape')})
     return pdf_bytes
 
 
@@ -702,16 +705,17 @@ class LogoutHandler(tornado.web.RequestHandler):
 
 
 class MainHandler(BaseHandler):
-    def print_to_pdf_thread_worker(self, url, pdf_timeout=5, pdf_orientation='landscape', pdf_force_scale=None, pdf_force_fit=False):
+    def print_to_pdf_thread_worker(self, url, pdf_timeout=5, pdf_orientation='landscape', pdf_force_scale=None, pdf_force_fit=False, pdf_extra_delay=1):
         pdf_bytes = asyncio.new_event_loop().run_until_complete(print_to_pdf(url=url, timeout=pdf_timeout, orientation=pdf_orientation,
-                                                                             force_scale=pdf_force_scale, force_fit=pdf_force_fit))        
+                                                                             force_scale=pdf_force_scale, force_fit=pdf_force_fit,
+                                                                             extra_delay=pdf_extra_delay))
         self.set_header("Content-Type", 'application/pdf; charset="utf-8"')
         self.write(pdf_bytes)
         self.finish()
 
     async def get(self):
         self._auto_finish = False
-        
+
         # strip off the leading slash, then combine with web directory
         filename = os.path.abspath(os.path.join(self.application.settings['html_dir'], self.request.path[1:]))
 
@@ -750,10 +754,10 @@ class MainHandler(BaseHandler):
                     # build and remove pdf_arguments
                     pdf_kwargs = {}
                     uri = self.request.uri
-                    for name in ['output', 'pdf_timeout', 'pdf_orientation', 'pdf_force_scale', 'pdf_force_fit']:
-                        if name in self.request.query_arguments:                            
+                    for name in ['output', 'pdf_timeout', 'pdf_orientation', 'pdf_force_scale', 'pdf_force_fit', 'pdf_extra_delay']:
+                        if name in self.request.query_arguments:
                             pdf_kwargs[name] = self.request.query_arguments[name][0].decode()
-                            uri = uri.replace(f'{name}={pdf_kwargs[name]}', '')                            
+                            uri = uri.replace(f'{name}={pdf_kwargs[name]}', '')
                     url = self.request.protocol + "://" + self.request.host + uri
                     pdf_kwargs['url'] = url
                     del pdf_kwargs['output']
@@ -761,8 +765,8 @@ class MainHandler(BaseHandler):
                     # print to pdf in another thread
                     t = threading.Thread(target=self.print_to_pdf_thread_worker, kwargs=pdf_kwargs)
                     t.start()
-                    return                    
-                
+                    return
+
             monkeypatch_filename = os.path.join(os.path.dirname(__file__), 'monkey_patch.js')
             f = open(monkeypatch_filename, 'rb')
             mps = f.read()
