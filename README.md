@@ -11,6 +11,7 @@ Simple bridge to allow Python to communicate with JavaScript
 [&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Core Methods)](#jsclient-core-methods)<br>
 [&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Modal UI Methods)](#jsclient-modal-ui-methods)<br>
 [&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Select Element Methods)](#jsclient-select-element-methods)<br>
+[&nbsp;&nbsp;&nbsp;&nbsp;PDF Output](#pdf-output)<br>
 **[Useful Code Examples](#useful-code-examples)**<br>
 **[Apache2 Reverse Proxy](#to-use-pylinkjs-behind-an-apache-reverse-proxy-subdirectory-foo)**<br>
 
@@ -488,6 +489,27 @@ jsc.select_set_selected_options('#myselect', ['a_val'])
 # to set a single selected option, second option without the list
 jsc.select_set_selected_options('#myselect', [a_val])
 ```
+
+<br>
+<br>
+<br>
+
+## PDF Output
+There is built in functionality to generate PDF output of a pyLinkJS website.  Simply add the output=pdf parameter to the url
+
+Example
+```http://mywebsite.com?output=pdf```
+
+Additional parameters that can be passed are
+
+- pdf_timeout: seconds to wait for webpage to finish loading, default is 5
+- pdf_orientation: landscape or portrait, default is portrait
+- pdf_force_scale: force a scaling factor
+- pdf_force_fit: force the page width to fit on the page
+- pdf_extra_delay: extra delay in seconds to allow the browser to render after loading has finished, default is 0
+
+Example
+```http://mywebsite.com?output=pdf&pdf_timeout=15&pdf_orientation=portrait&pdf_force_fit=1&pdf_extra_delay=5```
 
 <br>
 <br>
