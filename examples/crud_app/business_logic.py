@@ -3,6 +3,7 @@
 # --------------------------------------------------
 # Imports
 # --------------------------------------------------
+import os
 import pandas as pd
 
 
@@ -104,11 +105,9 @@ def init_data(props):
               'address': 'string',
               'company': 'string',
               'phone_number': 'string',}
-    df = pd.read_csv('fake_data.csv.gz', index_col=0, parse_dates=['date', 'date_time'], dtype=dtypes)
+    filename = os.path.join(os.path.dirname(__file__), 'fake_data.csv.gz')
+    df = pd.read_csv(filename, index_col=0, parse_dates=['date', 'date_time'], dtype=dtypes)
 
-
-
-    
     # rename any columns needed here
     # df = df.rename(columns={'a': 'b', 'c': 'd'}
     

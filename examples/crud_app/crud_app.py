@@ -170,10 +170,11 @@ def reconnect(jsc, *args):
 # --------------------------------------------------
 #   Main
 # --------------------------------------------------
-def main():
+def main(args):
     # start the thread and the app
+    args['port'] = args.get('port', 8300)
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-    run_pylinkjs_app(default_html='crud_app.html', internal_polling_interval=0.025)
+    run_pylinkjs_app(default_html='crud_app.html', html_dir=os.path.dirname(__file__), internal_polling_interval=0.025, port=args['port'])
 
 if __name__ == '__main__':
     main()

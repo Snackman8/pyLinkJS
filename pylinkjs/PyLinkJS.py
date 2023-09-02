@@ -940,7 +940,10 @@ def run_pylinkjs_app(**kwargs):
     global INTERNAL_POLLING_INTERVAL
 
     # exit on Ctrl-C
-    signal.signal(signal.SIGINT, signal_handler)
+    try:
+        signal.signal(signal.SIGINT, signal_handler)
+    except ValueError:
+        pass
 
     if 'port' not in kwargs:
         kwargs['port'] = 8300
