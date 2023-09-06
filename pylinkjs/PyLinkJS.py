@@ -91,6 +91,7 @@ async def print_url(url, output_type, timeout=5, orientation='landscape', force_
     # wait for page to load
     start_time = time.time()
     while time.time() - start_time < timeout:
+        time.sleep(1)
         try:
             ready_finished = await page.evaluate('''() => ready_finished''')
             if ready_finished:
@@ -745,6 +746,7 @@ class MainHandler(BaseHandler):
                         self.set_header("Content-Type", f'{content_type}; charset="utf-8"')
                     if status_code is not None:
                         self.set_status(status_code)
+                        self.finish()
                     return
                 else:
                     raise tornado.web.HTTPError(404)
