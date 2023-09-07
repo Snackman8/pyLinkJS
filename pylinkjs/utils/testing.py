@@ -16,7 +16,7 @@ def find_free_port():
         return s.getsockname()[1]
 
 
-def download_and_compare(server_func, url, update_truth=False, truth_path='.', print_extra_delay=1):
+def download_and_compare(server_func, url, update_truth=False, truth_path='.', print_extra_delay=1, print_timeout=5):
     # start server with free port
     port = find_free_port()
     t = Thread(target=server_func, args=({'port': port},))
@@ -29,9 +29,9 @@ def download_and_compare(server_func, url, update_truth=False, truth_path='.', p
     
     # add the output type of png
     if '?' in url:
-        url = url + f'&output=png&print_extra_delay={print_extra_delay}'
+        url = url + f'&output=png&print_extra_delay={print_extra_delay}&print_timeout={print_timeout}'
     else:
-        url = url + f'?output=png&print_extra_delay={print_extra_delay}'
+        url = url + f'?output=png&print_extra_delay={print_extra_delay}&print_timeout={print_timeout}'
     
     # render the url
     time.sleep(1)

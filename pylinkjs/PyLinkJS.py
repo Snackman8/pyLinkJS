@@ -83,7 +83,7 @@ def print_url(url, output_type, timeout=5, orientation='landscape', force_scale=
     
             # wait for page to load
             start_time = time.time()
-            while time.time() - start_time < timeout:
+            while time.time() - start_time < int(timeout):
                 time.sleep(1)
                 try:
                     ready_finished = page.evaluate('''() => ready_finished''')
@@ -91,7 +91,14 @@ def print_url(url, output_type, timeout=5, orientation='landscape', force_scale=
                         print('READY!')
                         if INCOMING_PYCALLBACK_QUEUE.empty() and INCOMING_RETVAL_QUEUE.empty() and OUTGOING_EXECJS_QUEUE.empty():
                             print('QUEUES EMPTY')
-                            break
+                            try:
+                                page_ready = page.evaluate('''() => PAGE_READY''')
+                                if page_ready == 1:
+                                    print('PAGE READY')
+                                    break
+                            except:
+                                print('PAGE READY NOT PRESENT')
+                                break
                 except:
                     pass
             time.sleep(int(extra_delay))
