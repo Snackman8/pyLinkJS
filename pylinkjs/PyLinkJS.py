@@ -29,7 +29,7 @@ import tornado.websocket
 from tornado.ioloop import IOLoop
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 from tornado.websocket import WebSocketClosedError
-import pyppeteer
+from playwright.sync_api import sync_playwright
 
 
 # --------------------------------------------------
@@ -60,7 +60,7 @@ def backtick_if_string(p):
         return p
 
 
-async def print_url(url, output_type, timeout=5, orientation='landscape', force_scale=None, force_fit=False, extra_delay=1):
+def print_url(url, output_type, timeout=5, orientation='landscape', force_scale=None, force_fit=False, extra_delay=1):
     """
         print url to pdf.
 
@@ -75,59 +75,55 @@ async def print_url(url, output_type, timeout=5, orientation='landscape', force_
             force_fit - force printout scaling to fit width to page
             extra_delay - extra time to add after web page is rendering to allow rendering to complete, default is 1
     """
-    # create a headless pyppeteer browser and navigate to the url
-    browserObj = await pyppeteer.launch(headless=True,
-                                        handleSIGINT=False,
-                                        handleSIGTERM=False,
-                                        handleSIGHUP=False,
-                                        args=['--no-sandbox',
-                                              '--disable-setuid-sandbox',
-                                              '--disable-dev-shm-usage',
-                                              '--disable-gpu',
-                                              '--ignore-certificate-errors'])
-    page = await browserObj.newPage()
-    await page.goto(url)
-
-    # wait for page to load
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        time.sleep(1)
-        try:
-            ready_finished = await page.evaluate('''() => ready_finished''')
-            if ready_finished:
-                print('READY!')
-                if INCOMING_PYCALLBACK_QUEUE.empty() and INCOMING_RETVAL_QUEUE.empty() and OUTGOING_EXECJS_QUEUE.empty():
-                    print('QUEUES EMPTY')
-                    break
-        except:
-            pass
-    time.sleep(extra_delay)
-
-    # handle png
-    if output_type == 'png':
-        return await page.screenshot({'fullPage': True}), 'image/png'
-
-    # calculate if force_fit
-    if force_fit:
-        # get the dimensions
-        dimensions = await page.evaluate('''() => {
-            return {
-                width: document.body.scrollWidth,
-                height: document.body.scrollHeight,
-                deviceScaleFactor: window.devicePixelRatio, }}''')
-
-        # calculate the scale factor
-        if orientation == 'landscape':
-            force_scale = 1584 / dimensions['width']
-        else:
-            force_scale = 1224 / dimensions['width']
-
-    # save to pdf
-    if force_scale:
-        pdf_bytes = await page.pdf({'landscape': (orientation == 'landscape'), 'scale': force_scale})
-    else:
-        pdf_bytes = await page.pdf({'landscape': (orientation == 'landscape')})
-    return pdf_bytes, 'application/pdf; charset="utf-8"'
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
+            page.goto(url)
+    
+            # wait for page to load
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                time.sleep(1)
+                try:
+                    ready_finished = page.evaluate('''() => ready_finished''')
+                    if ready_finished:
+                        print('READY!')
+                        if INCOMING_PYCALLBACK_QUEUE.empty() and INCOMING_RETVAL_QUEUE.empty() and OUTGOING_EXECJS_QUEUE.empty():
+                            print('QUEUES EMPTY')
+                            break
+                except:
+                    pass
+            time.sleep(int(extra_delay))
+    
+            # handle png
+            if output_type == 'png':
+                return page.screenshot(full_page=True), 'image/png'
+    
+            # calculate if force_fit
+            if force_fit:
+                # get the dimensions
+                dimensions = page.evaluate('''() => {
+                    return {
+                        width: document.body.scrollWidth,
+                        height: document.body.scrollHeight,
+                        deviceScaleFactor: window.devicePixelRatio, }}''')
+    
+                # calculate the scale factor
+                if orientation == 'landscape':
+                    force_scale = 1584 / dimensions['width']
+                else:
+                    force_scale = 1224 / dimensions['width']
+    
+            # save to pdf
+            if force_scale:
+                pdf_bytes = page.pdf(landscape=(orientation == 'landscape'), scale=force_scale)
+            else:
+                pdf_bytes = page.pdf(landscape=(orientation == 'landscape'))
+            return pdf_bytes, 'application/pdf; charset="utf-8"'
+    except Exception as e:
+        traceback.print_exc()
+        print(e)
 
 
 def search_for_magic_function(func_name):
@@ -715,9 +711,9 @@ class LogoutHandler(tornado.web.RequestHandler):
 class MainHandler(BaseHandler):
     def print_thread_worker(self, url, print_output_type='pdf', print_timeout=5, print_orientation='landscape', print_force_scale=None, print_force_fit=False,
                             print_extra_delay=1):
-        print_bytes, content_type = asyncio.new_event_loop().run_until_complete(print_url(url=url, output_type=print_output_type, timeout=print_timeout,
-                                                                                          orientation=print_orientation, force_scale=print_force_scale,
-                                                                                          force_fit=print_force_fit, extra_delay=print_extra_delay))
+        print_bytes, content_type = print_url(url=url, output_type=print_output_type, timeout=print_timeout,
+                                              orientation=print_orientation, force_scale=print_force_scale,
+                                              force_fit=print_force_fit, extra_delay=print_extra_delay)
         self.set_header("Content-Type", content_type)
         self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
         self.write(print_bytes)
