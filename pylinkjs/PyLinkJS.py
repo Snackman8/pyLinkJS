@@ -37,6 +37,7 @@ from playwright.sync_api import sync_playwright
 # --------------------------------------------------
 ALL_JSCLIENTS = []
 RETVALS = {}
+DEFAULT_PRINT_TIMEOUT = 10
 
 
 # --------------------------------------------------
@@ -60,7 +61,7 @@ def backtick_if_string(p):
         return p
 
 
-def print_url(url, output_type, timeout=5, orientation='landscape', force_scale=None, force_fit=False, extra_delay=1):
+def print_url(url, output_type, timeout=None, orientation='landscape', force_scale=None, force_fit=False, extra_delay=1):
     """
         print url to pdf.
 
@@ -80,10 +81,19 @@ def print_url(url, output_type, timeout=5, orientation='landscape', force_scale=
             browser = p.chromium.launch()
             page = browser.new_page()
             page.goto(url)
-    
+
+            if timeout is None:
+                try:
+                    print_timeout = page.evaluate('''() => HINT_PRINT_TIMEOUT''')
+                    timeout = print_timeout
+                    print(f'USING OVERIDE PRINT TIMEOUT OF {timeout} seconds')
+                except:
+                    timeout = DEFAULT_PRINT_TIMEOUT
+                    print(f'USING TIMEOUT OF {timeout} seconds')
+
             # wait for page to load
             start_time = time.time()
-            while time.time() - start_time < int(timeout):
+            while (time.time() - start_time) < int(timeout):
                 time.sleep(1)
                 try:
                     ready_finished = page.evaluate('''() => ready_finished''')
@@ -92,21 +102,20 @@ def print_url(url, output_type, timeout=5, orientation='landscape', force_scale=
                         if INCOMING_PYCALLBACK_QUEUE.empty() and INCOMING_RETVAL_QUEUE.empty() and OUTGOING_EXECJS_QUEUE.empty():
                             print('QUEUES EMPTY')
                             try:
-                                page_ready = page.evaluate('''() => PAGE_READY''')
+                                page_ready = page.evaluate('''() => HINT_PRINT_PAGE_READY''')
                                 if page_ready == 1:
-                                    print('PAGE READY')
+                                    print('HINT_PRINT_PAGE_READY')
                                     break
                             except:
-                                print('PAGE READY NOT PRESENT')
-                                break
+                                print('HINT_PRINT_PAGE_READY NOT PRESENT')
                 except:
                     pass
             time.sleep(int(extra_delay))
-    
+
             # handle png
             if output_type == 'png':
                 return page.screenshot(full_page=True), 'image/png'
-    
+
             # calculate if force_fit
             if force_fit:
                 # get the dimensions
@@ -115,13 +124,13 @@ def print_url(url, output_type, timeout=5, orientation='landscape', force_scale=
                         width: document.body.scrollWidth,
                         height: document.body.scrollHeight,
                         deviceScaleFactor: window.devicePixelRatio, }}''')
-    
+
                 # calculate the scale factor
                 if orientation == 'landscape':
                     force_scale = 1584 / dimensions['width']
                 else:
                     force_scale = 1224 / dimensions['width']
-    
+
             # save to pdf
             if force_scale:
                 pdf_bytes = page.pdf(landscape=(orientation == 'landscape'), scale=force_scale)
@@ -716,7 +725,7 @@ class LogoutHandler(tornado.web.RequestHandler):
 
 
 class MainHandler(BaseHandler):
-    def print_thread_worker(self, url, print_output_type='pdf', print_timeout=5, print_orientation='landscape', print_force_scale=None, print_force_fit=False,
+    def print_thread_worker(self, url, print_output_type='pdf', print_timeout=None, print_orientation='landscape', print_force_scale=None, print_force_fit=False,
                             print_extra_delay=1):
         print_bytes, content_type = print_url(url=url, output_type=print_output_type, timeout=print_timeout,
                                               orientation=print_orientation, force_scale=print_force_scale,
