@@ -503,11 +503,21 @@ Example
 
 Additional parameters that can be passed are
 
-- print_timeout: seconds to wait for webpage to finish loading, default is 5
+- print_timeout: seconds to wait for webpage to finish loading, default is 10
 - print_orientation: landscape or portrait, default is portrait (pdf only)
 - print_force_scale: force a scaling factor (pdf only)
 - print_force_fit: force the page width to fit on the page (pdf only)
 - print_extra_delay: extra delay in seconds to allow the browser to render after loading has finished, default is 0
+
+In the html javascript template some hints can be provided to the printing engine
+
+```var HINT_PAGE_READY = 0;```
+
+```var HINT_PRINT_TIMEOUT = 30;```
+
+The printing engine will wait until HINT_PAGE_READY is set to a non-zero value before rendering the PNG or PDF.
+
+The printing engine will use the HINT_PRINT_TIMEOUT as the timeout value if print_timeout was not explicitly passed in.
 
 Example
 ```http://mywebsite.com?output=pdf&print_timeout=15&print_orientation=portrait&print_force_fit=1&print_extra_delay=5```
