@@ -782,6 +782,11 @@ class MainHandler(BaseHandler):
                             pdf_kwargs[name] = self.request.query_arguments[name][0].decode()
                             uri = uri.replace(f'{name}={pdf_kwargs[name]}', '')
                     url = self.request.protocol + "://" + self.request.host + uri
+
+                    # special handling for apache rewrite proxy
+                    if 'X-Forwarded-Host' in self.request.headers:
+                        url = self.request.protocol + "://" + self.request.host + ':' + str(self.application.settings['port']) + uri
+
                     pdf_kwargs['url'] = url
                     pdf_kwargs['print_output_type'] = pdf_kwargs['output']
                     del pdf_kwargs['output']
