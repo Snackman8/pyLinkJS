@@ -511,11 +511,11 @@ Additional parameters that can be passed are
 
 In the html javascript template some hints can be provided to the printing engine
 
-```var HINT_PAGE_READY = 0;```
+```var HINT_PRINT_PAGE_READY = 0;```
 
 ```var HINT_PRINT_TIMEOUT = 30;```
 
-The printing engine will wait until HINT_PAGE_READY is set to a non-zero value before rendering the PNG or PDF.
+The printing engine will wait until HINT_PRINT_PAGE_READY is set to a non-zero value before rendering the PNG or PDF.
 
 The printing engine will use the HINT_PRINT_TIMEOUT as the timeout value if print_timeout was not explicitly passed in.
 
