@@ -107,4 +107,20 @@
       </div>
     </div>
   </div>
+
+  <!-- ROW -->
+  <div class="row_container">
+    <div class="row_column_container">
+      <div class="cell">
+        <h4>Sample Histogram Dataframe</h4>
+        {% raw create_chart(name='chart_histogram_table', jsc_id=jsc_id, chart_type='table', autosize_mode="fit_columns", sizing_mode="stretch_both") %}
+      </div>
+      <div class="cell">
+        <h4>Sample Bokeh Histogram Chart</h4>
+        {% raw create_chart(name='chart_sample_histogram', jsc_id=jsc_id, chart_type='histogram', title='Example Histogram chart', sizing_mode="stretch_both",
+                            __histogram__width=0.99, __histogram__line_color='white', __histogram__fill_color='pink'
+        ) %}
+      </div>
+    </div>
+  </div>
 </div>

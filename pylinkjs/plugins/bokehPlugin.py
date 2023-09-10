@@ -381,6 +381,51 @@ class pluginBokeh:
         # success!
         return p
 
+    @classmethod
+    def _create_histogram_chart_data(cls, pv):
+        # init, grab the first color off the palette using a fake dataframe
+        data = {}
+        palette = cls._configure_color_palette(pd.DataFrame(index=[0], columns=['A']))
+
+        # convert
+        df = pv['df'].copy()
+
+
+        # build the data
+        data['factors'] = []
+        counts = []
+        fill_color = []
+        line_color = []
+        for c in df.columns:
+            data['factors'].append(c)
+            counts.append(df.iloc[0][c])
+            fill_color.append(palette[0])
+            line_color.append(palette[0])
+
+        data['cds'] = bokeh.models.ColumnDataSource({'factors': data['factors'], 'counts': counts,
+                                                     'line_color': line_color, 'fill_color': fill_color})
+
+        # success!
+        return data
+
+    @classmethod
+    def _create_histogram_chart(cls, pv, **kwargs):
+        """ Create a histogram bar chart """
+        # create the data
+        data = cls._create_histogram_chart_data(pv)
+
+        # create the figure
+        p = bokeh.plotting.figure(x_range=bokeh.models.ranges.FactorRange(*data['factors']), **pv['figure_kwargs'])
+
+        # plot the bars
+        histogram_kwargs = dict(source=data['cds'], x='factors', top='counts', fill_color='fill_color', line_color='line_color', width=0.95)
+        histogram_kwargs.update(cls._promote_kwargs_prefix(['__histogram__'], kwargs))
+        p.vbar(**histogram_kwargs)
+        p.x_range.range_padding = 0.05
+
+        # success!
+        return p
+
     def _create_chart(self, chart_type, jsc_id, jsc_sequence_number=0, **kwargs):
         # create the document if needed
         if jsc_id not in self.BOKEH_CONTEXT:
@@ -512,6 +557,12 @@ class pluginBokeh:
                 jsc.eval_js_code(js)
 
             if chart_type == 'vbar':
+                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{p_id}').x_range.factors = {json.dumps(data['factors'])};"""
+                jsc.eval_js_code(js)
+                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
+                jsc.eval_js_code(js)
+
+            if chart_type == 'histogram':
                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{p_id}').x_range.factors = {json.dumps(data['factors'])};"""
                 jsc.eval_js_code(js)
                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
