@@ -267,10 +267,17 @@ class pluginBokeh:
         p = bokeh.plotting.figure(**pv['figure_kwargs'])
 
         # create the lines
+        line_kwargs_list = []
         for i, c in enumerate(pv['df'].columns):
             line_kwargs = dict(source=data['cds'], x='X', y=c, color=pv['palette'][i], legend_label=c)
             line_kwargs.update(cls._promote_kwargs_prefix(['__line__', f'__line_{i}__'], kwargs))
             p.line(**line_kwargs)
+            line_kwargs_list.append(line_kwargs)
+
+        # attach extra information so we can create new lines if needed later
+#        tag_pv = {k:pv[k] for k in pv if k not in ('df', 'cds')}
+        # tag_pv = {}
+        # p.tags.append({'pv': tag_pv, 'cds_id': data['cds'].id, 'line_kwargs_list': line_kwargs_list})
 
         p.y_range.start = 0
         p.yaxis.formatter=bokeh.models.formatters.NumeralTickFormatter(format="0,0")
@@ -437,8 +444,60 @@ class pluginBokeh:
                 jsc.eval_js_code(js)
 
             if chart_type == 'line':
+                # update the data in javascript
                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
                 jsc.eval_js_code(js)
+
+                # add another line glyph if needed
+                p = cls.BOKEH_CONTEXT[jsc._jsc_id]['Document'].get_model_by_name(chart_name)
+                palette = cls._configure_color_palette(df)
+                for i in range(1, len(pv['cds'].column_names)):
+                    if i > len(p.renderers):
+                        c = pv['cds'].column_names[i]
+                        line_kwargs = dict(source=pv['cds'], x='X', y=c, color=palette[i - 1], legend_label=c)
+                        p.line(**line_kwargs)
+
+                        js = f"""
+                            // create a new line
+                            var line = new Bokeh.Line({{x: {{ field: "X" }},
+                                                        y: {{ field: "{c}" }},
+                                                        line_color: "{palette[i - 1]}",
+                                                        line_width: 2}});
+                            var plot = Bokeh.documents[{doc_index}].get_model_by_id('{p_id}');
+                            var cds = Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}');
+                            plot.add_glyph(line, cds);
+
+                            // create a new legend item for the line
+                            var legends = Bokeh.documents[{doc_index}].get_model_by_id('{p.legend.id}');
+                            var legenditem = new Bokeh.LegendItem({{label: "{c}"}});
+                            legends.items.push(legenditem);
+                            legenditem.renderers.push(plot.renderers[plot.renderers.length - 1]);
+                            legends.change.emit();"""
+                        print(js)
+                        jsc.eval_js_code(js)
+                    else:
+                        # make visible any hidden lines and legends
+                        js = f"""
+                            var plot = Bokeh.documents[{doc_index}].get_model_by_id('{p_id}');
+                            var legends = Bokeh.documents[{doc_index}].get_model_by_id('{p.legend.id}');
+
+                            plot.renderers[{i - 1}].visible = true;
+                            legends.items[{i - 1}].visible = true;
+                            legends.change.emit();"""
+                        print(js)
+                        jsc.eval_js_code(js)
+
+                # hide and lines and legends not needed
+                print('***', len(pv['cds'].column_names), len(p.renderers))
+                for i in range(len(p.renderers), len(pv['cds'].column_names) - 1, -1):
+                    js = f"""
+                        var plot = Bokeh.documents[{doc_index}].get_model_by_id('{p_id}');
+                        var legends = Bokeh.documents[{doc_index}].get_model_by_id('{p.legend.id}');
+
+                        plot.renderers[{i - 1}].visible = false;
+                        legends.items[{i - 1}].visible = false;"""
+                    print(js)
+                    jsc.eval_js_code(js)
 
             if chart_type == 'pie':
                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""

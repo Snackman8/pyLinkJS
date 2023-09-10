@@ -29,7 +29,13 @@ def get_data(jsc_id, jsc_sequence_number, **kwargs):
 
     if 'cached_chart_data' not in DATA_CACHE[jsc_id]:
         print ('Cache Miss', jsc_id, jsc_sequence_number)
-        DATA_CACHE[jsc_id]['cached_chart_data'] = pd.DataFrame(np.random.randint(0,100,size=(4, 3)), columns=list('ABC'))
+        columns = kwargs.get('columns', 3)
+        rows = np.random.randint(4, 10)
+
+        # generate some fake column headers using the letters of the alphabet
+        column_headers = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ'[:columns])
+
+        DATA_CACHE[jsc_id]['cached_chart_data'] = pd.DataFrame(np.random.randint(0,100,size=(rows, columns)), columns=column_headers)
     else:
         print ('Cache Hit', jsc_id, jsc_sequence_number)
 
@@ -59,13 +65,13 @@ def on_context_close(jsc):
 def on_context_open(jsc):
     print ('CONTEXT OPEN', jsc.get_id())
 
-def btn_refresh_charts_with_new_data_clicked(jsc):
+def btn_refresh_charts_with_new_data_clicked(jsc, columns):
     """ refresh charts with new data, invalidate the data cache to retrieve new data """
     # invalidate the cache
     jsc.increment_sequence_number()
 
     # update the dataframe display
-    df = get_data(jsc.get_id(), jsc.get_sequence_number(), name='df_display')
+    df = get_data(jsc.get_id(), jsc.get_sequence_number(), name='df_display', columns=columns)
     jsc['#df_display'].html = df.to_string()
 
     # update the charts

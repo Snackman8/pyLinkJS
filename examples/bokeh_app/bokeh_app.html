@@ -11,6 +11,7 @@
     <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.1.1.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.1.1.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.1.1.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-api-3.1.1.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.1.1.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.1.1.min.js" crossorigin="anonymous"></script>
 
@@ -60,7 +61,9 @@
   <!-- HEADER -->
   <div class='header'>
     <h1> Sample Bokeh Charts </h1>
-    <button onclick="call_py('btn_refresh_charts_with_new_data_clicked');">Click to Fetch New Data</button>
+    <button onclick="call_py('btn_refresh_charts_with_new_data_clicked', 3);">Click to Fetch New Data 3 Columns</button>
+    <button onclick="call_py('btn_refresh_charts_with_new_data_clicked', 4);">Click to Fetch New Data 4 Columns</button>
+    <button onclick="call_py('btn_refresh_charts_with_new_data_clicked', 5);">Click to Fetch New Data 4 Columns</button>
     <button onclick="call_py('btn_refresh_charts_with_cached_data_clicked');">Click to Refresh Charts With Cached Data</button>
   </div>
   <!-- ROW -->
