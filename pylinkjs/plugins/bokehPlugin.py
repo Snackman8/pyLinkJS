@@ -397,21 +397,13 @@ class pluginBokeh:
 
         # convert
         df = pv['df'].copy()
-
-
-        # build the data
-        data['factors'] = []
-        counts = []
-        fill_color = []
-        line_color = []
-        for c in df.columns:
-            data['factors'].append(c)
-            counts.append(df.iloc[0][c])
-            fill_color.append(palette[0])
-            line_color.append(palette[0])
-
-        data['cds'] = bokeh.models.ColumnDataSource({'factors': data['factors'], 'counts': counts,
-                                                     'line_color': line_color, 'fill_color': fill_color})
+        df.index.name = 'factors'
+        df = df.reset_index()
+        df['fill_color'] = palette[0]
+        df['line_color'] = palette[0]
+        df['counts_text'] = df['counts']
+        data['df'] = df
+        data['cds'] = bokeh.models.ColumnDataSource(df)
 
         # success!
         return data
@@ -423,13 +415,20 @@ class pluginBokeh:
         data = cls._create_histogram_chart_data(pv)
 
         # create the figure
-        p = bokeh.plotting.figure(x_range=bokeh.models.ranges.FactorRange(*data['factors']), **pv['figure_kwargs'])
+        p = bokeh.plotting.figure(x_range=bokeh.models.ranges.FactorRange(*data['cds'].data['factors']), **pv['figure_kwargs'])
 
         # plot the bars
         histogram_kwargs = dict(source=data['cds'], x='factors', top='counts', fill_color='fill_color', line_color='line_color', width=0.95)
         histogram_kwargs.update(cls._promote_kwargs_prefix(['__histogram__'], kwargs))
+
+        # add labelset
+        labels = bokeh.models.LabelSet(x='factors', y='counts_text', text='bin_text', level='glyph',
+                          text_align='center', y_offset=5, source=data['cds'])
+        p.add_layout(labels)
+
         p.vbar(**histogram_kwargs)
         p.x_range.range_padding = 0.05
+        p.y_range = bokeh.models.Range1d(start=0, end=data['df']['counts'].max() * 1.1)
 
         # success!
         return p

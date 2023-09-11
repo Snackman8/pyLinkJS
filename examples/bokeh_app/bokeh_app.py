@@ -53,12 +53,14 @@ def get_data(jsc_id, jsc_sequence_number, **kwargs):
         return df
 
     # histogram data
-    df_hist = pd.DataFrame(index=[0])
-    for c in ['<55%', '55%-65%', '65%-75%', '75%-85%', '85%-95%', '95%-105%', '105%-115%', '115%-125%', '125%-135%', '135%-145%', '145%-155%', '>155%']:
-        df_hist[c] = np.random.randint(0, 100)
+    bins = ['<55%', '55%-65%', '65%-75%', '75%-85%', '85%-95%', '95%-105%', '105%-115%', '115%-125%', '125%-135%', '135%-145%', '145%-155%', '>155%']
+    df_hist = pd.DataFrame(index=bins)
+    for b in bins:
+        df_hist.loc[b, 'counts'] = np.random.randint(0, 100)
+        df_hist['bin_text'] = df_hist['counts']
 
     if kwargs['name'] == 'chart_histogram_table':
-        return df_hist
+        return df_hist.reset_index()
 
     if kwargs['name'] == 'chart_sample_histogram':
         return df_hist
