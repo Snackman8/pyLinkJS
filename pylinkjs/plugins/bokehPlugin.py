@@ -291,7 +291,11 @@ class pluginBokeh:
         df = pv['df'].head(1).reset_index().T[1:]
         df = df.rename(columns={df.columns[0]: 'value'})
         df['angle'] = df['value'] / df['value'].sum() * 2 * math.pi
+        df['text_angle'] = (df['value'] / df['value'].sum() * 2 * math.pi)
         df['color'] = pv['palette']
+        df["text_value"] = df['value'].astype(str)
+        df["text_value"] = df["text_value"].str.pad(12, side = "left")
+
         df.index.name = 'legend'
 
         return {'cds': bokeh.models.ColumnDataSource(df)}
@@ -307,6 +311,10 @@ class pluginBokeh:
         p.wedge(x=0, y=1, radius=0.4,
                 start_angle=bokeh.transform.cumsum('angle', include_zero=True), end_angle=bokeh.transform.cumsum('angle'),
                 line_color="white", fill_color='color', legend_field='legend', source=data['cds'])
+
+        labels = bokeh.models.LabelSet(x=0, y=1, text='text_value',
+                          angle=bokeh.transform.cumsum('text_angle', include_zero=True), source=data['cds'], text_color='white')
+        p.add_layout(labels)
 
         # don't show the grid or the axis
         p.axis.axis_label = None
