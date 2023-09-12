@@ -395,6 +395,11 @@ class pluginBokeh:
         data = {}
         palette = cls._configure_color_palette(pd.DataFrame(index=[0], columns=['A']))
 
+        # sanity check
+        if list(pv['df'].columns) == ['Blank']:
+            pv['df'] = pd.DataFrame(index=['0'])
+            pv['df']['counts'] = 1
+
         # convert
         df = pv['df'].copy()
         df.index.name = 'factors'
@@ -570,7 +575,7 @@ class pluginBokeh:
                 jsc.eval_js_code(js)
 
             if chart_type == 'histogram':
-                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{p_id}').x_range.factors = {json.dumps(data['factors'])};"""
+                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{p_id}').y_range.end={data['df']['counts'].max() * 1.1}"""
                 jsc.eval_js_code(js)
                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
                 jsc.eval_js_code(js)
