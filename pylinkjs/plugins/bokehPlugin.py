@@ -592,13 +592,14 @@ class pluginBokeh:
             div = f"<div id={div_id} style='margin:0 px; padding: 0px; width:100%; height:100%;'></div>"
             script = f"<script>{create_histogram_chart_js(div_id, pv, **kwargs)}</script>"
             return div + script
-        # if chart_type == 'table':
-        #     pv = self._prep_for_chart(**kwargs)
-        #     self.BOKEH_CONTEXT[jsc_id]['Figures'][kwargs['name']] = chart_type
-        #     div_id = f"div_{kwargs['name']}"
-        #     div = f"<div id={div_id} style='margin:0 px; padding: 0px; width:100%; height:100%;'></div>"
-        #     script = f"<script>{create_table_chart_js(div_id, pv, **kwargs)}</script>"
-        #     return div + script
+        if chart_type == 'table':
+            pv = self._prep_for_chart(**kwargs)
+            self.BOKEH_CONTEXT[jsc_id]['Figures'][kwargs['name']] = chart_type
+            self.BOKEH_CONTEXT[jsc_id]['kwargs'][kwargs['name']] = kwargs
+            div_id = f"div_{kwargs['name']}"
+            div = f"<div id={div_id} style='margin:0 px; padding: 0px; width:100%; height:100%;'></div>"
+            script = f"<script>{create_table_chart_js(div_id, pv, **kwargs)}</script>"
+            return div + script
 
 
         # call the sub function to actually generate the chart
@@ -683,11 +684,11 @@ class pluginBokeh:
                 jsc.eval_js_code(js)
                 print(js)
                 return
-            # if chart_type == 'table':
-            #     js = update_table_chart_js(pv, chart_name)
-            #     jsc.eval_js_code(js)
-            #     print(js)
-            #     return
+            if chart_type == 'table':
+                js = update_table_chart_js(pv, chart_name, **kwargs)
+                jsc.eval_js_code(js)
+                print(js)
+                return
         
         
         p_id = cls.BOKEH_CONTEXT[jsc._jsc_id]['Document'].get_model_by_name(chart_name).id
