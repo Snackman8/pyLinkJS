@@ -90,8 +90,11 @@ def btn_refresh_charts_with_new_data_clicked(jsc, columns):
     # update the charts
     for chart_name in ['chart_sample_hbar', 'chart_sample_line', 'chart_sample_pie', 'chart_sample_table', 'chart_sample_vbar',
                        'chart_sample_histogram', 'chart_histogram_table']:
-        df = get_data(jsc.get_id(), jsc.get_sequence_number(), name=chart_name)
-        jsc.update_chart(chart_name, df)
+        try:
+            df = get_data(jsc.get_id(), jsc.get_sequence_number(), name=chart_name)
+            jsc.update_chart(chart_name, df)
+        except:
+            pass
 
 
 def btn_refresh_charts_with_cached_data_clicked(jsc):
