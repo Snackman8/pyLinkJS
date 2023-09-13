@@ -47,7 +47,6 @@ def create_chart_js(target_div_id, pv, **kwargs):
 
 def update_chart_js(pv, chart_name=None, **kwargs):
     df = create_chart_df(pv)
-    print(df)
     
     js = prepare_for_chart_update_js(chart_name, df)
 
@@ -66,7 +65,6 @@ def update_chart_js(pv, chart_name=None, **kwargs):
         f.y_range = new Bokeh.Range1d({{start:0, end: {int(df['counts'].max() * 1.1)} }});
         """
 
-    print(df)
 
     kwd = {}
     kwd['source'] = 'cds'

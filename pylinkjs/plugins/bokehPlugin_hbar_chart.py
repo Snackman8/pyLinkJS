@@ -70,7 +70,6 @@ def create_chart_js(target_div_id, pv, **kwargs):
 def update_chart_js(pv, chart_name=None, **kwargs):
     factors, cds = create_chart_factors_cds(pv, flip_factors=kwargs.get('flip_factors', False))
     df = cds.to_df()
-    print(df)
     cds_data_json = json.dumps(df.reset_index().to_dict(orient='list'))
     js = f"""
         var plt = Bokeh.Plotting;

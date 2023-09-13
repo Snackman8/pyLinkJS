@@ -16,12 +16,11 @@ def create_chart_df(pv):
     df['angle'] = df['value'] / df['value'].sum() * 2 * math.pi
     df['color'] = pv['palette']
     df["text_value"] = df['value'].astype(str)
-    df["text_value"] = df["text_value"].str.pad(12, side = "left")
+    df["text_value"] = df["text_value"].str.pad(6, side = "left")
     df['end_angle'] = df['angle'].cumsum()
     df['start_angle'] = df['end_angle'].shift(1).fillna(0)
     df['text_angle'] = (df['start_angle'] + df['end_angle']) / 2
     df.index.name = 'legend'
-    print(df.to_string())
     return df
 
 
@@ -30,6 +29,8 @@ def create_chart_js(target_div_id, pv, **kwargs):
     js = f"""
         var plt = Bokeh.Plotting;
         var f = new plt.Figure({pv['figure_kwargs']});
+        f.grid.visible = false;
+        f.axis.visible = false;
         """        
     js += update_chart_js(pv, **kwargs)
     js += f"plt.show(f, '#{target_div_id}');"
@@ -41,7 +42,6 @@ def update_chart_js(pv, chart_name=None, **kwargs):
     df = create_chart_df(pv)
 
     cds_data_json = json.dumps(df.reset_index().to_dict(orient='list'))
-    print(cds_data_json)
     js = f"""
         var plt = Bokeh.Plotting;
         var data_json = JSON.parse('{cds_data_json}');
@@ -115,12 +115,13 @@ def update_chart_js(pv, chart_name=None, **kwargs):
             
             // make sure to push the renderer to the autoranger
             f.x_range.renderers.push(wo);
-
-            var lso = new Bokeh.LabelSet({{source: cds, x: 0, y: 0, text: {{field: 'text_value'}}, level: 'glyph', 'text_color': 'white', angle: {{field: 'start_angle'}}}})
+/*
+            var lso = new Bokeh.LabelSet({{source: cds, x: 0, y: 0, text: {{field: 'text_value'}}, level: 'glyph', 'text_color': 'white', angle: {{field: 'text_angle'}}}})
             f.add_layout(lso);
             f.tags.push(lso);
 
-            pie_lso = lso;            
+            pie_lso = lso;
+*/                        
         """
 
         # labels = bokeh.models.LabelSet(x=0, y=1, text='text_value',
@@ -142,5 +143,4 @@ def update_chart_js(pv, chart_name=None, **kwargs):
     #         f.text({{ {kwds} }});
     #         """
         
-    print(js)
     return js

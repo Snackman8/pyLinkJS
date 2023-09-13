@@ -662,32 +662,26 @@ class pluginBokeh:
             if chart_type == 'line':                 
                 js = update_line_chart_js(pv, chart_name, **kwargs)
                 jsc.eval_js_code(js, blocking=False)
-                print(js)
                 return
             if chart_type == 'pie':                 
                 js = update_pie_chart_js(pv, chart_name, **kwargs)
                 jsc.eval_js_code(js, blocking=False)
-                print(js)
                 return
             if chart_type == 'hbar':                 
                 js = update_hbar_chart_js(pv, chart_name, **kwargs)
                 jsc.eval_js_code(js, blocking=False)
-                print(js)
                 return
             if chart_type == 'vbar':
                 js = update_vbar_chart_js(pv, chart_name, **kwargs)
                 jsc.eval_js_code(js, blocking=False)
-                print(js)
                 return
             if chart_type == 'histogram':
                 js = update_histogram_chart_js(pv, chart_name, **kwargs)
                 jsc.eval_js_code(js, blocking=False)
-                print(js)
                 return
             if chart_type == 'table':
                 js = update_table_chart_js(pv, chart_name, **kwargs)
                 jsc.eval_js_code(js, blocking=False)
-                print(js)
                 return
         
         
