@@ -664,7 +664,7 @@ class pluginBokeh:
                 jsc.eval_js_code(js, blocking=False)
                 return
             if chart_type == 'pie':                 
-                js = update_pie_chart_js(pv, chart_name, **kwargs)
+                js = update_pie_chart_js(pv, **kwargs)
                 jsc.eval_js_code(js, blocking=False)
                 return
             if chart_type == 'hbar':                 
