@@ -113,7 +113,7 @@ def update_chart_js(pv, **kwargs):
               var cds = new Bokeh.ColumnDataSource({{'data': data_json}}); \n"""
     
     # search for the figure
-    if kwargs.get('creating_chart', False):
+    if not kwargs.get('creating_chart', False):
         js += f""" var f;
                    for (let i = 0; i < Bokeh.documents.length; i++) {{
                        f = Bokeh.documents[i].get_model_by_name('{kwargs['name']}');

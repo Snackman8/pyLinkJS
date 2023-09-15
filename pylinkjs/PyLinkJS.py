@@ -38,6 +38,7 @@ from playwright.sync_api import sync_playwright
 ALL_JSCLIENTS = []
 RETVALS = {}
 DEFAULT_PRINT_TIMEOUT = 10
+INITIAL_JSC_MAPPINGS = {}
 
 
 # --------------------------------------------------
@@ -810,7 +811,9 @@ class MainHandler(BaseHandler):
             template_vars = self.application.settings.get('global_template_vars', {})
             template_vars['request_path'] = self.request.path
             template_vars['jsc_id'] = '0.' + str(uuid.uuid4())
+            template_vars['page_instance_id'] = '0.' + str(uuid.uuid4())
             template_vars['jsc_sequence_number'] = 0
+            INITIAL_JSC_MAPPINGS[template_vars['jsc_id']] = template_vars['page_instance_id']
             self.write(t.generate(**template_vars))
             self.finish()
             return
@@ -848,6 +851,7 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
         self.set_nodelay(True)
         jsc_id = self.request.uri.split('/')[2]
         self._jsc = PyLinkJSClient(self, jsc_id, threading.get_ident(), self.application.settings['extra_settings'])
+        self._jsc.page_instance_id = INITIAL_JSC_MAPPINGS.get(jsc_id, None)
         self._all_jsclients.append(self._jsc)
         for func in self.application.settings['on_context_open']:
             func(self._jsc)

@@ -6,6 +6,7 @@
 import json
 import math
 import time
+import uuid
 import pandas as pd
 import bokeh.embed
 import bokeh.models
@@ -62,17 +63,18 @@ class pluginBokeh:
     @classmethod
     def on_context_close(cls, jsc):
         # delete the bokeh document associated with js clients that are closing
-        del cls.BOKEH_CONTEXT[jsc._jsc_id]
+        pass
+#        del cls.BOKEH_CONTEXT[jsc.page_instance_id]
 
     @classmethod
     def on_context_open(cls, jsc):
         # create a new bokeh document if needed for this js client.  this may have been created
         # during page template rendering
-        if jsc._jsc_id not in cls.BOKEH_CONTEXT:
-            cls.BOKEH_CONTEXT[jsc._jsc_id] = {}
-        if 'Document' not in cls.BOKEH_CONTEXT[jsc._jsc_id]:
-            cls.BOKEH_CONTEXT[jsc._jsc_id]['Document'] = bokeh.plotting.Document()
-            cls.BOKEH_CONTEXT[jsc._jsc_id]['Document_Index'] = 0
+        if jsc.page_instance_id not in cls.BOKEH_CONTEXT:
+            cls.BOKEH_CONTEXT[jsc.page_instance_id] = {}
+        if 'Document' not in cls.BOKEH_CONTEXT[jsc.page_instance_id]:
+            cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document'] = bokeh.plotting.Document()
+            cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document_Index'] = 0
 
     # --------------------------------------------------
     #    Private Functions
@@ -542,60 +544,60 @@ class pluginBokeh:
     #     # success!
     #     return p
 
-    def _create_chart(self, chart_type, jsc_id, jsc_sequence_number=0, **kwargs):
+    def _create_chart(self, chart_type, page_instance_id, jsc_sequence_number=0, **kwargs):
         # create the document if needed
-        if jsc_id not in self.BOKEH_CONTEXT:
-            self.BOKEH_CONTEXT[jsc_id] = {}
-            self.BOKEH_CONTEXT[jsc_id]['Figures'] = {}
-            self.BOKEH_CONTEXT[jsc_id]['kwargs'] = {}
-        if 'Document' not in self.BOKEH_CONTEXT[jsc_id]:
-            self.BOKEH_CONTEXT[jsc_id]['Document'] = bokeh.plotting.Document()
-            self.BOKEH_CONTEXT[jsc_id]['Document_Index'] = 0
+        if page_instance_id not in self.BOKEH_CONTEXT:
+            self.BOKEH_CONTEXT[page_instance_id] = {}
+            self.BOKEH_CONTEXT[page_instance_id]['Figures'] = {}
+            self.BOKEH_CONTEXT[page_instance_id]['kwargs'] = {}
+        if 'Document' not in self.BOKEH_CONTEXT[page_instance_id]:
+            self.BOKEH_CONTEXT[page_instance_id]['Document'] = bokeh.plotting.Document()
+            self.BOKEH_CONTEXT[page_instance_id]['Document_Index'] = 0
 
         if chart_type == 'line':
             pv = self._prep_for_chart(**kwargs)
-            self.BOKEH_CONTEXT[jsc_id]['Figures'][kwargs['name']] = chart_type
-            self.BOKEH_CONTEXT[jsc_id]['kwargs'][kwargs['name']] = kwargs
+            self.BOKEH_CONTEXT[page_instance_id]['Figures'][kwargs['name']] = chart_type
+            self.BOKEH_CONTEXT[page_instance_id]['kwargs'][kwargs['name']] = kwargs
             div_id = f"div_{kwargs['name']}"
             div = f"<div id={div_id} style='margin:0 px; padding: 0px; width:100%; height:100%;'></div>"
             script = f"<script>{create_line_chart_js(div_id, pv, **kwargs)}</script>"
             return div + script
         if chart_type == 'pie':
             pv = self._prep_for_chart(**kwargs)
-            self.BOKEH_CONTEXT[jsc_id]['Figures'][kwargs['name']] = chart_type
-            self.BOKEH_CONTEXT[jsc_id]['kwargs'][kwargs['name']] = kwargs
+            self.BOKEH_CONTEXT[page_instance_id]['Figures'][kwargs['name']] = chart_type
+            self.BOKEH_CONTEXT[page_instance_id]['kwargs'][kwargs['name']] = kwargs
             div_id = f"div_{kwargs['name']}"
             div = f"<div id={div_id} style='margin:0 px; padding: 0px; width:100%; height:100%;'></div>"
             script = f"<script>{create_pie_chart_js(div_id, pv, **kwargs)}</script>"
             return div + script
         if chart_type == 'hbar':
             pv = self._prep_for_chart(**kwargs)
-            self.BOKEH_CONTEXT[jsc_id]['Figures'][kwargs['name']] = chart_type
-            self.BOKEH_CONTEXT[jsc_id]['kwargs'][kwargs['name']] = kwargs
+            self.BOKEH_CONTEXT[page_instance_id]['Figures'][kwargs['name']] = chart_type
+            self.BOKEH_CONTEXT[page_instance_id]['kwargs'][kwargs['name']] = kwargs
             div_id = f"div_{kwargs['name']}"
             div = f"<div id={div_id} style='margin:0 px; padding: 0px; width:100%; height:100%;'></div>"
             script = f"<script>{create_hbar_chart_js(div_id, pv, **kwargs)}</script>"
             return div + script
         if chart_type == 'vbar':
             pv = self._prep_for_chart(**kwargs)
-            self.BOKEH_CONTEXT[jsc_id]['Figures'][kwargs['name']] = chart_type
-            self.BOKEH_CONTEXT[jsc_id]['kwargs'][kwargs['name']] = kwargs
+            self.BOKEH_CONTEXT[page_instance_id]['Figures'][kwargs['name']] = chart_type
+            self.BOKEH_CONTEXT[page_instance_id]['kwargs'][kwargs['name']] = kwargs
             div_id = f"div_{kwargs['name']}"
             div = f"<div id={div_id} style='margin:0 px; padding: 0px; width:100%; height:100%;'></div>"
             script = f"<script>{create_vbar_chart_js(div_id, pv, **kwargs)}</script>"
             return div + script
         if chart_type == 'histogram':
             pv = self._prep_for_chart(**kwargs)
-            self.BOKEH_CONTEXT[jsc_id]['Figures'][kwargs['name']] = chart_type
-            self.BOKEH_CONTEXT[jsc_id]['kwargs'][kwargs['name']] = kwargs
+            self.BOKEH_CONTEXT[page_instance_id]['Figures'][kwargs['name']] = chart_type
+            self.BOKEH_CONTEXT[page_instance_id]['kwargs'][kwargs['name']] = kwargs
             div_id = f"div_{kwargs['name']}"
             div = f"<div id={div_id} style='margin:0 px; padding: 0px; width:100%; height:100%;'></div>"
             script = f"<script>{create_histogram_chart_js(div_id, pv, **kwargs)}</script>"
             return div + script
         if chart_type == 'table':
             pv = self._prep_for_chart(**kwargs)
-            self.BOKEH_CONTEXT[jsc_id]['Figures'][kwargs['name']] = chart_type
-            self.BOKEH_CONTEXT[jsc_id]['kwargs'][kwargs['name']] = kwargs
+            self.BOKEH_CONTEXT[page_instance_id]['Figures'][kwargs['name']] = chart_type
+            self.BOKEH_CONTEXT[page_instance_id]['kwargs'][kwargs['name']] = kwargs
             div_id = f"div_{kwargs['name']}"
             div = f"<div id={div_id} style='margin:0 px; padding: 0px; width:100%; height:100%;'></div>"
             script = f"<script>{create_table_chart_js(div_id, pv, **kwargs)}</script>"
@@ -607,7 +609,7 @@ class pluginBokeh:
             if self._get_data_handler:
                 if 'df' not in kwargs:
                     kwargs['__creation'] = True
-                    kwargs['df'] = self._get_data_handler(jsc_id, jsc_sequence_number=jsc_sequence_number, **kwargs)
+                    kwargs['df'] = self._get_data_handler(page_instance_id, jsc_sequence_number=jsc_sequence_number, **kwargs)
 
             # prep for the chart
             pv = self._prep_for_chart(**kwargs)
@@ -652,10 +654,10 @@ class pluginBokeh:
         
         # new style update
         # ---------------
-        if chart_name in cls.BOKEH_CONTEXT[jsc._jsc_id]['Figures']:
-            chart_type = cls.BOKEH_CONTEXT[jsc._jsc_id]['Figures'][chart_name]
-            if chart_name in cls.BOKEH_CONTEXT[jsc._jsc_id]['kwargs']:
-                kwargs = cls.BOKEH_CONTEXT[jsc._jsc_id]['kwargs'][chart_name]
+        if chart_name in cls.BOKEH_CONTEXT[jsc.page_instance_id]['Figures']:
+            chart_type = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Figures'][chart_name]
+            if chart_name in cls.BOKEH_CONTEXT[jsc.page_instance_id]['kwargs']:
+                kwargs = cls.BOKEH_CONTEXT[jsc.page_instance_id]['kwargs'][chart_name]
             else:
                 kwargs = {}
 
@@ -685,14 +687,14 @@ class pluginBokeh:
                 return
         
         
-        p_id = cls.BOKEH_CONTEXT[jsc._jsc_id]['Document'].get_model_by_name(chart_name).id
-        chart_type = cls.BOKEH_CONTEXT[jsc._jsc_id]['Charts'][p_id]
+        p_id = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document'].get_model_by_name(chart_name).id
+        chart_type = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Charts'][p_id]
         if chart_type == 'table':
-            cds_id = cls.BOKEH_CONTEXT[jsc._jsc_id]['Document'].get_model_by_name(chart_name).source.id
+            cds_id = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document'].get_model_by_name(chart_name).source.id
         else:
-            cds_id = cls.BOKEH_CONTEXT[jsc._jsc_id]['Document'].get_model_by_name(chart_name).renderers[0].data_source.id
+            cds_id = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document'].get_model_by_name(chart_name).renderers[0].data_source.id
 
-        doc_index = cls.BOKEH_CONTEXT[jsc._jsc_id]['Charts_Doc_Index'][p_id]
+        doc_index = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Charts_Doc_Index'][p_id]
 
         if hasattr(cls, f'_create_{chart_type}_chart_data'):
             func = getattr(cls, f'_create_{chart_type}_chart_data')
@@ -711,7 +713,7 @@ class pluginBokeh:
                 jsc.eval_js_code(js)
 
                 # add another line glyph if needed
-                p = cls.BOKEH_CONTEXT[jsc._jsc_id]['Document'].get_model_by_name(chart_name)
+                p = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document'].get_model_by_name(chart_name)
                 palette = cls._configure_color_palette(df)
                 for i in range(1, len(pv['cds'].column_names)):
                     if i > len(p.renderers):

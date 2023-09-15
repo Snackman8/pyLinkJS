@@ -4,6 +4,7 @@
     var timerID = 0;
     var request_path = "{{request_path}}";
     var jsc_id = "{{jsc_id}}"
+    var page_instance_id = "{{page_instance_id}}"
     var ready_finished = 0;
 
 
