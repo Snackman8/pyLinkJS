@@ -1,5 +1,5 @@
 import pandas as pd
-from .bokehPlugin_util import promote_kwargs_prefix, prepare_for_chart_update_js, configure_color_palette
+from .bokehPlugin_util import promote_kwargs_prefix, prepare_for_chart_update_js, configure_color_palette, post_process_figure
 
 def create_chart_df(pv):
     """
@@ -41,6 +41,7 @@ def create_chart_js(target_div_id, pv, **kwargs):
         var plt = Bokeh.Plotting;
         var f = new plt.Figure({pv['figure_kwargs']});
         """
+    js += post_process_figure(**kwargs)
     js += update_chart_js(pv, **kwargs)
     js += f"plt.show(f, '#{target_div_id}');"
     return js

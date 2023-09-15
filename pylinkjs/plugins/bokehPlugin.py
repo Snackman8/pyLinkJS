@@ -269,17 +269,18 @@ class pluginBokeh:
     #     # success!
     #     return p
 
-    @classmethod
-    def _create_line_chart_data(cls, pv):
-        """
-                    A   B   C
-                X            
-                0  21   3  24
-                1  60  24  64
-                2  72  68  13
-        """
-        return {'cds': bokeh.models.ColumnDataSource(pv['df'])}
-    
+    # @classmethod
+    # def _create_line_chart_data(cls, pv):
+    #     """
+    #                 A   B   C
+    #             X            
+    #             0  21   3  24
+    #             1  60  24  64
+    #             2  72  68  13
+    #     """
+    #     return {'cds': bokeh.models.ColumnDataSource(pv['df'])}
+    #
+
     # @classmethod
     # def _create_line_chart_js(cls, target_div_id, pv, **kwargs):
     #     """ Create the javascript to create a line chart """
@@ -430,29 +431,29 @@ class pluginBokeh:
     #     # success!
     #     return p
 
-    @classmethod
-    def _create_table_chart_data(cls, pv):
-        return {'cds': bokeh.models.ColumnDataSource(pv['df'])}
-
-    @classmethod
-    def _create_table_chart(cls, pv, **kwargs):
-        """ Create a line chart """
-        # create the data
-        data = cls._create_line_chart_data(pv)
-
-        # plot the table
-        table_kwargs = pv['figure_kwargs']
-        table_kwargs.update({'source': data['cds']})
-        table_kwargs.update(promote_kwargs_prefix(['__table__'], kwargs))
-        table_kwargs['columns'] = [bokeh.models.widgets.TableColumn(field=Ci, title=Ci) for Ci in pv['df'].columns]
-        del table_kwargs['title']
-
-        # # create the figure
-        p = bokeh.models.widgets.DataTable(**table_kwargs)
-#        p = DataTable(columns=columns, source=bokeh.models.ColumnDataSource(pv['df']))
-
-        # success!
-        return p
+#     @classmethod
+#     def _create_table_chart_data(cls, pv):
+#         return {'cds': bokeh.models.ColumnDataSource(pv['df'])}
+#
+#     @classmethod
+#     def _create_table_chart(cls, pv, **kwargs):
+#         """ Create a line chart """
+#         # create the data
+#         data = cls._create_line_chart_data(pv)
+#
+#         # plot the table
+#         table_kwargs = pv['figure_kwargs']
+#         table_kwargs.update({'source': data['cds']})
+#         table_kwargs.update(promote_kwargs_prefix(['__table__'], kwargs))
+#         table_kwargs['columns'] = [bokeh.models.widgets.TableColumn(field=Ci, title=Ci) for Ci in pv['df'].columns]
+#         del table_kwargs['title']
+#
+#         # # create the figure
+#         p = bokeh.models.widgets.DataTable(**table_kwargs)
+# #        p = DataTable(columns=columns, source=bokeh.models.ColumnDataSource(pv['df']))
+#
+#         # success!
+#         return p
 
     # @classmethod
     # def _create_varea_chart_data(cls, pv):
@@ -603,47 +604,48 @@ class pluginBokeh:
             script = f"<script>{create_table_chart_js(div_id, pv, **kwargs)}</script>"
             return div + script
 
-
-        # call the sub function to actually generate the chart
-        if hasattr(self, f'_create_{chart_type}_chart'):
-            if self._get_data_handler:
-                if 'df' not in kwargs:
-                    kwargs['__creation'] = True
-                    kwargs['df'] = self._get_data_handler(page_instance_id, jsc_sequence_number=jsc_sequence_number, **kwargs)
-
-            # prep for the chart
-            pv = self._prep_for_chart(**kwargs)
-
-            # # success!
-            # if chart_type == 'line':
-            #     self.BOKEH_CONTEXT[jsc_id]['Figures'][kwargs['name']] = chart_type
-            #     div_id = f"div_{kwargs['name']}"
-            #     div = f"<div id={div_id} style='margin:0 px; padding: 0px; width:100%; height:100%;'></div>"
-            #     script = f"<script>{self._create_line_chart_js(div_id, pv, **kwargs)}</script>"
-            #     return div + script
-    
-    
-
-            # create the chart
-            p = getattr(self, f'_create_{chart_type}_chart')(pv, **kwargs)
-
-            # add to the current document
-            self.BOKEH_CONTEXT[jsc_id]['Document'].add_root(p)
-            if 'Charts' not in self.BOKEH_CONTEXT[jsc_id]:
-                self.BOKEH_CONTEXT[jsc_id]['Charts'] = {}
-            if 'Charts_Doc_Index' not in self.BOKEH_CONTEXT[jsc_id]:
-                self.BOKEH_CONTEXT[jsc_id]['Charts_Doc_Index'] = {}
-            self.BOKEH_CONTEXT[jsc_id]['Charts'][p.id] = chart_type
-            self.BOKEH_CONTEXT[jsc_id]['Charts_Doc_Index'][p.id] = self.BOKEH_CONTEXT[jsc_id]['Document_Index']
-            self.BOKEH_CONTEXT[jsc_id]['Document_Index'] = self.BOKEH_CONTEXT[jsc_id]['Document_Index'] + 1
-
-
-            
-            
-            script, div = bokeh.embed.components(p)
-            return script + div
-        else:
-            raise Exception(f'No chart type of "{chart_type}" is available')
+        return '<div>Unable to create chart</div>'
+        #
+        # # call the sub function to actually generate the chart
+        # if hasattr(self, f'_create_{chart_type}_chart'):
+        #     if self._get_data_handler:
+        #         if 'df' not in kwargs:
+        #             kwargs['__creation'] = True
+        #             kwargs['df'] = self._get_data_handler(page_instance_id, jsc_sequence_number=jsc_sequence_number, **kwargs)
+        #
+        #     # prep for the chart
+        #     pv = self._prep_for_chart(**kwargs)
+        #
+        #     # # success!
+        #     # if chart_type == 'line':
+        #     #     self.BOKEH_CONTEXT[jsc_id]['Figures'][kwargs['name']] = chart_type
+        #     #     div_id = f"div_{kwargs['name']}"
+        #     #     div = f"<div id={div_id} style='margin:0 px; padding: 0px; width:100%; height:100%;'></div>"
+        #     #     script = f"<script>{self._create_line_chart_js(div_id, pv, **kwargs)}</script>"
+        #     #     return div + script
+        #
+        #
+        #
+        #     # create the chart
+        #     p = getattr(self, f'_create_{chart_type}_chart')(pv, **kwargs)
+        #
+        #     # add to the current document
+        #     self.BOKEH_CONTEXT[jsc_id]['Document'].add_root(p)
+        #     if 'Charts' not in self.BOKEH_CONTEXT[jsc_id]:
+        #         self.BOKEH_CONTEXT[jsc_id]['Charts'] = {}
+        #     if 'Charts_Doc_Index' not in self.BOKEH_CONTEXT[jsc_id]:
+        #         self.BOKEH_CONTEXT[jsc_id]['Charts_Doc_Index'] = {}
+        #     self.BOKEH_CONTEXT[jsc_id]['Charts'][p.id] = chart_type
+        #     self.BOKEH_CONTEXT[jsc_id]['Charts_Doc_Index'][p.id] = self.BOKEH_CONTEXT[jsc_id]['Document_Index']
+        #     self.BOKEH_CONTEXT[jsc_id]['Document_Index'] = self.BOKEH_CONTEXT[jsc_id]['Document_Index'] + 1
+        #
+        #
+        #
+        #
+        #     script, div = bokeh.embed.components(p)
+        #     return script + div
+        # else:
+        #     raise Exception(f'No chart type of "{chart_type}" is available')
 
 
 
@@ -685,119 +687,119 @@ class pluginBokeh:
                 js = update_table_chart_js(pv, chart_name, **kwargs)
                 jsc.eval_js_code(js, blocking=False)
                 return
-        
-        
-        p_id = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document'].get_model_by_name(chart_name).id
-        chart_type = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Charts'][p_id]
-        if chart_type == 'table':
-            cds_id = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document'].get_model_by_name(chart_name).source.id
-        else:
-            cds_id = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document'].get_model_by_name(chart_name).renderers[0].data_source.id
-
-        doc_index = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Charts_Doc_Index'][p_id]
-
-        if hasattr(cls, f'_create_{chart_type}_chart_data'):
-            func = getattr(cls, f'_create_{chart_type}_chart_data')
-            data = func(pv)
-            new_val = data['cds'].to_df().to_dict(orient='list')
-
-            if chart_type == 'hbar':
-                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{p_id}').y_range.factors = {json.dumps(data['factors'])};"""
-                jsc.eval_js_code(js)
-                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
-                jsc.eval_js_code(js)
-
-            if chart_type == 'line':
-                # update the data in javascript
-                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
-                jsc.eval_js_code(js)
-
-                # add another line glyph if needed
-                p = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document'].get_model_by_name(chart_name)
-                palette = cls._configure_color_palette(df)
-                for i in range(1, len(pv['cds'].column_names)):
-                    if i > len(p.renderers):
-                        c = pv['cds'].column_names[i]
-                        line_kwargs = dict(source=pv['cds'], x='X', y=c, color=palette[i - 1], legend_label=c)
-                        p.line(**line_kwargs)
-
-                        js = f"""
-                            // create a new line
-                            var line = new Bokeh.Line({{x: {{ field: "X" }},
-                                                        y: {{ field: "{c}" }},
-                                                        line_color: "{palette[i - 1]}",
-                                                        line_width: 2}});
-                            var plot = Bokeh.documents[{doc_index}].get_model_by_id('{p_id}');
-                            var cds = Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}');
-                            plot.add_glyph(line, cds);
-
-                            // create a new legend item for the line
-                            var legends = Bokeh.documents[{doc_index}].get_model_by_id('{p.legend.id}');
-                            var legenditem = new Bokeh.LegendItem({{label: "{c}"}});
-                            legends.items.push(legenditem);
-                            legenditem.renderers.push(plot.renderers[plot.renderers.length - 1]);
-                            legends.change.emit();"""
-                        print(js)
-                        jsc.eval_js_code(js)
-                    else:
-                        # make visible any hidden lines and legends
-                        js = f"""
-                            var plot = Bokeh.documents[{doc_index}].get_model_by_id('{p_id}');
-                            var legends = Bokeh.documents[{doc_index}].get_model_by_id('{p.legend.id}');
-
-                            plot.renderers[{i - 1}].visible = true;
-                            legends.items[{i - 1}].visible = true;
-                            legends.change.emit();"""
-                        print(js)
-                        jsc.eval_js_code(js)
-
-                # hide and lines and legends not needed
-                print('***', len(pv['cds'].column_names), len(p.renderers))
-                for i in range(len(p.renderers), len(pv['cds'].column_names) - 1, -1):
-                    js = f"""
-                        var plot = Bokeh.documents[{doc_index}].get_model_by_id('{p_id}');
-                        var legends = Bokeh.documents[{doc_index}].get_model_by_id('{p.legend.id}');
-
-                        plot.renderers[{i - 1}].visible = false;
-                        legends.items[{i - 1}].visible = false;"""
-                    print(js)
-                    jsc.eval_js_code(js)
-
-            if chart_type == 'pie':
-                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
-                jsc.eval_js_code(js)
-
-            if chart_type == 'table':
-
-                js = f"""
-                var cds;
-                
-                for (let i = 0; i < Bokeh.documents.length; i++) {{
-                    cds = Bokeh.documents[i].get_model_by_id('{cds_id}');
-                    if (cds != null) {{
-                        break;
-                    }}
-                }}
-                
-                cds.data = {json.dumps(new_val)};
-    """ 
-
-                
-#                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
-                jsc.eval_js_code(js)
-
-            if chart_type == 'varea':
-                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
-                jsc.eval_js_code(js)
-
-            if chart_type == 'vbar':
-                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{p_id}').x_range.factors = {json.dumps(data['factors'])};"""
-                jsc.eval_js_code(js)
-                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
-                jsc.eval_js_code(js)
-
-            if chart_type == 'histogram':
-                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{p_id}').y_range.end={data['df']['counts'].max() * 1.1}"""
-                jsc.eval_js_code(js)
-                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
-                jsc.eval_js_code(js)
+#
+#
+#         p_id = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document'].get_model_by_name(chart_name).id
+#         chart_type = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Charts'][p_id]
+#         if chart_type == 'table':
+#             cds_id = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document'].get_model_by_name(chart_name).source.id
+#         else:
+#             cds_id = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document'].get_model_by_name(chart_name).renderers[0].data_source.id
+#
+#         doc_index = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Charts_Doc_Index'][p_id]
+#
+#         if hasattr(cls, f'_create_{chart_type}_chart_data'):
+#             func = getattr(cls, f'_create_{chart_type}_chart_data')
+#             data = func(pv)
+#             new_val = data['cds'].to_df().to_dict(orient='list')
+#
+#             if chart_type == 'hbar':
+#                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{p_id}').y_range.factors = {json.dumps(data['factors'])};"""
+#                 jsc.eval_js_code(js)
+#                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
+#                 jsc.eval_js_code(js)
+#
+#             if chart_type == 'line':
+#                 # update the data in javascript
+#                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
+#                 jsc.eval_js_code(js)
+#
+#                 # add another line glyph if needed
+#                 p = cls.BOKEH_CONTEXT[jsc.page_instance_id]['Document'].get_model_by_name(chart_name)
+#                 palette = cls._configure_color_palette(df)
+#                 for i in range(1, len(pv['cds'].column_names)):
+#                     if i > len(p.renderers):
+#                         c = pv['cds'].column_names[i]
+#                         line_kwargs = dict(source=pv['cds'], x='X', y=c, color=palette[i - 1], legend_label=c)
+#                         p.line(**line_kwargs)
+#
+#                         js = f"""
+#                             // create a new line
+#                             var line = new Bokeh.Line({{x: {{ field: "X" }},
+#                                                         y: {{ field: "{c}" }},
+#                                                         line_color: "{palette[i - 1]}",
+#                                                         line_width: 2}});
+#                             var plot = Bokeh.documents[{doc_index}].get_model_by_id('{p_id}');
+#                             var cds = Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}');
+#                             plot.add_glyph(line, cds);
+#
+#                             // create a new legend item for the line
+#                             var legends = Bokeh.documents[{doc_index}].get_model_by_id('{p.legend.id}');
+#                             var legenditem = new Bokeh.LegendItem({{label: "{c}"}});
+#                             legends.items.push(legenditem);
+#                             legenditem.renderers.push(plot.renderers[plot.renderers.length - 1]);
+#                             legends.change.emit();"""
+#                         print(js)
+#                         jsc.eval_js_code(js)
+#                     else:
+#                         # make visible any hidden lines and legends
+#                         js = f"""
+#                             var plot = Bokeh.documents[{doc_index}].get_model_by_id('{p_id}');
+#                             var legends = Bokeh.documents[{doc_index}].get_model_by_id('{p.legend.id}');
+#
+#                             plot.renderers[{i - 1}].visible = true;
+#                             legends.items[{i - 1}].visible = true;
+#                             legends.change.emit();"""
+#                         print(js)
+#                         jsc.eval_js_code(js)
+#
+#                 # hide and lines and legends not needed
+#                 print('***', len(pv['cds'].column_names), len(p.renderers))
+#                 for i in range(len(p.renderers), len(pv['cds'].column_names) - 1, -1):
+#                     js = f"""
+#                         var plot = Bokeh.documents[{doc_index}].get_model_by_id('{p_id}');
+#                         var legends = Bokeh.documents[{doc_index}].get_model_by_id('{p.legend.id}');
+#
+#                         plot.renderers[{i - 1}].visible = false;
+#                         legends.items[{i - 1}].visible = false;"""
+#                     print(js)
+#                     jsc.eval_js_code(js)
+#
+#             if chart_type == 'pie':
+#                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
+#                 jsc.eval_js_code(js)
+#
+#             if chart_type == 'table':
+#
+#                 js = f"""
+#                 var cds;
+#
+#                 for (let i = 0; i < Bokeh.documents.length; i++) {{
+#                     cds = Bokeh.documents[i].get_model_by_id('{cds_id}');
+#                     if (cds != null) {{
+#                         break;
+#                     }}
+#                 }}
+#
+#                 cds.data = {json.dumps(new_val)};
+#     """ 
+#
+#
+# #                js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
+#                 jsc.eval_js_code(js)
+#
+#             if chart_type == 'varea':
+#                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
+#                 jsc.eval_js_code(js)
+#
+#             if chart_type == 'vbar':
+#                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{p_id}').x_range.factors = {json.dumps(data['factors'])};"""
+#                 jsc.eval_js_code(js)
+#                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
+#                 jsc.eval_js_code(js)
+#
+#             if chart_type == 'histogram':
+#                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{p_id}').y_range.end={data['df']['counts'].max() * 1.1}"""
+#                 jsc.eval_js_code(js)
+#                 js = f"""Bokeh.documents[{doc_index}].get_model_by_id('{cds_id}').data = {json.dumps(new_val)};"""
+#                 jsc.eval_js_code(js)

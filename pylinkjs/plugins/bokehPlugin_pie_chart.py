@@ -5,7 +5,7 @@
 # --------------------------------------------------
 import json
 import math
-from .bokehPlugin_util import promote_kwargs_prefix
+from .bokehPlugin_util import promote_kwargs_prefix, post_process_figure
 
 
 # --------------------------------------------------
@@ -78,6 +78,7 @@ def create_chart_js(target_div_id, pv, **kwargs):
     js = f""" {{
               var plt = Bokeh.Plotting;
               var f = new plt.Figure({pv['figure_kwargs']}); \n"""
+    js += post_process_figure(**kwargs)              
     js += update_chart_js(pv, creating_chart=True, **kwargs)
     js += f"""plt.show(f, '#{target_div_id}'); \n"""
 

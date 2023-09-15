@@ -59,6 +59,13 @@ def promote_kwargs_prefix(prefixes, kwargs):
     return promoted
 
 
+def post_process_figure(**kwargs):
+    js = ''
+    if not kwargs.get('toolbar_visible', True):
+        js += """f.toolbar.visible = false; \n""" 
+    return js
+
+
 def prepare_for_chart_update_js(chart_name, df):
     cds_data_json = json.dumps(df.reset_index().to_dict(orient='list'))
     js = f"""
