@@ -76,7 +76,7 @@
       </div>
       <div class="cell">
         <h4>Sample Bokeh Table</h4>
-          {% raw create_chart(name='chart_sample_table', jsc_id=jsc_id, chart_type='table', autosize_mode="fit_columns", sizing_mode="stretch_both") %}
+          {% raw create_chart(name='chart_sample_table', page_instance_id=page_instance_id, chart_type='table', autosize_mode="fit_columns", sizing_mode="stretch_both") %}
       </div>
     </div>
   </div>
@@ -86,11 +86,11 @@
     <div class="row_column_container">
       <div class="cell">
         <h4>Sample Bokeh Line Chart</h4>
-        {% raw create_chart(name='chart_sample_line', jsc_id=jsc_id, chart_type='line', title='Example Line Chart', sizing_mode="stretch_both") %}
+        {% raw create_chart(name='chart_sample_line', page_instance_id=page_instance_id, chart_type='line', title='Example Line Chart', sizing_mode="stretch_both") %}
       </div>
       <div class="cell">
         <h4>Sample Bokeh Pie Chart</h4>
-        {% raw create_chart(name='chart_sample_pie', jsc_id=jsc_id, chart_type='pie', title='Example Pie chart', sizing_mode="stretch_both", __wedge__radius=0.2) %}
+        {% raw create_chart(name='chart_sample_pie', page_instance_id=page_instance_id, chart_type='pie', title='Example Pie chart', sizing_mode="stretch_both", __wedge__radius=0.2) %}
       </div>
     </div>
   </div>
@@ -100,11 +100,11 @@
     <div class="row_column_container">
       <div class="cell">
         <h4>Sample Bokeh HBar Chart</h4>
-        {% raw create_chart(name='chart_sample_hbar', jsc_id=jsc_id, chart_type='hbar', title='Example Horizontal Bar Chart', sizing_mode="stretch_both") %}
+        {% raw create_chart(name='chart_sample_hbar', page_instance_id=page_instance_id, chart_type='hbar', title='Example Horizontal Bar Chart', sizing_mode="stretch_both") %}
       </div>
       <div class="cell">
         <h4>Sample Bokeh VBar Chart</h4>
-        {% raw create_chart(name='chart_sample_vbar', jsc_id=jsc_id, chart_type='vbar', title='Example Vertical Bar chart', sizing_mode="stretch_both") %}
+        {% raw create_chart(name='chart_sample_vbar', page_instance_id=page_instance_id, chart_type='vbar', title='Example Vertical Bar chart', sizing_mode="stretch_both") %}
       </div>
     </div>
   </div>
@@ -114,11 +114,11 @@
     <div class="row_column_container">
       <div class="cell">
         <h4>Sample Histogram Dataframe</h4>
-        {% raw create_chart(name='chart_histogram_table', jsc_id=jsc_id, chart_type='table', autosize_mode="fit_columns", sizing_mode="stretch_both") %}
+        {% raw create_chart(name='chart_histogram_table', page_instance_id=page_instance_id, chart_type='table', autosize_mode="fit_columns", sizing_mode="stretch_both") %}
       </div>
       <div class="cell">
         <h4>Sample Bokeh Histogram Chart</h4>
-        {% raw create_chart(name='chart_sample_histogram', jsc_id=jsc_id, chart_type='histogram', title='Example Histogram chart', sizing_mode="stretch_both",
+        {% raw create_chart(name='chart_sample_histogram', page_instance_id=page_instance_id, chart_type='histogram', title='Example Histogram chart', sizing_mode="stretch_both",
                             __histogram__width=0.99, __histogram__line_color='"white"', __histogram__fill_color='"pink"'
         ) %}
       </div>
