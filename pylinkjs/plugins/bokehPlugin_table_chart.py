@@ -1,10 +1,17 @@
+# bokeh table chart generation code
+
+# --------------------------------------------------
+#    Imports
+# --------------------------------------------------
 import json
 import bokeh.embed
 import bokeh.models
 from .bokehPlugin_util import promote_kwargs_prefix
 
 
-
+# --------------------------------------------------
+#    Functions
+# --------------------------------------------------
 def create_chart_js(pv):  
     """ Create the javascript to create a chart
     
@@ -12,8 +19,14 @@ def create_chart_js(pv):
             target_div_id - id of the div which will contain the chart
             pv - dict of prepared values
                     'df' - dataframe passed in by user
-            kwargs - dict of keyword arguments
-                    'name' - name of the chart
+                    'div_id' - id of the div to target
+                    'figure_kwargs' - keyword args passed in that affect figure creation
+                        'name' - name of the chart
+                        (see bokeh Figure documentation for full list)
+                    'kwargs' - keyword arguments passed in during initial chart creation
+                        (keyword args prefaced with __wedge__ will be passed in for wedge creation.
+                         see Bokeh wedge documentation for full list of available keywords)
+                    'palette' - color palette to use for chart rendering
 
         Returns:
             javascript to create the initial chart
@@ -26,15 +39,11 @@ def update_chart_js(pv):
     """ update the chart with new data
     
         Args:
-            pv - dict of prepared values
-                    'df' - dataframe passed in by user
-                    'div_id' - id of the div which will contain the chart
-            kwargs - dict of keyword arguments
-                      'name' - name of the chart
+            pv - see create_chart_js documentation for pv documentation
 
         Returns:
-            javascript to create the initial chart
-    """    
+            javascript to update the chart with new data
+    """
     df = pv['df']
     cds = bokeh.models.ColumnDataSource(df)
     

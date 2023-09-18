@@ -7,9 +7,6 @@ import math
 from .bokehPlugin_util import promote_kwargs_prefix, post_process_figure, reset_figure
 
 
-
- 
-
 # --------------------------------------------------
 #    Functions
 # --------------------------------------------------

@@ -1,25 +1,42 @@
+# bokeh histogram chart generation code
+
+# --------------------------------------------------
+#    Imports
+# --------------------------------------------------
 import pandas as pd
 from .bokehPlugin_util import promote_kwargs_prefix, configure_color_palette, post_process_figure, reset_figure
 
-def create_chart_df(pv):
-    """
-           counts  bin_text
-<55%         79.0      79.0
-55%-65%      72.0      72.0
-65%-75%      25.0      25.0
-75%-85%      74.0      74.0
-85%-95%      52.0      52.0
-95%-105%     13.0      13.0
-105%-115%    26.0      26.0
-115%-125%    43.0      43.0
-125%-135%    63.0      63.0
-135%-145%    27.0      27.0
-145%-155%    50.0      50.0
->155%        79.0      79.0    
-    """
 
+# --------------------------------------------------
+#    Functions
+# --------------------------------------------------
+def create_chart_df(pv):
+    """ create dataframe for the chart from prepared values
+
+        Input Dataframe
+            Index is labels for histogram bins
+            counts column contains the counts for each bin
+            bin_text column contains the text to display above each bin
+
+               counts bin_text
+            A      91      A A
+            B      60      B B
+            C      99      C C
+
+        Args:
+            pv - dict of prepared values
+                    'df' - dataframe passed in by user
+
+        Returns:
+            dataframe specific to this type of chart
+
+                    value text     angle    color  end_angle  start_angle  text_angle
+            legend                                                                   
+            A          10   1A  1.047198  #1f77b4   1.047198     0.000000    0.523599
+            B          20   2B  2.094395  #ff7f0e   3.141593     1.047198    2.094395
+            C          30   3C  3.141593  #2ca02c   6.283185     3.141593    4.712389            
+    """
     # init, grab the first color off the palette using a fake dataframe
-#    data = {}
     palette = configure_color_palette(pd.DataFrame(index=[0], columns=['A']))
 
     # convert
@@ -34,8 +51,26 @@ def create_chart_df(pv):
         
     return df.reset_index()
 
+
 def create_chart_js(pv):
-    """ Create the javascript to create a line chart """
+    """ Create the javascript to create a chart
+    
+        Args:
+            target_div_id - id of the div which will contain the chart
+            pv - dict of prepared values
+                    'df' - dataframe passed in by user
+                    'div_id' - id of the div to target
+                    'figure_kwargs' - keyword args passed in that affect figure creation
+                        'name' - name of the chart
+                        (see bokeh Figure documentation for full list)
+                    'kwargs' - keyword arguments passed in during initial chart creation
+                        (keyword args prefaced with __wedge__ will be passed in for wedge creation.
+                         see Bokeh wedge documentation for full list of available keywords)
+                    'palette' - color palette to use for chart rendering
+
+        Returns:
+            javascript to create the initial chart
+    """
     pv['figure_kwargs']['x_range'] = []
     js = f"""
         var plt = Bokeh.Plotting;
@@ -47,6 +82,14 @@ def create_chart_js(pv):
     return js
 
 def update_chart_js(pv):
+    """ update the chart with new data
+    
+        Args:
+            pv - see create_chart_js documentation for pv documentation
+
+        Returns:
+            javascript to update the chart with new data
+    """
     df = create_chart_df(pv)
     
     js = reset_figure(df, pv['figure_kwargs']['name'])

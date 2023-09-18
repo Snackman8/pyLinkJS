@@ -1,19 +1,40 @@
+# bokeh horizontal bar chart generation code
+
+# --------------------------------------------------
+#    Imports
+# --------------------------------------------------
 import bokeh.models
 from .bokehPlugin_util import post_process_figure, promote_kwargs_prefix, reset_figure
 
+
+# --------------------------------------------------
+#    Functions
+# --------------------------------------------------
 def create_chart_factors_cds(pv, flip_factors):
-    """
-    A   B   C
-X            
-0  25  13   8
-1  53  64  52
-2   0  15  80
-3  91  31   3
-4  14  54  19
-5  30  31  40
-6  20   4  89
-7  16  86  10
-8  18  80  97
+    """ create a set of factors and the corresponding ColumnDataSource
+    
+        Input DataFrame
+        
+            Columns are the labels for the bars inside the categories
+            Index are the outer categories
+        
+                A   B   C
+            X            
+            0  25  13   8
+            1  53  64  52
+            2   0  15  80
+    
+        Args:
+            pv - see create_chart_js documentation for pv documentation
+            flip_factors - if True, reverse the order of the produced factors
+    
+        Returns:
+            factors built up from the dataframe.  i.e. [(0, A), (0, B), (0,C), (1, A) ...]
+            ColumnDataSource with the data rearranged so there is one data point per factor
+                {'factors': [('0', 'A'), ('0', 'B'), ('0', 'C') ...],
+                 'counts': [51, 43, 79 ...],
+                 'line_color': ['#1f77b4', '#ff7f0e', '#2ca02c' ...],
+                 'fill_color': ['#1f77b4', '#ff7f0e', '#2ca02c' ...]}
     """
     if pv['df'].empty:
         return [], bokeh.models.ColumnDataSource()
@@ -55,8 +76,26 @@ X
     # success!
     return data['factors'], data['cds']
 
+
 def create_chart_js(pv):
-    """ Create the javascript to create a line chart """
+    """ Create the javascript to create a chart
+    
+        Args:
+            target_div_id - id of the div which will contain the chart
+            pv - dict of prepared values
+                    'df' - dataframe passed in by user
+                    'div_id' - id of the div to target
+                    'figure_kwargs' - keyword args passed in that affect figure creation
+                        'name' - name of the chart
+                        (see bokeh Figure documentation for full list)
+                    'kwargs' - keyword arguments passed in during initial chart creation
+                        (keyword args prefaced with __wedge__ will be passed in for wedge creation.
+                         see Bokeh wedge documentation for full list of available keywords)
+                    'palette' - color palette to use for chart rendering
+
+        Returns:
+            javascript to create the initial chart
+    """
     pv['figure_kwargs']['y_range'] = []
     js = f"""
         var plt = Bokeh.Plotting;
@@ -67,7 +106,16 @@ def create_chart_js(pv):
     js += f"""plt.show(f, '#{pv["div_id"]}');"""
     return js
 
+
 def update_chart_js(pv):
+    """ update the chart with new data
+    
+        Args:
+            pv - see create_chart_js documentation for pv documentation
+
+        Returns:
+            javascript to update the chart with new data
+    """    
     factors, cds = create_chart_factors_cds(pv, flip_factors=pv['kwargs'].get('flip_factors', False))
     df = cds.to_df()
     
