@@ -1,6 +1,5 @@
-import json
 import bokeh.models
-from .bokehPlugin_util import promote_kwargs_prefix, prepare_for_chart_update_js
+from .bokehPlugin_util import post_process_figure, promote_kwargs_prefix, reset_figure
 
 def create_chart_factors_cds(pv, flip_factors):
     """
@@ -56,22 +55,23 @@ X
     # success!
     return data['factors'], data['cds']
 
-def create_chart_js(target_div_id, pv, **kwargs):
+def create_chart_js(pv):
     """ Create the javascript to create a line chart """
     pv['figure_kwargs']['x_range'] = []
     js = f"""
         var plt = Bokeh.Plotting;
         var f = new plt.Figure({pv['figure_kwargs']});
         """
-    js += update_chart_js(pv, **kwargs)
-    js += f"plt.show(f, '#{target_div_id}');"
+    js += post_process_figure(**pv['kwargs'])
+    js += update_chart_js(pv)
+    js += f"""plt.show(f, '#{pv["div_id"]}');"""
     return js
 
-def update_chart_js(pv, chart_name=None, **kwargs):
-    factors, cds = create_chart_factors_cds(pv, flip_factors=kwargs.get('flip_factors', False))
+def update_chart_js(pv):
+    factors, cds = create_chart_factors_cds(pv, flip_factors=pv['kwargs'].get('flip_factors', False))
     df = cds.to_df()
-    print(df)
-    js = prepare_for_chart_update_js(chart_name, df)
+    
+    js = reset_figure(df, pv['figure_kwargs']['name'])
 
     # rebuilt the y_range factors
     factors_str = [[x[0], x[1]] for x in factors]
@@ -84,7 +84,7 @@ def update_chart_js(pv, chart_name=None, **kwargs):
     kwd['fill_color'] = "{field: 'fill_color'}"
     kwd['line_color'] = "{field: 'line_color'}"
     kwd['width'] = 0.8
-    kwd.update(promote_kwargs_prefix(['__vbar__'], kwargs))
+    kwd.update(promote_kwargs_prefix(['__vbar__'], pv['kwargs']))
     kwds = ', '.join([f"'{k}': {v}" for k, v in kwd.items()])
     js += f"""
         // add the vbar    

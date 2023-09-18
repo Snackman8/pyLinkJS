@@ -1,5 +1,5 @@
 import pandas as pd
-from .bokehPlugin_util import promote_kwargs_prefix, prepare_for_chart_update_js, configure_color_palette, post_process_figure
+from .bokehPlugin_util import promote_kwargs_prefix, configure_color_palette, post_process_figure, reset_figure
 
 def create_chart_df(pv):
     """
@@ -34,22 +34,22 @@ def create_chart_df(pv):
         
     return df.reset_index()
 
-def create_chart_js(target_div_id, pv, **kwargs):
+def create_chart_js(pv):
     """ Create the javascript to create a line chart """
     pv['figure_kwargs']['x_range'] = []
     js = f"""
         var plt = Bokeh.Plotting;
         var f = new plt.Figure({pv['figure_kwargs']});
         """
-    js += post_process_figure(**kwargs)
-    js += update_chart_js(pv, **kwargs)
-    js += f"plt.show(f, '#{target_div_id}');"
+    js += post_process_figure(**pv['kwargs'])
+    js += update_chart_js(pv)
+    js += f"plt.show(f, '#{pv['div_id']}');"
     return js
 
-def update_chart_js(pv, chart_name=None, **kwargs):
+def update_chart_js(pv):
     df = create_chart_df(pv)
     
-    js = prepare_for_chart_update_js(chart_name, df)
+    js = reset_figure(df, pv['figure_kwargs']['name'])
 
     js += f"""
         f.x_range.factors = {list(df['factors'])};
@@ -66,13 +66,12 @@ def update_chart_js(pv, chart_name=None, **kwargs):
         f.y_range = new Bokeh.Range1d({{start:0, end: {int(df['counts'].max() * 1.1)} }});
         """
 
-
     kwd = {}
     kwd['source'] = 'cds'
     kwd['x'] = "{field: 'factors'}"
     kwd['top'] = "{field: 'counts'}"
     kwd['width'] = 0.95
-    kwd.update(promote_kwargs_prefix(['__histogram__'], kwargs))
+    kwd.update(promote_kwargs_prefix(['__histogram__'], pv['kwargs']))
     kwd['fill_color'] = "'white'"
     kwd['line_color'] = "'white'"
     kwd['top'] = "{field: 'counts2'}"
@@ -84,7 +83,7 @@ def update_chart_js(pv, chart_name=None, **kwargs):
     kwd['top'] = "{field: 'counts'}"
     kwd['fill_color'] = "{field: 'fill_color'}"
     kwd['line_color'] = "{field: 'line_color'}"
-    kwd.update(promote_kwargs_prefix(['__histogram__'], kwargs))
+    kwd.update(promote_kwargs_prefix(['__histogram__'], pv['kwargs']))
     kwds = ', '.join([f"'{k}': {v}" for k, v in kwd.items()])
     js += f"""
         // add the vbar    

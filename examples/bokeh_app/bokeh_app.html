@@ -16,112 +16,177 @@
     <script src="https://cdn.bokeh.org/bokeh/release/bokeh-mathjax-3.1.1.min.js" crossorigin="anonymous"></script>
 
     <style>
-        .full_screen_container {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            padding: 16px; 16px; 16px 16px;
+        body {
+            padding: 32px;
         }
-
+        
         .header {
             flex: 0;
             margin-bottom: 16px;
-        }
-
-        .row_container {
-            display:flex;
-            flex-direction:column;
-            flex: 1;
-        }
-
-        .row_column_container {
-            display: flex;
-            flex: 1;
-        }
-
-        .cell {
-            flex: 1;
-            border: solid 1px black;
-            display:flex;
-            flex-direction:column;
-            padding: 16px; 16px; 16px 16px;
-            height: 300px;
         }
 
         h1 {
             margin-bottom: 20px;
         }
 
-        h4 {
-            margin-bottom: 16px;
+        h3 {
+            font-size: 16px;
+        }
+        
+        .chart_flexitem {
+            border: solid 1px black;
+            padding: 16px;        
+        }
+        
+        .chart_flexitem > div {
+            width: 660px;
+            display: flex;
+            padding: 32px;
+        }
+
+        .chart_flexitem > div > div {
+            flex: 1 1 auto;
+        }
+
+        .chart_flexitem > div > div > pre {
+            margin-right: 16px;
+            border-right: solid 1px gray;
+            height: 100%;
         }
     </style>
+
+    <!-- constants -->
+    {% set chart_width = 350 %}
+    {% set chart_height = 250 %}    
 </head>
-<!--div style="display: flex; flex-direction: column; min-height: 100vh;"-->
-<div class='full_screen_container'>
+
+
   <!-- HEADER -->
   <div class='header'>
     <h1> Sample Bokeh Charts </h1>
-    <button onclick="call_py('btn_refresh_charts_with_new_data_clicked', 3);">Click to Fetch New Data 3 Columns</button>
-    <button onclick="call_py('btn_refresh_charts_with_new_data_clicked', 4);">Click to Fetch New Data 4 Columns</button>
-    <button onclick="call_py('btn_refresh_charts_with_new_data_clicked', 5);">Click to Fetch New Data 4 Columns</button>
-    <button onclick="call_py('btn_refresh_charts_with_cached_data_clicked');">Click to Refresh Charts With Cached Data</button>
-  </div>
-  <!-- ROW -->
-  <div class="row_container">
-    <div class="row_column_container">
-      <div class="cell">
-        <h4>Pandas Dataframe Source</h4>
-        <pre id=df_display></pre>
-      </div>
-      <div class="cell">
-        <h4>Sample Bokeh Table</h4>
-          {% raw create_chart(name='chart_sample_table', page_instance_id=page_instance_id, chart_type='table', autosize_mode="fit_columns", sizing_mode="stretch_both") %}
-      </div>
-    </div>
+    <button onclick="call_py('refresh_charts', 3);">Click to Fetch New Data 3 Columns</button>
+    <button onclick="call_py('refresh_charts', 4);">Click to Fetch New Data 4 Columns</button>
+    <button onclick="call_py('refresh_charts', 5);">Click to Fetch New Data 5 Columns</button>
   </div>
 
-  <!-- ROW -->
-  <div class="row_container">
-    <div class="row_column_container">
-      <div class="cell">
-        <h4>Sample Bokeh Line Chart</h4>
-        {% raw create_chart(name='chart_sample_line', page_instance_id=page_instance_id, chart_type='line', title='Example Line Chart', sizing_mode="stretch_both") %}
-      </div>
-      <div class="cell">
-        <h4>Sample Bokeh Pie Chart</h4>
-        {% raw create_chart(name='chart_sample_pie', page_instance_id=page_instance_id, chart_type='pie', title='Example Pie chart', sizing_mode="stretch_both", __wedge__radius=0.2) %}
-      </div>
-    </div>
+
+<div id=flexcontainer style='display: flex; flex-wrap: wrap; width: 1400px;'>
+  <div class=chart_flexitem>
+    <div>
+        <div>            
+          <h3>Line Chart DataFrame</h3>
+          <pre id=chart_line_df></pre>              
+        </div>
+        <div>
+          <h3>Line Chart</h3>
+          {% raw create_chart(name='chart_line', chart_type='line', page_instance_id=page_instance_id,
+                              title='Example Line chart', width=chart_width, height=chart_height,
+                              x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
+        </div>
+    </div>        
   </div>
 
-  <!-- ROW -->
-  <div class="row_container">
-    <div class="row_column_container">
-      <div class="cell">
-        <h4>Sample Bokeh HBar Chart</h4>
-        {% raw create_chart(name='chart_sample_hbar', page_instance_id=page_instance_id, chart_type='hbar', title='Example Horizontal Bar Chart', sizing_mode="stretch_both") %}
-      </div>
-      <div class="cell">
-        <h4>Sample Bokeh VBar Chart</h4>
-        {% raw create_chart(name='chart_sample_vbar', page_instance_id=page_instance_id, chart_type='vbar', title='Example Vertical Bar chart', sizing_mode="stretch_both") %}
-      </div>
-    </div>
+  <div class=chart_flexitem>
+    <div>
+        <div>            
+          <h3>Pie Chart DataFrame</h3>
+          <pre id=chart_pie_df></pre>              
+        </div>
+        <div>
+          <h3>Pie Chart</h3>
+          {% raw create_chart(name='chart_pie', chart_type='pie', page_instance_id=page_instance_id,
+                              title='Example Pie chart', width=chart_width, height=chart_height,
+                              __wedge__radius=0.4) %}
+        </div>
+    </div>        
   </div>
 
-  <!-- ROW -->
-  <div class="row_container">
-    <div class="row_column_container">
-      <div class="cell">
-        <h4>Sample Histogram Dataframe</h4>
-        {% raw create_chart(name='chart_histogram_table', page_instance_id=page_instance_id, chart_type='table', autosize_mode="fit_columns", sizing_mode="stretch_both") %}
-      </div>
-      <div class="cell">
-        <h4>Sample Bokeh Histogram Chart</h4>
-        {% raw create_chart(name='chart_sample_histogram', page_instance_id=page_instance_id, chart_type='histogram', title='Example Histogram chart', sizing_mode="stretch_both",
-                            __histogram__width=0.99, __histogram__line_color='"white"', __histogram__fill_color='"pink"'
-        ) %}
-      </div>
-    </div>
+  <div class=chart_flexitem>
+    <div>
+        <div>            
+          <h3>HBar Chart DataFrame</h3>
+          <pre id=chart_hbar1_df></pre>              
+        </div>
+        <div>
+          <h3>HBar Chart</h3>
+          {% raw create_chart(name='chart_hbar1', chart_type='hbar', page_instance_id=page_instance_id,
+                              title='Example HBar Chart', width=chart_width, height=chart_height,
+                              x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
+        </div>
+    </div>        
   </div>
+
+  <div class=chart_flexitem>
+    <div>
+        <div>            
+          <h3>HBar Chart DataFrame</h3>
+          <pre id=chart_hbar_df></pre>              
+        </div>
+        <div>
+          <h3>HBar Chart</h3>
+          {% raw create_chart(name='chart_hbar', chart_type='hbar', page_instance_id=page_instance_id,
+                              title='Example HBar Chart', width=chart_width, height=chart_height,
+                              x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
+        </div>
+    </div>        
+  </div>
+
+  <div class=chart_flexitem>
+    <div>
+        <div>            
+          <h3>VBar Chart DataFrame</h3>
+          <pre id=chart_vbar1_df></pre>              
+        </div>
+        <div>
+          <h3>VBar Chart</h3>
+          {% raw create_chart(name='chart_vbar1', chart_type='vbar', page_instance_id=page_instance_id,
+                              title='Example VBar Chart', width=chart_width, height=chart_height,
+                              x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
+        </div>
+    </div>        
+  </div>
+
+  <div class=chart_flexitem>
+    <div>
+        <div>            
+          <h3>VBar Chart DataFrame</h3>
+          <pre id=chart_vbar_df></pre>              
+        </div>
+        <div>
+          <h3>VBar Chart</h3>
+          {% raw create_chart(name='chart_vbar', chart_type='vbar', page_instance_id=page_instance_id,
+                              title='Example VBar Chart', width=chart_width, height=chart_height,
+                              x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
+        </div>
+    </div>        
+  </div>
+
+  <div class=chart_flexitem>
+    <div>
+        <div>            
+          <h3>Histogram Chart DataFrame</h3>
+          <pre id=chart_histogram_df></pre>              
+        </div>
+        <div>
+          <h3>Histogram Chart</h3>
+          {% raw create_chart(name='chart_histogram', chart_type='histogram', page_instance_id=page_instance_id,
+                              title='Example Histogram Chart', width=chart_width, height=chart_height) %}
+        </div>
+    </div>        
+  </div>
+
+  <div class=chart_flexitem>
+    <div>
+        <div>            
+          <h3>Table Chart DataFrame</h3>
+          <pre id=chart_table_df></pre>              
+        </div>
+        <div>
+          <h3>Table Chart</h3>
+          {% raw create_chart(name='chart_table', chart_type='table', page_instance_id=page_instance_id,
+                              title='Example table Chart', width=chart_width, height=chart_height,
+                              x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
+        </div>
+    </div>        
+  </div>  
 </div>

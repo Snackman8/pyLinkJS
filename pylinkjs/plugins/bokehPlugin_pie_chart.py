@@ -3,10 +3,12 @@
 # --------------------------------------------------
 #    Imports
 # --------------------------------------------------
-import json
 import math
-from .bokehPlugin_util import promote_kwargs_prefix, post_process_figure
+from .bokehPlugin_util import promote_kwargs_prefix, post_process_figure, reset_figure
 
+
+
+ 
 
 # --------------------------------------------------
 #    Functions
@@ -61,15 +63,21 @@ def create_chart_df(pv):
     return df
 
 
-def create_chart_js(target_div_id, pv, **kwargs):
+def create_chart_js(pv):
     """ Create the javascript to create a chart
     
         Args:
             target_div_id - id of the div which will contain the chart
             pv - dict of prepared values
                     'df' - dataframe passed in by user
-            kwargs - dict of keyword arguments
-                    'name' - name of the chart
+                    'div_id' - id of the div to target
+                    'figure_kwargs' - keyword args passed in that affect figure creation
+                        'name' - name of the chart
+                        (see bokeh Figure documentation for full list)
+                    'kwargs' - keyword arguments passed in during initial chart creation
+                        (keyword args prefaced with __wedge__ will be passed in for wedge creation.
+                         see Bokeh wedge documentation for full list of available keywords)
+                    'palette' - color palette to use for chart rendering
 
         Returns:
             javascript to create the initial chart
@@ -78,9 +86,9 @@ def create_chart_js(target_div_id, pv, **kwargs):
     js = f""" {{
               var plt = Bokeh.Plotting;
               var f = new plt.Figure({pv['figure_kwargs']}); \n"""
-    js += post_process_figure(**kwargs)              
-    js += update_chart_js(pv, creating_chart=True, **kwargs)
-    js += f"""plt.show(f, '#{target_div_id}'); \n"""
+    js += post_process_figure(**pv['kwargs'])              
+    js += update_chart_js(pv)
+    js += f"""plt.show(f, '#{pv["div_id"]}'); \n"""
 
     # extra specific to this type of chart
     js += f"""f.grid.visible = false; \n"""
@@ -91,48 +99,20 @@ def create_chart_js(target_div_id, pv, **kwargs):
     return js
 
 
-def update_chart_js(pv, **kwargs):
+def update_chart_js(pv):
     """ update the chart with new data
     
         Args:
-            target_div_id - id of the div which will contain the chart
-            pv - dict of prepared values
-                    'df' - dataframe passed in by user
-            kwargs - dict of keyword arguments
-                      'name' - name of the chart
+            pv - see create_chart_js documentation for pv documentation
 
         Returns:
-            javascript to create the initial chart
+            javascript to update the chart with new data
     """
     # convert the prepared values into a dataframe
     df = create_chart_df(pv)
 
-    # generate javascript to turn the python dataframe into a javascript ColumnDatasource
-    cds_data_json = json.dumps(df.reset_index().to_dict(orient='list'))
-    js = f""" var plt = Bokeh.Plotting;
-              var data_json = JSON.parse('{cds_data_json}');
-              var cds = new Bokeh.ColumnDataSource({{'data': data_json}}); \n"""
-    
-    # search for the figure
-    if not kwargs.get('creating_chart', False):
-        js += f""" var f;
-                   for (let i = 0; i < Bokeh.documents.length; i++) {{
-                       f = Bokeh.documents[i].get_model_by_name('{kwargs['name']}');
-                       if (f != null) break;
-                   }} \n""" 
-
-    # remove the old glyphs and legends
-    js += """ for (let i = f.renderers.length - 1; i >= 0; i--) {
-                  f.renderers[i].visible = false;
-                  f.renderers.pop();
-                  f.legend.items.pop();
-              }
-              f.legend.change.emit(); \n"""
-
-    # remove the labelsets
-    js += """ for (i = 0; i < f.tags.length; i++) {
-                  f.tags[i].visible = false;
-              } \n"""
+    # reset the figure
+    js = reset_figure(df, pv['figure_kwargs']['name'])
 
     # add pie wedges    
     for i, c in enumerate(df.index):
@@ -148,7 +128,7 @@ def update_chart_js(pv, **kwargs):
         kwd['end_angle'] = df.iloc[i]['end_angle']
         kwd['start_angle_units'] = "'rad'"
         kwd['end_angle_units'] = "'rad'"
-        kwd.update(promote_kwargs_prefix(['__wedge__', f'__wedge_{i}__'], kwargs))
+        kwd.update(promote_kwargs_prefix(['__wedge__', f'__wedge_{i}__'], pv['kwargs']))
         kwds = ', '.join([f"'{k}': {v}" for k, v in kwd.items()])
                 
         js += f""" // add the wedge    

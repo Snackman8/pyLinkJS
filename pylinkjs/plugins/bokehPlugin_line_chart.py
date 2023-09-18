@@ -1,5 +1,4 @@
-import json
-from .bokehPlugin_util import promote_kwargs_prefix
+from .bokehPlugin_util import post_process_figure, promote_kwargs_prefix, reset_figure
 
 """
                 A   B   C
@@ -9,54 +8,31 @@ from .bokehPlugin_util import promote_kwargs_prefix
             2  72  68  13
 """
 
-def create_chart_js(target_div_id, pv, **kwargs):
+#def create_chart_js(target_div_id, pv, **kwargs):
+def create_chart_js(pv):
     """ Create the javascript to create a line chart """
     js = f"""
         var plt = Bokeh.Plotting;
         var f = new plt.Figure({pv['figure_kwargs']});
-        """        
-    js += update_chart_js(pv, **kwargs)
-    js += f"plt.show(f, '#{target_div_id}');"
+        """
+    js += post_process_figure(**pv['kwargs'])
+    js += update_chart_js(pv)
+    js += f"""plt.show(f, '#{pv["div_id"]}');"""
     
     return js
 
-def update_chart_js(pv, chart_name=None, **kwargs):
-    cds_data_json = json.dumps(pv['df'].reset_index().to_dict(orient='list'))
-    js = f"""
-        var plt = Bokeh.Plotting;
-        var data_json = JSON.parse('{cds_data_json}');
-        var cds = new Bokeh.ColumnDataSource({{'data': data_json}});
-    """
-    
-    if chart_name is not None:
-        js += f"""
-        var f;
-        
-        for (let i = 0; i < Bokeh.documents.length; i++) {{
-            f = Bokeh.documents[i].get_model_by_name('{chart_name}');
-            if (f != null) {{
-                break;
-            }}
-        }}
-    """ 
+def update_chart_js(pv):
+    # reset the figure
+    js = reset_figure(pv['df'], pv['figure_kwargs']['name'])
 
-    # remove the old glyphs
-    js += """
-        for (let i = f.renderers.length - 1; i >= 0; i--) {
-            f.renderers[i].visible = false;
-            f.renderers.pop();
-            f.legend.items.pop();
-        }
-        f.legend.change.emit();
-    """                
-
+    # add the new glyphs
     for i, c in enumerate(pv['df'].columns):
         kwd = {}
         kwd['source'] = 'cds'
         kwd['x'] = "{field: 'X'}"
         kwd['y'] = f"{{field: '{c}'}}"
         kwd['color'] = f"'{pv['palette'][i]}'"
-        kwd.update(promote_kwargs_prefix(['__line__', f'__line_{i}__'], kwargs))
+        kwd.update(promote_kwargs_prefix(['__line__', f'__line_{i}__'], pv['kwargs']))
         kwds = ', '.join([f"'{k}': {v}" for k, v in kwd.items()])
 
         js += f"""
