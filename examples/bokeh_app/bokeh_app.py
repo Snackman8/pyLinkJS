@@ -31,6 +31,8 @@ def refresh_charts(jsc, columns = 3):
     jsc.update_chart('chart_vbar', df)
     jsc['#chart_table_df'].html = df.to_string()
     jsc.update_chart('chart_table', df)
+    jsc['#chart_boxplot_df'].html = df.to_string()
+    jsc.update_chart('chart_boxplot', df)
 
     # special for pie chart
     df_pie = df.head(1).copy()

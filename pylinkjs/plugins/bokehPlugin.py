@@ -15,6 +15,8 @@ import bokeh.plotting
 import bokeh.transform
 import bokeh.models.formatters
 from .bokehPlugin_util import promote_kwargs_prefix, configure_color_palette
+from .bokehPlugin_boxplot_chart import create_chart_js as create_boxplot_chart_js
+from .bokehPlugin_boxplot_chart import update_chart_js as update_boxplot_chart_js
 from .bokehPlugin_hbar_chart import create_chart_js as create_hbar_chart_js
 from .bokehPlugin_hbar_chart import update_chart_js as update_hbar_chart_js
 from .bokehPlugin_line_chart import create_chart_js as create_line_chart_js
@@ -156,6 +158,10 @@ class pluginBokeh:
         kwargs['chart_type'] = kwargs.get('chart_type', chart_type)
         self.BOKEH_CONTEXT[page_instance_id]['kwargs'][kwargs['name']] = kwargs
         pv = self._prep_for_chart(**kwargs)
+        if chart_type == 'boxplot':
+            div = f"<div id={pv['div_id']} style='margin:0 px; padding: 0px; width:100%; height:100%;'></div>"
+            script = f"<script>{create_boxplot_chart_js(pv)}</script>"
+            return div + script
         if chart_type == 'line':
             div = f"<div id={pv['div_id']} style='margin:0 px; padding: 0px; width:100%; height:100%;'></div>"
             script = f"<script>{create_line_chart_js(pv)}</script>"

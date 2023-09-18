@@ -19,7 +19,7 @@
         body {
             padding: 32px;
         }
-        
+
         .header {
             flex: 0;
             margin-bottom: 16px;
@@ -32,12 +32,12 @@
         h3 {
             font-size: 16px;
         }
-        
+
         .chart_flexitem {
             border: solid 1px black;
-            padding: 16px;        
+            padding: 16px;
         }
-        
+
         .chart_flexitem > div {
             width: 660px;
             display: flex;
@@ -57,7 +57,7 @@
 
     <!-- constants -->
     {% set chart_width = 350 %}
-    {% set chart_height = 250 %}    
+    {% set chart_height = 250 %}
 </head>
 
 
@@ -73,9 +73,9 @@
 <div id=flexcontainer style='display: flex; flex-wrap: wrap; width: 1400px;'>
   <div class=chart_flexitem>
     <div>
-        <div>            
+        <div>
           <h3>Line Chart DataFrame</h3>
-          <pre id=chart_line_df></pre>              
+          <pre id=chart_line_df></pre>
         </div>
         <div>
           <h3>Line Chart</h3>
@@ -83,14 +83,14 @@
                               title='Example Line chart', width=chart_width, height=chart_height,
                               x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
         </div>
-    </div>        
+    </div>
   </div>
 
   <div class=chart_flexitem>
     <div>
-        <div>            
+        <div>
           <h3>Pie Chart DataFrame</h3>
-          <pre id=chart_pie_df></pre>              
+          <pre id=chart_pie_df></pre>
         </div>
         <div>
           <h3>Pie Chart</h3>
@@ -98,14 +98,14 @@
                               title='Example Pie chart', width=chart_width, height=chart_height,
                               __wedge__radius=0.4) %}
         </div>
-    </div>        
+    </div>
   </div>
 
   <div class=chart_flexitem>
     <div>
-        <div>            
+        <div>
           <h3>HBar Chart DataFrame</h3>
-          <pre id=chart_hbar1_df></pre>              
+          <pre id=chart_hbar1_df></pre>
         </div>
         <div>
           <h3>HBar Chart</h3>
@@ -113,14 +113,14 @@
                               title='Example HBar Chart', width=chart_width, height=chart_height,
                               x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
         </div>
-    </div>        
+    </div>
   </div>
 
   <div class=chart_flexitem>
     <div>
-        <div>            
+        <div>
           <h3>HBar Chart DataFrame</h3>
-          <pre id=chart_hbar_df></pre>              
+          <pre id=chart_hbar_df></pre>
         </div>
         <div>
           <h3>HBar Chart</h3>
@@ -128,14 +128,14 @@
                               title='Example HBar Chart', width=chart_width, height=chart_height,
                               x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
         </div>
-    </div>        
+    </div>
   </div>
 
   <div class=chart_flexitem>
     <div>
-        <div>            
+        <div>
           <h3>VBar Chart DataFrame</h3>
-          <pre id=chart_vbar1_df></pre>              
+          <pre id=chart_vbar1_df></pre>
         </div>
         <div>
           <h3>VBar Chart</h3>
@@ -143,14 +143,14 @@
                               title='Example VBar Chart', width=chart_width, height=chart_height,
                               x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
         </div>
-    </div>        
+    </div>
   </div>
 
   <div class=chart_flexitem>
     <div>
-        <div>            
+        <div>
           <h3>VBar Chart DataFrame</h3>
-          <pre id=chart_vbar_df></pre>              
+          <pre id=chart_vbar_df></pre>
         </div>
         <div>
           <h3>VBar Chart</h3>
@@ -158,28 +158,28 @@
                               title='Example VBar Chart', width=chart_width, height=chart_height,
                               x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
         </div>
-    </div>        
+    </div>
   </div>
 
   <div class=chart_flexitem>
     <div>
-        <div>            
+        <div>
           <h3>Histogram Chart DataFrame</h3>
-          <pre id=chart_histogram_df></pre>              
+          <pre id=chart_histogram_df></pre>
         </div>
         <div>
           <h3>Histogram Chart</h3>
           {% raw create_chart(name='chart_histogram', chart_type='histogram', page_instance_id=page_instance_id,
                               title='Example Histogram Chart', width=chart_width, height=chart_height) %}
         </div>
-    </div>        
+    </div>
   </div>
 
   <div class=chart_flexitem>
     <div>
-        <div>            
+        <div>
           <h3>Table Chart DataFrame</h3>
-          <pre id=chart_table_df></pre>              
+          <pre id=chart_table_df></pre>
         </div>
         <div>
           <h3>Table Chart</h3>
@@ -187,6 +187,21 @@
                               title='Example table Chart', width=chart_width, height=chart_height,
                               x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
         </div>
-    </div>        
-  </div>  
+    </div>
+  </div>
+
+  <div class=chart_flexitem>
+    <div>
+        <div>
+          <h3>BoxPlot Chart DataFrame</h3>
+          <pre id=chart_boxplot_df></pre>
+        </div>
+        <div>
+          <h3>BoxPlot Chart</h3>
+          {% raw create_chart(name='chart_boxplot', chart_type='boxplot', page_instance_id=page_instance_id,
+                              title='Example BoxPlot chart', width=chart_width, height=chart_height,
+                              x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
+        </div>
+    </div>
+  </div>
 </div>
