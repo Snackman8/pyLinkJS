@@ -54,7 +54,8 @@ def update_chart_js(pv):
     table_kwargs['columns'] = [bokeh.models.widgets.TableColumn(field=Ci, title=Ci) for Ci in df.columns]
     
     # DataTable does not accept title parameter, so remove
-    del table_kwargs['title']
+    if 'title' in table_kwargs:
+        del table_kwargs['title']
 
     # # create the figure
     p = bokeh.models.widgets.DataTable(**table_kwargs)

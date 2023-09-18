@@ -45,7 +45,7 @@ def reset_figure(df, chart_name):
     js = f""" var plt = Bokeh.Plotting;
               var data_json = JSON.parse('{cds_data_json}');
               var cds = new Bokeh.ColumnDataSource({{'data': data_json}}); \n"""
-    
+
     # search for the figure
     js += f""" var f_name = '';
                try {{
@@ -68,8 +68,8 @@ def reset_figure(df, chart_name):
                   f.legend.items.pop();
               }
               f.legend.change.emit(); \n"""
-    
-    return js   
+
+    return js
 
 
 def promote_kwargs_prefix(prefixes, kwargs):
@@ -93,42 +93,11 @@ def promote_kwargs_prefix(prefixes, kwargs):
 
 def post_process_figure(**kwargs):
     js = ''
-    if not kwargs.get('toolbar_autohide', True):
-        js += """f.toolbar.autohide = true; \n"""
+    if not kwargs.get('toolbar_visible', True):
+        js += """f.toolbar.visible = false; \n"""
     if 'x_axis_label' in kwargs:
-        js += f"""f.xaxis.axis_label = "{kwargs['x_axis_label']}"; \n""" 
+        js += f"""f.xaxis.axis_label = "{kwargs['x_axis_label']}"; \n"""
     if 'y_axis_label' in kwargs:
-        js += f"""f.yaxis.axis_label = "{kwargs['y_axis_label']}"; \n""" 
+        js += f"""f.yaxis.axis_label = "{kwargs['y_axis_label']}"; \n"""
     return js
-
-
-# def prepare_for_chart_update_js(chart_name, df):
-#     cds_data_json = json.dumps(df.reset_index().to_dict(orient='list'))
-#     js = f"""
-#         var plt = Bokeh.Plotting;
-#         var data_json = JSON.parse('{cds_data_json}');
-#         var cds = new Bokeh.ColumnDataSource({{'data': data_json}});
-#     """
-#
-#     if chart_name is not None:
-#         js += f"""
-#         var f;
-#
-#         for (let i = 0; i < Bokeh.documents.length; i++) {{
-#             f = Bokeh.documents[i].get_model_by_name('{chart_name}');
-#             if (f != null) {{
-#                 break;
-#             }}
-#         }}
-#     """ 
-#
-#     # remove the old glyphs
-#     js += """
-#         for (let i = f.renderers.length - 1; i >= 0; i--) {
-#             f.renderers[i].visible = false;
-#             f.renderers.pop();
-#         }
-#     """  
-#
-#     return js              
     
