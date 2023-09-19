@@ -111,7 +111,7 @@ def update_chart_js(pv):
     # reset the figure
     js = reset_figure(df, pv['figure_kwargs']['name'])
 
-    # add pie wedges    
+    # add pie wedges
     for i, c in enumerate(df.index):
         kwd = {}
         kwd['source'] = 'cds'
@@ -127,7 +127,7 @@ def update_chart_js(pv):
         kwd['end_angle_units'] = "'rad'"
         kwd.update(promote_kwargs_prefix(['__wedge__', f'__wedge_{i}__'], pv['kwargs']))
         kwds = ', '.join([f"'{k}': {v}" for k, v in kwd.items()])
-                
+
         js += f""" // add the wedge    
                    var wo = f.wedge({{ {kwds} }});
             
@@ -135,13 +135,19 @@ def update_chart_js(pv):
                    var lio = new Bokeh.LegendItem({{label: '{c}'}});
                    lio.renderers.push(wo);
                    f.legend.items.push(lio);
-                   f.legend.change.emit();
+                   f.legend.change.emit(); \n"""
 
-                   // add the text
+    # add pie wedges    
+    for i, c in enumerate(df.index):
+        kwd = {}
+        kwd['radius'] = 0.5
+        kwd['radius_units'] = "'data'"
+        kwd.update(promote_kwargs_prefix(['__wedge__', f'__wedge_{i}__'], pv['kwargs']))
+                
+        js += f""" // add the text
                    var ar =  (f.inner_height / f.inner_width);   
                    var tx = {kwd['radius'] * math.cos(df.iloc[i]['text_angle']) * 0.5};
                    var ty = {kwd['radius'] * math.sin(df.iloc[i]['text_angle']) * 0.5} / ar;
-                   f2 = f;
                    f.text({{x: tx, y: ty, text: '{df.iloc[i]['text']}', text_align: 'center', text_baseline: 'middle', color: 'white'}}); \n"""
 
     return js

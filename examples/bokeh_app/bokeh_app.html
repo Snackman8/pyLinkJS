@@ -80,7 +80,7 @@
         <div>
           <h3>Line Chart</h3>
           {% raw create_chart(name='chart_line', chart_type='line', page_instance_id=page_instance_id,
-                              title='Example Line chart', width=chart_width, height=chart_height,
+                              title='Example Line chart', width=chart_width, height=chart_height, toolbar_visible=False,
                               x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
         </div>
     </div>
@@ -95,7 +95,7 @@
         <div>
           <h3>Pie Chart</h3>
           {% raw create_chart(name='chart_pie', chart_type='pie', page_instance_id=page_instance_id,
-                              title='Example Pie chart', width=chart_width, height=chart_height,
+                              title='Example Pie chart', width=chart_width, height=chart_height, toolbar_visible=False,
                               __wedge__radius=0.4) %}
         </div>
     </div>
@@ -110,7 +110,7 @@
         <div>
           <h3>HBar Chart</h3>
           {% raw create_chart(name='chart_hbar1', chart_type='hbar', page_instance_id=page_instance_id,
-                              title='Example HBar Chart', width=chart_width, height=chart_height,
+                              title='Example HBar Chart', width=chart_width, height=chart_height, toolbar_visible=False,
                               x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
         </div>
     </div>
@@ -125,7 +125,7 @@
         <div>
           <h3>HBar Chart</h3>
           {% raw create_chart(name='chart_hbar', chart_type='hbar', page_instance_id=page_instance_id,
-                              title='Example HBar Chart', width=chart_width, height=chart_height,
+                              title='Example HBar Chart', width=chart_width, height=chart_height, toolbar_visible=False,
                               x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
         </div>
     </div>
@@ -140,7 +140,7 @@
         <div>
           <h3>VBar Chart</h3>
           {% raw create_chart(name='chart_vbar1', chart_type='vbar', page_instance_id=page_instance_id,
-                              title='Example VBar Chart', width=chart_width, height=chart_height,
+                              title='Example VBar Chart', width=chart_width, height=chart_height, toolbar_visible=False,
                               x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
         </div>
     </div>
@@ -155,7 +155,7 @@
         <div>
           <h3>VBar Chart</h3>
           {% raw create_chart(name='chart_vbar', chart_type='vbar', page_instance_id=page_instance_id,
-                              title='Example VBar Chart', width=chart_width, height=chart_height,
+                              title='Example VBar Chart', width=chart_width, height=chart_height, toolbar_visible=False,
                               x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
         </div>
     </div>
@@ -170,7 +170,8 @@
         <div>
           <h3>Histogram Chart</h3>
           {% raw create_chart(name='chart_histogram', chart_type='histogram', page_instance_id=page_instance_id,
-                              title='Example Histogram Chart', width=chart_width, height=chart_height) %}
+                              title='Example Histogram Chart', width=chart_width, height=chart_height, toolbar_visible=False,
+                              x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
         </div>
     </div>
   </div>
@@ -184,8 +185,7 @@
         <div>
           <h3>Table Chart</h3>
           {% raw create_chart(name='chart_table', chart_type='table', page_instance_id=page_instance_id,
-                              title='Example table Chart', width=chart_width, height=chart_height,
-                              x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis') %}
+                              title='Example table Chart', width=chart_width, height=chart_height) %}
         </div>
     </div>
   </div>
@@ -199,7 +199,7 @@
         <div>
           <h3>BoxPlot Chart</h3>
           {% raw create_chart(name='chart_boxplot', chart_type='boxplot', page_instance_id=page_instance_id,
-                              title='Example BoxPlot chart', width=chart_width, height=chart_height,
+                              title='Example BoxPlot chart', width=chart_width, height=chart_height, toolbar_visible=False,
                               x_axis_label = 'X-Axis', y_axis_label = 'Y-Axis',
                               user_palette=['red', 'green', 'blue']) %}
         </div>
