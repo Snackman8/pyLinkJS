@@ -624,6 +624,9 @@ def start_pycallback_handler_ioloop(caller_globals):
                     subdir = js_data['window_location_pathname']
                     if subdir.endswith('.html'):
                         subdir = subdir[:-5]
+                    else:
+                        # this is an apache rewrite, so we need to skip the first path portion
+                        subdir = '/'.join(subdir.split('/').pop(0))
                     subdir = subdir.replace('/', '.')[1:]
                     if subdir != '':
                         fullfuncpath = subdir + '.' + js_data['py_func_name']
