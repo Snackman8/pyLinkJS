@@ -3,8 +3,9 @@
 # --------------------------------------------------
 #    Imports
 # --------------------------------------------------
+import pandas as pd
 import bokeh.models
-from .bokehPlugin_util import post_process_figure, promote_kwargs_prefix, reset_figure
+from .bokehPlugin_util import post_process_figure, reset_figure, configure_color_palette
 
 
 # --------------------------------------------------
@@ -12,7 +13,7 @@ from .bokehPlugin_util import post_process_figure, promote_kwargs_prefix, reset_
 # --------------------------------------------------
 def create_chart_js(pv):
     """ Create the javascript to create a chart
-    
+
         Args:
             target_div_id - id of the div which will contain the chart
             pv - dict of prepared values
@@ -42,20 +43,26 @@ def create_chart_js(pv):
 
 def update_chart_js(pv):
     """ update the chart with new data
-    
+
         Args:
             pv - see create_chart_js documentation for pv documentation
 
         Returns:
             javascript to update the chart with new data
     """
-    
+
+    # init, grab the first color off the palette using a fake dataframe
+    kwargs = {}
+    if 'user_palette' in pv['kwargs']:
+        kwargs['user_palette'] = pv['kwargs'] ['user_palette']
+    palette = configure_color_palette(pd.DataFrame(index=[0], columns=['A', 'B', 'C']), **kwargs)
+
     df = pv['df']
 
     if df.empty:
         return ''
-    
-    
+
+
     d = {
         'factors': list(df.columns),
         'mean': df.mean().values,
@@ -66,31 +73,21 @@ def update_chart_js(pv):
     }
     cds = bokeh.models.ColumnDataSource(d)
     df = cds.to_df()
-    
-    js = reset_figure(df, pv['figure_kwargs']['name'])
+
+    js = reset_figure(df, pv['figure_kwargs']['name'], no_legend=True)
 
     # rebuilt the y_range factors
     factors_str = d['factors']
     js += f"""f.x_range.factors = {factors_str};"""
 
-    # kwd = {}
-    # kwd['source'] = 'cds'
-    # kwd['x'] = "{field: 'factors'}"
-    # kwd['top'] = "{field: 'counts'}"
-    # kwd['fill_color'] = "{field: 'fill_color'}"
-    # kwd['line_color'] = "{field: 'line_color'}"
-    # kwd['width'] = 0.8
-    # kwd.update(promote_kwargs_prefix(['__vbar__'], pv['kwargs']))
-    # kwds = ', '.join([f"'{k}': {v}" for k, v in kwd.items()])
-
     i = 0
-    for idx, r in df.iterrows():
+    for _, r in df.iterrows():
         js += f"""
-            f.line({{x: [{0.5 + i - 0.1}, {0.5 + i + 0.1}], y: [{r.lower}, {r.lower}]}});    
-            f.line({{x: [{0.5 + i - 0.1}, {0.5 + i + 0.1}], y: [{r.upper}, {r.upper}]}});   
-            f.line({{x: [{0.5 + i}, {0.5 + i}], y: [{r.upper}, {r.lower}]}});
-            f.quad({{ left: {0.5 + i - 0.2}, right: {0.5 + i + 0.2}, top: {r["mean"]}, bottom: {r["25percentile"]} }});
-            f.quad({{ left: {0.5 + i - 0.2}, right: {0.5 + i + 0.2}, top: {r["75percentile"]}, bottom: {r["mean"]}, fill_color: "red" }});
+            f.line({{x: [{0.5 + i - 0.1}, {0.5 + i + 0.1}], y: [{r.lower}, {r.lower}], line_color: '{palette[0]}' }});
+            f.line({{x: [{0.5 + i - 0.1}, {0.5 + i + 0.1}], y: [{r.upper}, {r.upper}], line_color: '{palette[0]}' }});
+            f.line({{x: [{0.5 + i}, {0.5 + i}], y: [{r.upper}, {r.lower}], line_color: '{palette[0]}' }});
+            f.quad({{ left: {0.5 + i - 0.2}, right: {0.5 + i + 0.2}, top: {r["mean"]}, bottom: {r["25percentile"]}, fill_color: '{palette[1]}' }});
+            f.quad({{ left: {0.5 + i - 0.2}, right: {0.5 + i + 0.2}, top: {r["75percentile"]}, bottom: {r["mean"]}, fill_color: '{palette[2]}' }});
         """
         i = i + 1
     return js

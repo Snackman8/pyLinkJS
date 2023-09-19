@@ -16,6 +16,8 @@ def configure_color_palette(df, user_palette=None):
     # setup the base palette
     if user_palette is None:
         user_palette = bokeh.palettes.Category10
+    else:
+        user_palette = {len(user_palette): user_palette}
 
     # calculate colors needed
     colors_needed = 0
@@ -40,7 +42,7 @@ def configure_color_palette(df, user_palette=None):
     return palette
 
 
-def reset_figure(df, chart_name):
+def reset_figure(df, chart_name, no_legend=False):
     cds_data_json = json.dumps(df.reset_index().to_dict(orient='list'))
     js = f""" var plt = Bokeh.Plotting;
               var data_json = JSON.parse('{cds_data_json}');
@@ -61,14 +63,19 @@ def reset_figure(df, chart_name):
                    }}
                }} \n"""
 
+    legend_pop = """f.legend.items.pop();"""
+    legend_change = """f.legend.change.emit();"""
+    if no_legend:
+        legend_pop = ''
+        legend_change = ''
+
     # remove the old glyphs and legends
-    js += """ for (let i = f.renderers.length - 1; i >= 0; i--) {
+    js += f""" for (let i = f.renderers.length - 1; i >= 0; i--) {{
                   f.renderers[i].visible = false;
                   f.renderers.pop();
-                  f.legend.items.pop();
-              }
-              f.legend.change.emit(); \n"""
-
+                  {legend_pop}
+              }}
+              {legend_change} \n"""
     return js
 
 

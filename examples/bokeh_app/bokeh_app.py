@@ -51,7 +51,6 @@ def refresh_charts(jsc, columns = 3):
     
     jsc['#chart_histogram_df'].html = df_hist.to_string()
     jsc.update_chart('chart_histogram', df_hist)
-
     
 
 def ready(jsc, *args):
