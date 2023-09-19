@@ -6,6 +6,7 @@
 import asyncio
 import base64
 from  functools import partial
+import importlib
 import inspect
 import json
 import logging
@@ -619,8 +620,18 @@ def start_pycallback_handler_ioloop(caller_globals):
 
             if js_data['cmd'] == 'call_py':
                 try:
+                    # prepend module path if this is a subdirectory
+                    subdir = js_data['window_location_pathname']
+                    if subdir.endswith('.html'):
+                        subdir = subdir[:-5]
+                    subdir = subdir.replace('/', '.')[1:]
+                    if subdir != '':
+                        fullfuncpath = subdir + '.' + js_data['py_func_name']
+                    else:
+                        fullfuncpath = js_data['py_func_name']
+                    
                     # split the function into modules and function name
-                    parts = js_data['py_func_name'].split('.')
+                    parts = fullfuncpath.split('.')
 
                     # init the search space
                     new_search_space = [caller_globals, locals(), globals()]
@@ -644,6 +655,15 @@ def start_pycallback_handler_ioloop(caller_globals):
                                     new_search_space = [ss[p]]
                                     break
 
+                    # perform a hail mary
+                    if new_search_space is None:
+                        try:
+                            m = importlib.import_module(subdir)
+                            if hasattr(m, js_data['py_func_name']):
+                                new_search_space = [getattr(m, js_data['py_func_name'])]
+                        except Exception as e:
+                            pass                    
+                        
                     # error if nothing was found in the final new_search_space
                     if new_search_space is None:
                         # check if we should emit this error or not

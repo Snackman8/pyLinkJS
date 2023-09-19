@@ -110,6 +110,8 @@
                'args': args,
                'event_time_ms': new Date().getTime(),
                'no_error_if_undefined': no_error_if_undefined,
+               'window_location_origin': window.location.origin,
+               'window_location_pathname': window.location.pathname,
                'new_thread': new_thread}
         ws.send(JSON.stringify(pkt));
         pkt_id = pkt_id + 1
