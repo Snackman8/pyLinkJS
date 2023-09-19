@@ -16,6 +16,8 @@
         }
         if (location.pathname.endsWith(request_path)) {
             reverse_proxy_dir = location.pathname.substring(0,location.pathname.length - request_path.length)
+        } else {
+            reverse_proxy_dir = location.pathname;
         }
         ws = new WebSocket(protocol + "://" + location.host + reverse_proxy_dir + "/websocket/" + jsc_id + request_path);
 
