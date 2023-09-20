@@ -82,10 +82,13 @@ def update_chart_js(pv):
 
     i = 0
     for _, r in df.iterrows():
+        # calculate whisker lower
+        wl = max(pv['kwargs'].get('whisker_floor', r.lower), r.lower)
+
         js += f"""
-            f.line({{x: [{0.5 + i - 0.1}, {0.5 + i + 0.1}], y: [{r.lower}, {r.lower}], line_color: '{palette[0]}' }});
+            f.line({{x: [{0.5 + i - 0.1}, {0.5 + i + 0.1}], y: [{wl}, {wl}], line_color: '{palette[0]}' }});
             f.line({{x: [{0.5 + i - 0.1}, {0.5 + i + 0.1}], y: [{r.upper}, {r.upper}], line_color: '{palette[0]}' }});
-            f.line({{x: [{0.5 + i}, {0.5 + i}], y: [{r.upper}, {r.lower}], line_color: '{palette[0]}' }});
+            f.line({{x: [{0.5 + i}, {0.5 + i}], y: [{r.upper}, {wl}], line_color: '{palette[0]}' }});
             f.quad({{ left: {0.5 + i - 0.2}, right: {0.5 + i + 0.2}, top: {r["mean"]}, bottom: {r["25percentile"]}, fill_color: '{palette[1]}' }});
             f.quad({{ left: {0.5 + i - 0.2}, right: {0.5 + i + 0.2}, top: {r["75percentile"]}, bottom: {r["mean"]}, fill_color: '{palette[2]}' }});
         """
