@@ -767,7 +767,12 @@ class MainHandler(BaseHandler):
 
         # default to index.html if this is a directory
         if os.path.isdir(filename):
-            filename = os.path.join(filename, self.application.settings['default_html'])
+            dirname = filename
+            filename = os.path.join(dirname, self.application.settings['default_html'])
+            # if not os.path.exists(filename):
+            #     filename_index = os.path.join(dirname, 'index.html')
+            #     if os.path.exists(filename_index):
+            #         filename = filename_index
 
         # return 404 if file does not exist or is a directory
         if not os.path.exists(filename):
@@ -852,6 +857,14 @@ class MainHandler(BaseHandler):
         # apply proper mime type for js
         if filename.endswith('.svg'):
             self.set_header("Content-Type", 'image/svg+xml')
+
+        # apply proper mime type for js
+        if filename.endswith('.png'):
+            self.set_header("Content-Type", 'image/png')
+
+        # apply proper mime type for js
+        if filename.endswith('.jpg'):
+            self.set_header("Content-Type", 'image/jpg')
 
         # serve the page
         self.write(b)
