@@ -100,18 +100,16 @@ def print_url(url, output_type, timeout=None, orientation='landscape', force_sca
                 try:
                     ready_finished = page.evaluate('''() => ready_finished''')
                     if ready_finished:
-                        print('READY!')
                         if INCOMING_PYCALLBACK_QUEUE.empty() and INCOMING_RETVAL_QUEUE.empty() and OUTGOING_EXECJS_QUEUE.empty():
-                            print('QUEUES EMPTY')
                             try:
                                 page_ready = page.evaluate('''() => HINT_PRINT_PAGE_READY''')
                                 if page_ready == 1:
-                                    print('HINT_PRINT_PAGE_READY')
                                     break
                             except:
-                                print('HINT_PRINT_PAGE_READY NOT PRESENT')
+                                pass                
                 except:
                     pass
+                logging.info('.')
             time.sleep(int(extra_delay))
 
             # handle png

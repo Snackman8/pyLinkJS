@@ -65,5 +65,4 @@ def update_chart_js(pv):
         $("#{pv['div_id']}").empty();
         window.Bokeh.embed.embed_item(JSON.parse('{j}'), '{pv['div_id']}');
         """
-    print(js)
     return js

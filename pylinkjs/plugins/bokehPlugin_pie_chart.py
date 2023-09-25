@@ -140,14 +140,16 @@ def update_chart_js(pv):
     # add pie wedges    
     for i, c in enumerate(df.index):
         kwd = {}
+        kwd['x'] = 0
+        kwd['y'] = 0
         kwd['radius'] = 0.5
         kwd['radius_units'] = "'data'"
         kwd.update(promote_kwargs_prefix(['__wedge__', f'__wedge_{i}__'], pv['kwargs']))
                 
         js += f""" // add the text
                    var ar =  (f.inner_height / f.inner_width);   
-                   var tx = {kwd['radius'] * math.cos(df.iloc[i]['text_angle']) * 0.5};
-                   var ty = {kwd['radius'] * math.sin(df.iloc[i]['text_angle']) * 0.5} / ar;
+                   var tx = {kwd['x'] + kwd['radius'] * math.cos(df.iloc[i]['text_angle']) * 0.5};
+                   var ty = {kwd['y'] + kwd['radius'] * math.sin(df.iloc[i]['text_angle']) * 0.5} / ar;
                    f.text({{x: tx, y: ty, text: '{df.iloc[i]['text']}', text_align: 'center', text_baseline: 'middle', color: 'white'}}); \n"""
 
     return js

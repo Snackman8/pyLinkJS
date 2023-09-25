@@ -106,5 +106,6 @@ def post_process_figure(**kwargs):
         js += f"""f.xaxis.axis_label = "{kwargs['x_axis_label']}"; \n"""
     if 'y_axis_label' in kwargs:
         js += f"""f.yaxis.axis_label = "{kwargs['y_axis_label']}"; \n"""
+    js += f"""{kwargs.get('post_figure_creation_js', '')}\n"""
     return js
     

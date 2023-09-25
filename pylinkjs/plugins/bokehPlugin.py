@@ -4,6 +4,7 @@
 #    Imports
 # --------------------------------------------------
 import json
+import logging
 import math
 import time
 import uuid
@@ -193,14 +194,15 @@ class pluginBokeh:
     @classmethod
     def _update_chart(cls, jsc, chart_name, df):
         # get the kwargs for the chart when itw as created
+        if chart_name not in cls.BOKEH_CONTEXT[jsc.page_instance_id]['kwargs']:
+            logging.info(f'"{chart_name}" not found on page')
+            return
         kwargs = cls.BOKEH_CONTEXT[jsc.page_instance_id]['kwargs'][chart_name]
         
         # calcualte prepared values
         pv = cls._prep_for_chart(df=df, **kwargs)
 
         # call the update_js for the chart type, i.e. update_line_chart_js
-        print(chart_name)
         func_js = globals()[f'update_{kwargs["chart_type"]}_chart_js']
         js = func_js(pv)
-#        js = func_js(pv, **kwargs)
         jsc.eval_js_code(js, blocking=False)
