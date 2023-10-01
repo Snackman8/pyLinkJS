@@ -3,7 +3,7 @@
 # --------------------------------------------------
 import requests
 import tornado.auth
-import urllib
+from pylinkjs.PyLinkJS import LoginHandler, LogoutHandler
 
 
 # --------------------------------------------------
@@ -30,7 +30,7 @@ class pluginGoogleOAuth2:
 # --------------------------------------------------
 #    LoginHandler
 # --------------------------------------------------
-class GoogleOAuth2LoginHandler(tornado.web.RequestHandler,
+class GoogleOAuth2LoginHandler(LoginHandler,
                                tornado.auth.GoogleOAuth2Mixin):
     async def get(self):
         if self.get_argument('code', False):
@@ -39,11 +39,15 @@ class GoogleOAuth2LoginHandler(tornado.web.RequestHandler,
                 code=self.get_argument('code'))
             access_token = access["access_token"]
             user = await self.oauth2_request("https://www.googleapis.com/oauth2/v1/userinfo", access_token=access_token)
-            self.set_secure_cookie("user_auth_access_token", access_token)
-            self.set_secure_cookie('user_auth_method', 'GoogleOAuth2')
-            self.set_secure_cookie("user_auth_name", user['name'])
-            self.set_secure_cookie("user_auth_username", user['email'])
-            self.redirect(urllib.parse.parse_qs(self.get_argument('state', '')).get('next', ['/'])[0])
+
+            cookies = {
+                self.settings['cookiename_user_auth_access_token']: access_token,
+                self.settings['cookiename_user_auth_username']: user['name'],
+                self.settings['cookiename_user_auth_email']: user['email'],
+                self.settings['cookiename_user_auth_method']: 'GoogleOAuth2'}
+    
+            # delegeate to the login hanlder get_handler which will set the cookies and display the login_html_page
+            self.post_handler(cookies)
         else:
             self.authorize_redirect(
                 redirect_uri=self.settings['google_oauth_redirect_uri'],
@@ -56,10 +60,10 @@ class GoogleOAuth2LoginHandler(tornado.web.RequestHandler,
 # --------------------------------------------------
 #    LogoutHandler
 # --------------------------------------------------
-class GoogleOAuth2LogoutHandler(tornado.web.RequestHandler):
+class GoogleOAuth2LogoutHandler(LogoutHandler):
     async def get(self):
         # read the user and the access token
-        access_token = self.get_secure_cookie('user_auth_acess_token')
+        access_token = self.get_secure_cookie(self.settings['cookiename_user_auth_access_token'])
         if access_token is None:
             access_token = b''
         access_token = access_token.decode()
@@ -67,9 +71,12 @@ class GoogleOAuth2LogoutHandler(tornado.web.RequestHandler):
         url = f'https://oauth2.googleapis.com/revoke?token={access_token}'
         headers = {'content-type': 'application/x-www-form-urlencoded'}
         requests.post(url, headers=headers)
-        self.clear_cookie('user_auth_access_token')
-        self.clear_cookie('user_auth_method')
-        self.clear_cookie('user_auth_name')
-        self.clear_cookie('user_auth_username')
 
-        self.redirect(self.application.settings['logout_post_action_url'])
+        # build the list of cookies to clear when logging out
+        cookie_list = [self.settings['cookiename_user_auth_access_token'],
+                       self.settings['cookiename_user_auth_username'],
+                       self.settings['cookiename_user_auth_email'],
+                       self.settings['cookiename_user_auth_method'],]
+
+        # delegate to the logout get_handler which will clear the cookies then redirect to the logout_post_action_url
+        self.get_handler(cookie_list)

@@ -2,19 +2,27 @@
 #    Imports
 # --------------------------------------------------
 import os
-import tornado
+from pylinkjs.PyLinkJS import LoginHandler, LogoutHandler
 
 
 # --------------------------------------------------
 #    Plugin
 # --------------------------------------------------
 class pluginDevAuth:
-    def __init__(self, login_page_url='authDevAuthPlugin_Login.html', logout_post_action_url='/'):
+    def __init__(self, login_html_page=None, logout_post_action_url=None):
+        # use a default login_html_page if none is provided
+        if login_html_page is None:
+            login_html_page = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'authDevAuthPlugin_Login.html')
+
+        # build the arguments used by LoginHandler and LogoutHandler
         self._kwargs = {
             'login_handler': DevAuthLoginHandler,
             'logout_handler': DevAuthLogoutHandler,
-            'login_page_url': login_page_url,
-            'logout_post_action_url': logout_post_action_url}
+            'login_html_page': login_html_page, }
+
+        # set the logout post action url if needed
+        if logout_post_action_url is not None:
+            self._kwargs['logout_post_action_url'] = logout_post_action_url
 
     def register(self, kwargs):
         # merge the dictionaries
@@ -24,24 +32,25 @@ class pluginDevAuth:
 # --------------------------------------------------
 #    LoginHandler
 # --------------------------------------------------
-class DevAuthLoginHandler(tornado.web.RequestHandler):
-    async def get(self):
-        f = open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'authDevAuthPlugin_Login.html'))
-        self.write(f.read())
-
+class DevAuthLoginHandler(LoginHandler):
     async def post(self):
-        self.set_secure_cookie("user_auth_username", self.request.arguments['username'][0])
-        self.set_secure_cookie("user_auth_method", 'DevAuth')
-        self.redirect('/')
+        # build the cookie dictionary to set
+        cookies = {
+            self.settings['cookiename_user_auth_username']: self.request.arguments['username'][0],
+            self.settings['cookiename_user_auth_method']: 'DevAuth'}
+    
+        # delegeate to the login hanlder get_handler which will set the cookies and display the login_html_page
+        self.post_handler(cookies)
 
 
 # --------------------------------------------------
 #    LogoutHandler
 # --------------------------------------------------
-class DevAuthLogoutHandler(tornado.web.RequestHandler):
+class DevAuthLogoutHandler(LogoutHandler):
     async def get(self):
-        # read the user and the access token
-        self.clear_cookie('user_auth_username')
-        self.clear_cookie('user_auth_method')
+        # build the lsit of cookies to clear when logging out
+        cookie_list = [self.settings['cookiename_user_auth_username'],
+                       self.settings['cookiename_user_auth_method'] ]
 
-        self.redirect(self.application.settings['logout_post_action_url'])
+        # delegate to the logout get_handler which will clear the cookies then redirect to the logout_post_action_url
+        self.get_handler(cookie_list)

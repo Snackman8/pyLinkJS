@@ -246,7 +246,6 @@ class PyLinkJSClient(object):
         self.event_time_ms = None
         self.tag = extra_settings.copy()
         self._tornado_ioloop = IOLoop.current()
-        self.user = None
 
     def __getattr__(self, key):
         """ if the attribute does not exist intrinsicly on this instance, search the plugins for exposed functions
@@ -724,7 +723,7 @@ def start_retval_handler_ioloop():
 # --------------------------------------------------
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
-        return self.get_secure_cookie("user")
+        return self.get_secure_cookie(self.application.settings['cookiename_user_auth_username'])
 
 
 class LoginHandler(tornado.web.RequestHandler):
@@ -733,17 +732,26 @@ class LoginHandler(tornado.web.RequestHandler):
         with open(filename, 'r') as f:
             s = f.read()
         s = s.replace('{next_url}', self.request.headers.get('Referer', '/'))
+        s = s.replace('{error_message}', '')
         self.write(s)
 
     def post(self):
-        self.set_secure_cookie("user", self.get_argument("name"))
+        raise NotImplementedError()
+
+    def post_handler(self, cookies):
+        for k, v in cookies.items():
+            self.set_secure_cookie(k, v)
         self.redirect(self.get_argument('next', '/'))
 
 
 class LogoutHandler(tornado.web.RequestHandler):
     def get(self):
-        self.clear_cookie("user")
-        self.redirect(self.request.headers['Referer'])
+        raise NotImplementedError()
+
+    def get_handler(self, cookie_names):
+        for c in cookie_names:            
+            self.clear_cookie(c)
+        self.redirect(self.application.settings['logout_post_action_url'])
 
 
 class MainHandler(BaseHandler):
@@ -903,11 +911,13 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
 
         # put the packet in the queue
         if js_data['cmd'] == 'call_py':
-            props = ['user_auth_username', 'user_auth_method']
-            for p in props:
-                setattr(self._jsc, p, self.get_secure_cookie(p))
-                if getattr(self._jsc, p) is not None:
-                    setattr(self._jsc, p, getattr(self._jsc, p).decode())
+            props = {'user_auth_username': self.settings['cookiename_user_auth_username'],
+                     'user_auth_method':  self.settings['cookiename_user_auth_method'],
+                     'user_auth_email':  self.settings['cookiename_user_auth_email']}
+            for k, v in props.items():
+                setattr(self._jsc, k, self.get_secure_cookie(v))
+                if getattr(self._jsc, k) is not None:
+                    setattr(self._jsc, k, getattr(self._jsc, k).decode())
             INCOMING_PYCALLBACK_QUEUE.put((self._jsc, js_data), True, None)
 
         if js_data['cmd'] == 'return_py':
@@ -1008,8 +1018,6 @@ def run_pylinkjs_app(**kwargs):
         kwargs['default_html'] = 'index.html'
     if 'html_dir' not in kwargs:
         kwargs['html_dir'] = '.'
-    if 'login_html_page' not in kwargs:
-        kwargs['login_html_page'] = os.path.join(os.path.dirname(__file__), 'login.html')
     if 'cookie_secret' not in kwargs:
         logging.warning('COOKIE SECRET IS INSECURE!  PLEASE CHANGE')
         kwargs['cookie_secret'] = 'GENERIC COOKIE SECRET'
@@ -1026,6 +1034,11 @@ def run_pylinkjs_app(**kwargs):
 
     if 'extra_settings' not in kwargs:
         kwargs['extra_settings'] = {}
+
+    kwargs['cookiename_user_auth_username'] = f'user_auth_username+{kwargs["port"]}'
+    kwargs['cookiename_user_auth_method'] = f'user_auth_method+{kwargs["port"]}'            
+    kwargs['cookiename_user_auth_email'] = f'user_auth_email+{kwargs["port"]}'            
+    kwargs['cookiename_user_auth_access_token'] = f'user_auth_access_token+{kwargs["port"]}'
 
     if 'app_top' not in kwargs:
         kwargs['app_top'] = 0
@@ -1061,7 +1074,6 @@ def run_pylinkjs_app(**kwargs):
         request_handlers,
         default_html=kwargs['default_html'],
         html_dir=kwargs['html_dir'],
-        login_html_page=kwargs['login_html_page'],
         cookie_secret=kwargs['cookie_secret'],
         on_404=kwargs.get('on_404', None),
         extra_settings=kwargs['extra_settings']
