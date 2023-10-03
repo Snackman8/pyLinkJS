@@ -765,6 +765,28 @@ class MainHandler(BaseHandler):
         self.write(print_bytes)
         self.finish()
 
+    def _send_response(self, b):
+        monkeypatch_filename = os.path.join(os.path.dirname(__file__), 'monkey_patch.js')
+        f = open(monkeypatch_filename, 'rb')
+        mps = f.read()
+        f.close()
+        b = b + b'\n' + mps
+
+        for p in self.settings['plugins']:
+            if hasattr(p, 'inject_javascript'):
+                b = b + b'\n<script>\n' + p.inject_javascript() + b'\n</script>\n'
+
+        t = tornado.template.Template(b)
+        template_vars = self.application.settings.get('global_template_vars', {})
+        template_vars['request_path'] = self.request.path
+        template_vars['jsc_id'] = '0.' + str(uuid.uuid4())
+        template_vars['page_instance_id'] = '0.' + str(uuid.uuid4())
+        template_vars['jsc_sequence_number'] = 0
+        INITIAL_JSC_MAPPINGS[template_vars['jsc_id']] = template_vars['page_instance_id']
+        self.write(t.generate(**template_vars))
+        self.finish()
+        return
+
     async def get(self):
         self._auto_finish = False
 
@@ -780,6 +802,30 @@ class MainHandler(BaseHandler):
             #     if os.path.exists(filename_index):
             #         filename = filename_index
 
+        if 'output' in self.request.query_arguments:
+            if self.request.query_arguments.get('output', '')[0].lower() in [b'pdf', b'png']:
+                # build and remove pdf_arguments
+                pdf_kwargs = {}
+                uri = self.request.uri
+                for name in ['output', 'print_timeout', 'print_orientation', 'print_force_scale', 'print_force_fit', 'print_extra_delay']:
+                    if name in self.request.query_arguments:
+                        pdf_kwargs[name] = self.request.query_arguments[name][0].decode()
+                        uri = uri.replace(f'{name}={pdf_kwargs[name]}', '')
+                url = self.request.protocol + "://" + self.request.host + uri
+
+                # special handling for apache rewrite proxy
+                if 'X-Forwarded-Host' in self.request.headers:
+                    url = self.request.protocol + "://" + self.request.host + ':' + str(self.application.settings['port']) + uri
+
+                pdf_kwargs['url'] = url
+                pdf_kwargs['print_output_type'] = pdf_kwargs['output']
+                del pdf_kwargs['output']
+
+                # print to pdf in another thread
+                t = threading.Thread(target=self.print_thread_worker, kwargs=pdf_kwargs)
+                t.start()
+                return
+
         # return 404 if file does not exist or is a directory
         if not os.path.exists(filename):
             if self.application.settings['on_404']:
@@ -787,13 +833,16 @@ class MainHandler(BaseHandler):
                                                                        self.request.uri, self.request.headers['host'], self.settings['extra_settings'])
                 if handle_result is not None:
                     html, content_type, status_code = handle_result
-                    if html is not None:
-                        self.write(html)
                     if content_type is not None:
                         self.set_header("Content-Type", f'{content_type}; charset="utf-8"')
                     if status_code is not None:
                         self.set_status(status_code)
-                        self.finish()
+                    if html is not None:
+                        if content_type == 'text/html':
+                            self._send_response(html.encode('UTF-8'))
+                        else:
+                            self.write(html)
+                            self.finish()
                     return
                 else:
                     raise tornado.web.HTTPError(404)
@@ -807,49 +856,7 @@ class MainHandler(BaseHandler):
 
         # monkey patch in the websocket hooks
         if filename.endswith('.html'):
-            if 'output' in self.request.query_arguments:
-                if self.request.query_arguments.get('output', '')[0].lower() in [b'pdf', b'png']:
-                    # build and remove pdf_arguments
-                    pdf_kwargs = {}
-                    uri = self.request.uri
-                    for name in ['output', 'print_timeout', 'print_orientation', 'print_force_scale', 'print_force_fit', 'print_extra_delay']:
-                        if name in self.request.query_arguments:
-                            pdf_kwargs[name] = self.request.query_arguments[name][0].decode()
-                            uri = uri.replace(f'{name}={pdf_kwargs[name]}', '')
-                    url = self.request.protocol + "://" + self.request.host + uri
-
-                    # special handling for apache rewrite proxy
-                    if 'X-Forwarded-Host' in self.request.headers:
-                        url = self.request.protocol + "://" + self.request.host + ':' + str(self.application.settings['port']) + uri
-
-                    pdf_kwargs['url'] = url
-                    pdf_kwargs['print_output_type'] = pdf_kwargs['output']
-                    del pdf_kwargs['output']
-
-                    # print to pdf in another thread
-                    t = threading.Thread(target=self.print_thread_worker, kwargs=pdf_kwargs)
-                    t.start()
-                    return
-
-            monkeypatch_filename = os.path.join(os.path.dirname(__file__), 'monkey_patch.js')
-            f = open(monkeypatch_filename, 'rb')
-            mps = f.read()
-            f.close()
-            b = b + b'\n' + mps
-
-            for p in self.settings['plugins']:
-                if hasattr(p, 'inject_javascript'):
-                    b = b + b'\n<script>\n' + p.inject_javascript() + b'\n</script>\n'
-
-            t = tornado.template.Template(b)
-            template_vars = self.application.settings.get('global_template_vars', {})
-            template_vars['request_path'] = self.request.path
-            template_vars['jsc_id'] = '0.' + str(uuid.uuid4())
-            template_vars['page_instance_id'] = '0.' + str(uuid.uuid4())
-            template_vars['jsc_sequence_number'] = 0
-            INITIAL_JSC_MAPPINGS[template_vars['jsc_id']] = template_vars['page_instance_id']
-            self.write(t.generate(**template_vars))
-            self.finish()
+            self._send_response(b)
             return
 
         # apply proper mime type for css
