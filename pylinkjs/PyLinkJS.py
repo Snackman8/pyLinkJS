@@ -106,7 +106,7 @@ def print_url(url, output_type, timeout=None, orientation='landscape', force_sca
                                 if page_ready == 1:
                                     break
                             except:
-                                pass                
+                                pass
                 except:
                     pass
                 logging.info('.')
@@ -619,24 +619,37 @@ def start_pycallback_handler_ioloop(caller_globals):
                 try:
                     # prepend module path if this is a subdirectory
                     subdir = js_data['window_location_pathname']
+
+                    # strip the extension
                     if subdir.endswith('.html'):
                         subdir = subdir[:-5]
-                    else:
-                        # this is an apache rewrite, so we need to skip the first path portion
-                        subdir = '/'.join(subdir.split('/').pop(0))
-                    subdir = subdir.replace('/', '.')[1:]
+
+                    # strip the leading slash
+                    if subdir.startswith('/'):
+                        subdir = subdir[1:]
+
+                    # strip the trailing slash
+                    if subdir.endswith('/'):
+                        subdir = subdir[:-1]
+
+                    # replace slash with .
+                    subdir = subdir.replace('/', '.')
+                    
+                    # append the function name
                     if subdir != '':
                         fullfuncpath = subdir + '.' + js_data['py_func_name']
                     else:
                         fullfuncpath = js_data['py_func_name']
-                    
+
                     # split the function into modules and function name
                     parts = fullfuncpath.split('.')
 
                     # init the search space
                     new_search_space = [caller_globals, locals(), globals()]
+                    og_search_space = list(new_search_space)
 
                     # search through the search space
+                    top_level_package = True
                     for p in parts:
                         # init the search_space and new_search_space
                         search_space, new_search_space = new_search_space, None
@@ -650,20 +663,43 @@ def start_pycallback_handler_ioloop(caller_globals):
                             if isinstance(ss, ModuleType):
                                 if hasattr(ss, p):
                                     new_search_space = [getattr(ss, p)]
+                                    break
                             else:
                                 if p in ss:
                                     new_search_space = [ss[p]]
                                     break
 
+                        # we did not find anything
+                        if new_search_space is None:
+                            if top_level_package:
+                                # try again without the top level package
+                                new_search_space = og_search_space
+
+                        # this is no longer a top level package
+                        top_level_package = False
+
                     # perform a hail mary
                     if new_search_space is None:
+                        # hail mary without the top level package
+                        try:
+                            m = importlib.import_module('.'.join(subdir.split('.')[1:]))
+                            if hasattr(m, js_data['py_func_name']):
+                                new_search_space = [getattr(m, js_data['py_func_name'])]
+                        except ModuleNotFoundError:
+                            pass
+                        except Exception as e:
+                            traceback.print_exc()
+
+                        # hail mary with the top level package
                         try:
                             m = importlib.import_module(subdir)
                             if hasattr(m, js_data['py_func_name']):
                                 new_search_space = [getattr(m, js_data['py_func_name'])]
+                        except ModuleNotFoundError:
+                            pass
                         except Exception as e:
                             traceback.print_exc()
-                        
+
                     # error if nothing was found in the final new_search_space
                     if new_search_space is None:
                         # check if we should emit this error or not
@@ -749,7 +785,7 @@ class LogoutHandler(tornado.web.RequestHandler):
         raise NotImplementedError()
 
     def get_handler(self, cookie_names):
-        for c in cookie_names:            
+        for c in cookie_names:
             self.clear_cookie(c)
         self.redirect(self.application.settings['logout_post_action_url'])
 
@@ -798,7 +834,7 @@ class MainHandler(BaseHandler):
             dirname = filename
             filename = os.path.join(dirname, self.application.settings['default_html'])
             # if not os.path.exists(filename):
-            #     filename_index = os.path.join(dirname, 'index.html')
+            #     filename_index = os.path.join(dirname, os.path.basename(self.request.path[1:]) + '.html')
             #     if os.path.exists(filename_index):
             #         filename = filename_index
 
@@ -1043,8 +1079,8 @@ def run_pylinkjs_app(**kwargs):
         kwargs['extra_settings'] = {}
 
     kwargs['cookiename_user_auth_username'] = f'user_auth_username+{kwargs["port"]}'
-    kwargs['cookiename_user_auth_method'] = f'user_auth_method+{kwargs["port"]}'            
-    kwargs['cookiename_user_auth_email'] = f'user_auth_email+{kwargs["port"]}'            
+    kwargs['cookiename_user_auth_method'] = f'user_auth_method+{kwargs["port"]}'
+    kwargs['cookiename_user_auth_email'] = f'user_auth_email+{kwargs["port"]}'
     kwargs['cookiename_user_auth_access_token'] = f'user_auth_access_token+{kwargs["port"]}'
 
     if 'app_top' not in kwargs:
