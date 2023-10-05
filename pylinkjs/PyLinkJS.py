@@ -662,7 +662,7 @@ def start_pycallback_handler_ioloop(caller_globals):
                             if hasattr(m, js_data['py_func_name']):
                                 new_search_space = [getattr(m, js_data['py_func_name'])]
                         except Exception as e:
-                            pass                    
+                            traceback.print_exc()
                         
                     # error if nothing was found in the final new_search_space
                     if new_search_space is None:
