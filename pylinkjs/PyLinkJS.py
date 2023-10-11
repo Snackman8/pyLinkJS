@@ -634,7 +634,7 @@ def start_pycallback_handler_ioloop(caller_globals):
 
                     # replace slash with .
                     subdir = subdir.replace('/', '.')
-                    
+
                     # append the function name
                     if subdir != '':
                         fullfuncpath = subdir + '.' + js_data['py_func_name']
@@ -802,15 +802,21 @@ class MainHandler(BaseHandler):
         self.finish()
 
     def _send_response(self, b):
-        monkeypatch_filename = os.path.join(os.path.dirname(__file__), 'monkey_patch.js')
-        f = open(monkeypatch_filename, 'rb')
-        mps = f.read()
-        f.close()
-        b = b + b'\n' + mps
+        # inject monkeypatch top
+        html_top = b''
+        with open(os.path.join(os.path.dirname(__file__), 'monkey_patch_top.js'), 'rb') as f:
+            html_top += f.read() + b'\n'
 
+        # inject plugin html top
         for p in self.settings['plugins']:
-            if hasattr(p, 'inject_javascript'):
-                b = b + b'\n<script>\n' + p.inject_javascript() + b'\n</script>\n'
+            if hasattr(p, 'inject_html_top'):
+                html_top += bytes(p.inject_html_top(), 'UTF-8') + b'\n'
+
+        b = html_top + b
+
+        # inject monkeypatch bottom
+        with open(os.path.join(os.path.dirname(__file__), 'monkey_patch_bottom.js'), 'rb') as f:
+            b += f.read() + b'\n'
 
         t = tornado.template.Template(b)
         template_vars = self.application.settings.get('global_template_vars', {})
