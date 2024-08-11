@@ -673,7 +673,8 @@ def start_pycallback_handler_ioloop(caller_globals):
                         if new_search_space is None:
                             if top_level_package:
                                 # try again without the top level package
-                                new_search_space = og_search_space
+                                if len(parts) > 1:
+                                    new_search_space = og_search_space
 
                         # this is no longer a top level package
                         top_level_package = False
@@ -685,7 +686,7 @@ def start_pycallback_handler_ioloop(caller_globals):
                             m = importlib.import_module('.'.join(subdir.split('.')[1:]))
                             if hasattr(m, js_data['py_func_name']):
                                 new_search_space = [getattr(m, js_data['py_func_name'])]
-                        except ModuleNotFoundError:
+                        except (ModuleNotFoundError, ValueError):
                             pass
                         except Exception as e:
                             traceback.print_exc()
@@ -695,13 +696,13 @@ def start_pycallback_handler_ioloop(caller_globals):
                             m = importlib.import_module(subdir)
                             if hasattr(m, js_data['py_func_name']):
                                 new_search_space = [getattr(m, js_data['py_func_name'])]
-                        except ModuleNotFoundError:
+                        except (ModuleNotFoundError, ValueError):
                             pass
                         except Exception as e:
                             traceback.print_exc()
 
                     # error if nothing was found in the final new_search_space
-                    if new_search_space is None:
+                    if (new_search_space is None):
                         # check if we should emit this error or not
                         if not js_data.get('no_error_if_undefined', False):
                             s = 'No function found with name "%s"' % js_data['py_func_name']
