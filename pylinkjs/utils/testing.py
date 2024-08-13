@@ -115,6 +115,11 @@ def _process_redacted(png, redacted):
     return buf.getvalue()
 
 
+
+
+# --------------------------------------------------
+#    Functions
+# --------------------------------------------------
 def download_and_compare(server_func, url, update_truth=False, truth_path='.', print_extra_delay=1, print_timeout=5, redacted=[]):
     """
         run an application and download the png of the finished application.  Compare with truth
@@ -150,34 +155,21 @@ def download_and_compare(server_func, url, update_truth=False, truth_path='.', p
     _perform_comparison(truth_path, update_truth, png)
 
 
-# --------------------------------------------------
-#    Functions
-# --------------------------------------------------
-def download_and_compare_selenium(server_func, url, exercise_func, update_truth=False, truth_path='.', redacted=[]):
-    """
-        run an application and download the png of the finished application.  Exercise using selenium, compare with truth
-
-        Args:
-            server_func - function to run to start application
-            url - url to call for testing, i.e. http://localhost
-            exercise_func - function to call to exercise the application using selenium.  prototype is f(driver, url)
-            update_truth - if set to True, the truth file will automatically be updated
-            truth_path - path to look for truth files
-            redacted - list of rectangle coordinates (x, y, w, h) to redact, i.e. [[0, 0, 50, 100], [200, 200, 10, 100]]
-    """
+def selenium_test_begin(server_func, url):
     # start the app
-    _t, url = _start_pylinkjs_app(server_func, url)
+    _t, url_with_port = _start_pylinkjs_app(server_func, url)
 
     # start selenium
     chrome_options = Options()
     chrome_options.add_argument("--headless=new") # for Chrome >= 109
     driver = webdriver.Chrome(options=chrome_options)
+    driver.get(url_with_port)    
 
-    # exercise the app
-    driver.get(url)
-    exercise_func(driver, url)
+    return driver, url_with_port
 
+def selenium_test_compare_and_finish(driver, update_truth=False, truth_path='.', redacted=[], sleep_time=1):
     # get screenshot
+    time.sleep(sleep_time)
     png = driver.get_screenshot_as_png()
     driver.quit()
 
@@ -186,3 +178,42 @@ def download_and_compare_selenium(server_func, url, exercise_func, update_truth=
 
     # perform comparison
     _perform_comparison(truth_path, update_truth, png)
+
+# def download_and_compare_selenium(server_func, url, exercise_func, update_truth=False, truth_path='.', redacted=[]):
+#     """
+#         run an application and download the png of the finished application.  Exercise using selenium, compare with truth
+#
+#         Args:
+#             server_func - function to run to start application
+#             url - url to call for testing, i.e. http://localhost
+#             exercise_func - function to call to exercise the application using selenium.  prototype is f(driver, url)
+#             update_truth - if set to True, the truth file will automatically be updated
+#             truth_path - path to look for truth files
+#             redacted - list of rectangle coordinates (x, y, w, h) to redact, i.e. [[0, 0, 50, 100], [200, 200, 10, 100]]
+#     """
+#     # setup for test
+#     driver, url_with_port = selenium_test_begin(server_func, url)
+#
+#     # # start the app
+#     # _t, url = _start_pylinkjs_app(server_func, url)
+#     #
+#     # # start selenium
+#     # chrome_options = Options()
+#     # chrome_options.add_argument("--headless=new") # for Chrome >= 109
+#     # driver = webdriver.Chrome(options=chrome_options)
+#
+#     # exercise the app
+#     driver.get(url_with_port)
+#     exercise_func(driver, url)
+#
+#     selenium_test_compare_and_finish(driver, update_truth, truth_path, redacted)
+#     #
+#     # # get screenshot
+#     # png = driver.get_screenshot_as_png()
+#     # driver.quit()
+#     #
+#     # # process redacted sections
+#     # png = _process_redacted(png, redacted)
+#     #
+#     # # perform comparison
+#     # _perform_comparison(truth_path, update_truth, png)
