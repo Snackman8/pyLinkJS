@@ -875,9 +875,16 @@ class MainHandler(BaseHandler):
                 handle_result = await IOLoop.current().run_in_executor(None, self.application.settings['on_404'], self.request.path[1:],
                                                                        self.request.uri, self.request.headers['host'], self.settings['extra_settings'])
                 if handle_result is not None:
-                    html, content_type, status_code = handle_result
+                    if len(handle_result) == 4:
+                        html, content_type, status_code, headers = handle_result
+                    else:
+                        html, content_type, status_code = handle_result
+                        headers = {}
+
                     if content_type is not None:
                         self.set_header("Content-Type", f'{content_type}; charset="utf-8"')
+                    if headers.get('Content-Encoding', None) is not None:
+                        self.set_header("Content-Encoding", f'{headers["Content-Encoding"]}')
                     if status_code is not None:
                         self.set_status(status_code)
                     if html is not None:
