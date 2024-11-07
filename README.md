@@ -19,7 +19,7 @@ Simple bridge to allow Python to communicate with JavaScript
 
 The easiest way to install is to clone this repository to your home directory and then pip3 install
 ```
-sudo pip3 install pip install git+https://github.com/Snackman8/pyLinkJS
+sudo pip3 install git+https://github.com/Snackman8/pyLinkJS
 
 or
 
