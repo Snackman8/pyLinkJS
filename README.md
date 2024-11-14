@@ -1,33 +1,42 @@
 # pyLinkJS
-Simple bridge to allow Python to communicate with JavaScript
+A simple bridge to allow Python to communicate with JavaScript.
+
+---
 
 ### Table of Contents
 
-**[Installation](#installation)**<br>
-**[Basic Example](#basic-example)**<br>
-**[Documentation](#documentation)**<br>
-[&nbsp;&nbsp;&nbsp;&nbsp;Event Handlers](#event-handlers)<br>
-[&nbsp;&nbsp;&nbsp;&nbsp;PyLinkJS](#pylinkjs-1)<br>
-[&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Core Methods)](#jsclient-core-methods)<br>
-[&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Modal UI Methods)](#jsclient-modal-ui-methods)<br>
-[&nbsp;&nbsp;&nbsp;&nbsp;JSClient (Select Element Methods)](#jsclient-select-element-methods)<br>
-[&nbsp;&nbsp;&nbsp;&nbsp;PNG/PDF Output](#png-pdf-output)<br>
-**[Useful Code Examples](#useful-code-examples)**<br>
-**[Apache2 Reverse Proxy](#to-use-pylinkjs-behind-an-apache-reverse-proxy-subdirectory-foo)**<br>
+- **[Installation](#installation)**
+- **[Basic Example](#basic-example)**
+- **[Documentation](#documentation)**
+  - [Event Handlers](#event-handlers)
+  - [PyLinkJS](#pylinkjs-1)
+  - [PyLinkJSClient (Core Methods)](#pyLinkJSclient-core-methods)
+  - [PyLinkJSClient (Modal UI Methods)](#pyLinkJSclient-modal-ui-methods)
+  - [PyLinkJSClient (Select Element Methods)](#pyLinkJSclient-select-element-methods)
+  - [PNG/PDF Output](#png-pdf-output)
+- **[Useful Code Examples](#useful-code-examples)**
+- **[Using pyLinkJS Behind an Apache Reverse Proxy](#using-pylinkjs-behind-an-apache-reverse-proxy)**
+
+---
 
 ## Installation
 
-The easiest way to install is to clone this repository to your home directory and then pip3 install
-```
-sudo pip3 install git+https://github.com/Snackman8/pyLinkJS
+To install `pyLinkJS`, you have two options:
 
-or
+1. **Install directly from the Git repository using `pip`:**
 
-cd ~
-git clone https://github.com/Snackman8/pyLinkJS
-cd pyLinkJS
-sudo pip3 install .
-```
+   ```bash
+   pip3 install git+https://github.com/Snackman8/pyLinkJS
+   ```
+
+2. **Clone the repository and install using `pip`:**
+
+   ```bash
+   cd ~
+   git clone https://github.com/Snackman8/pyLinkJS
+   cd pyLinkJS
+   sudo pip3 install .
+   ```
 
 ## Basic Example
 
