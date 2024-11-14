@@ -16,6 +16,8 @@ A simple bridge to allow Python to communicate with JavaScript.
   - [PNG/PDF Output](#png-pdf-output)
 - **[Useful Code Examples](#useful-code-examples)**
 - **[Using pyLinkJS Behind an Apache Reverse Proxy](#using-pylinkjs-behind-an-apache-reverse-proxy)**
+- **[Important Hints for ChatGPT to Generate Correct Code](##to-use-pylinkjs-behind-an-apache-reverse-proxy-subdirectory-foo)**
+
 
 ---
 
