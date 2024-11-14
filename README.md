@@ -40,7 +40,20 @@ import datetime
 from pylinkjs.PyLinkJS import run_pylinkjs_app, Code
 
 def button_clicked(jsc, a, b):
-    """ simple example of a button click """
+    """
+    Handles button click events, updating the webpage's HTML and styles.
+
+    Parameters:
+    -----------
+    jsc : javascript_context
+        The JavaScript context for the current session, used to interact with page elements.
+    a, b : any
+        Dummy parameters to demonstrate passing data from JavaScript to Python.
+
+    JavaScript Example:
+    -------------------
+    call_py('button_clicked', 'param1', 'param2');
+    """
     jsc['#divout'].html = "Current Time: " + datetime.datetime.now().strftime('%H:%M:%S')
     jsc['#divout'].css.color = 'red'
     jsc['#divout'].click = Code('function() { alert("AA"); }')
@@ -48,6 +61,8 @@ def button_clicked(jsc, a, b):
 
 # start the thread and the app
 logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
+
+# Starts the PylinkJS app serving `example.html` on `localhost:8300` (default port) for browser-Python interaction.
 run_pylinkjs_app(default_html='example.html')
 ```
 
@@ -65,6 +80,8 @@ run_pylinkjs_app(default_html='example.html')
 <body>
   <a href='example2.html'>Click here to go to example 2 page</a>
   <br>
+
+  <!-- Button triggers the Python function `button_clicked` with parameters 'param1' and 'param2' when clicked. -->
   <button onclick="call_py('button_clicked', 'param1', 'param2');">Click me</button>
   <div id='divout'>?</div>
 </body>
