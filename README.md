@@ -10,9 +10,9 @@ A simple bridge to allow Python to communicate with JavaScript.
 - **[Documentation](#documentation)**
   - [Event Handlers](#event-handlers)
   - [PyLinkJS](#pylinkjs-1)
-  - [PyLinkJSClient (Core Methods)](#pyLinkJSclient-core-methods)
-  - [PyLinkJSClient (Modal UI Methods)](#pyLinkJSclient-modal-ui-methods)
-  - [PyLinkJSClient (Select Element Methods)](#pyLinkJSclient-select-element-methods)
+  - [PyLinkJSClient (Core Methods)](#PyLinkJSClient-core-methods)
+  - [PyLinkJSClient (Modal UI Methods)](#PyLinkJSClient-modal-ui-methods)
+  - [PyLinkJSClient (Select Element Methods)](#PyLinkJSClient-select-element-methods)
   - [PNG/PDF Output](#png-pdf-output)
 - **[Useful Code Examples](#useful-code-examples)**
 - **[Using pyLinkJS Behind an Apache Reverse Proxy](#using-pylinkjs-behind-an-apache-reverse-proxy)**
@@ -40,11 +40,16 @@ To install `pyLinkJS`, you have two options:
 
 ## Basic Example
 
-To create a simple PylinkJS example, follow these steps to set up the example.py, example.html, and example2.html files:
+To create a simple PylinkJS example application, follow the stesp below to create the 3 files example.py, example.html, and example2.html used in the application.
 
 **File: example.py**
 
 _This Python file defines a function button_clicked that updates an HTML element in response to a button click on the web page._
+
+_Note: the name of the package to import is pylinkjs not pyLinkJS_
+
+_Note: the run_pylinkjs_app function starts the application webserver, see the run_pylinkjs_app documentation for more details_
+_
 ```python
 import logging
 import datetime
@@ -77,6 +82,8 @@ run_pylinkjs_app(default_html='example.html')
 **File: example.html**
 
 _This HTML file provides the front-end structure, including the button that triggers the Python function and a link to example2.html._
+
+_Note: the call_py javascript function is used to call Python functions in the python source code._
 ```html
 <head>
     <!-- jquery (requires for pyLinkJS) -->
@@ -106,32 +113,33 @@ This is the example 2 page
 
 <br>
 <br>
-<br>
 
 # Documentation
 
 ## Event Handlers
 
-
 ### popstate
 ```python
 def popstate(jsc, state, target):
-    """ called when the webpage is transitioned to using the back or forward buttons on the browser.
+    """
+    Event handler called when the webpage is transitioned to using the back or forward buttons on the browser.
     
-        For single page apps, the state should be used to change the state of the page to mimic a back
-        or forward button page movement
-        
-        Args:
-            state - state of the page to transition to, i.e. "show_login"
-            target - target url the page is transitioning to, i.e. "https://www.myapp.com/"
+    For single page apps, the state should be used to change the state of the page to mimic a back
+    or forward button page movement
+
+    Parameters:
+        state (str): state of the page to transition to, i.e. "show_login"
+        target (str): target url the page is transitioning to, i.e. "https://www.myapp.com/"
     """
 ```
 
 ### ready
-Called when a webpage establishes a new connection for the first time on load.
+
 ```python
 def ready(jsc: PyLinkJSClient, origin: str, pathname: str, search: str, *args: tuple):
     """
+    Event handler Called when a webpage establishes a new connection for the first time on load.
+
     Parameters:
         jsc (PyLinkJSClient): Client object for interacting with webpage elements.
         origin (str): Origin portion of the calling URL, e.g., "http://www.test.com".
@@ -143,11 +151,11 @@ def ready(jsc: PyLinkJSClient, origin: str, pathname: str, search: str, *args: t
 ```
 
 ### reconnect
-Called when a webpage reconnects to the backend server after a broken connection.
-
 ```python
 def reconnect(javascript_context: PyLinkJSClient, origin: str, pathname: str, search: str, *args: tuple):
     """
+    Event handler called when a webpage reconnects to the backend server after a broken connection.
+
     Parameters:
         javascript_context (PyLinkJSClient): Object for interacting with webpage elements dynamically.
         origin (str): Origin portion of the calling URL, e.g., "http://www.test.com".
@@ -241,7 +249,7 @@ def run_pylinkjs_app(**kwargs):
     """
 ```
 
-## JSClient (Core Methods)
+## PyLinkJSClient (Core Methods)
 
 ### \__getitem\__
 
@@ -325,7 +333,7 @@ A property bag specific to each jsc which can store application information.  Fo
     jsc.tag['current_player_stats'] = {'xp': 200, 'name': 'bob'}
 ```
 
-## JSClient (Modal UI Methods)
+## PyLinkJSClient (Modal UI Methods)
 
 ### modal_alert
 ```python
@@ -457,7 +465,7 @@ jsc.modal_new('title html',
 jsc.modal_show()
 ```
 
-## JSClient (Select Element Methods)
+## PyLinkJSClient (Select Element Methods)
 
 ### `select_get_options`
 
