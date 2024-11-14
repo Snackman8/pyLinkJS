@@ -31,9 +31,11 @@ sudo pip3 install .
 
 ## Basic Example
 
-Create the two files below for a simple example
+To create a simple PylinkJS example, follow these steps to set up the example.py, example.html, and example2.html files:
 
-#### example.py
+**File: example.py**
+
+_This Python file defines a function button_clicked that updates an HTML element in response to a button click on the web page._
 ```python
 import logging
 import datetime
@@ -66,7 +68,9 @@ logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadNa
 run_pylinkjs_app(default_html='example.html')
 ```
 
-#### example.html
+**File: example.html**
+
+_This HTML file provides the front-end structure, including the button that triggers the Python function and a link to example2.html._
 ```html
 <head>
     <!-- jquery (requires for pyLinkJS) -->
@@ -87,7 +91,9 @@ run_pylinkjs_app(default_html='example.html')
 </body>
 ```
 
-#### example2.html
+**File: example2.html**
+
+_This is a simple HTML file that serves as the target page for the link in example.html._
 ```html
 This is the example 2 page
 ```
