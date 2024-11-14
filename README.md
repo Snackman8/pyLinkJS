@@ -123,32 +123,33 @@ def popstate(jsc, state, target):
 
 ### ready
 ```python
-def ready(jsc, origin, pathname, search, *args)
-    """ called when a webpage creates a new connection the first time on load """
-    print('Ready', origin, pathname, search, args)
+def ready(jsc, origin, pathname, search, *args):
+    """
+    Called when a webpage creates a new connection for the first time on load.
+
+    Parameters:
+        jsc - JavaScriptController object for interacting with the webpage elements.
+        origin - The origin portion of the calling URL, such as "http://www.test.com".
+        pathname - The path portion of the calling URL, like "/myapp.html".
+        search - The query string portion of the calling URL, for example, "?query=a".
+        *args - Additional arguments passed from the client (if any).
+    """
 ```
-&nbsp;&nbsp;&nbsp;&nbsp;This callback is triggered when a page is loaded and ready.  If the url called was http://www.test.com/myapp.html?query=a
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**origin** - contains the origin portion of the calling URL, i.e. "http://www.test.com"
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**pathname** - contains the path portion of the calling URL, i.e. "/myapp.html"
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**search** - contains the search portion of the calling URL, i.e. "?query=a"
-
 
 ### reconnect
 ```python
-def reconnect(jsc, origin, pathname, search, *args)
-    """ called when a webpage automatically reconnects a broken connection """
-    print('Reconnect', origin, pathname, search, args)
+def reconnect(javascript_context, origin, pathname, search, *args):
+    """
+    Called when a webpage reconnects to the backend server after a broken connection.
+
+    Parameters:
+        javascript_context - Object for interacting with webpage elements dynamically.
+        origin - The origin portion of the calling URL, such as "http://www.test.com".
+        pathname - The path portion of the calling URL, like "/myapp.html".
+        search - The query string portion of the calling URL, for example, "?query=a".
+        *args - Additional arguments passed from the client (if any).
+    """
 ```
-&nbsp;&nbsp;&nbsp;&nbsp;This callback is triggered when an existing page reconnects to the backend server from a broken websocket connection.  If the url called was http://www.test.com/myapp.html?query=a
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**origin** - contains the origin portion of the calling URL, i.e. "http://www.test.com"
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**pathname** - contains the path portion of the calling URL, i.e. "/myapp.html"
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**search** - contains the search portion of the calling URL, i.e. "?query=a"
 
 ## PyLinkJS
 
