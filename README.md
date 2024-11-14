@@ -6,6 +6,7 @@ A simple bridge to allow Python to communicate with JavaScript.
 ### Table of Contents
 
 - **[Installation](#installation)**
+- **[Skeleton Example](#skeleton-application-example)**
 - **[Basic Example](#basic-example)**
 - **[Documentation](#documentation)**
   - [Event Handlers](#event-handlers)
@@ -39,6 +40,60 @@ To install `pyLinkJS`, you have two options:
    cd pyLinkJS
    sudo pip3 install .
    ```
+   
+---
+
+## Skeleton Application Example
+
+This is a minimal structure that serves as the starting point for building a pylinkjs application.  A hello world app if you will.
+
+By convention, the html file and python file will be the same name as the appliation, although they don't have to be.
+
+This skeleton application example consists of two files, skeleton.py and skeleton.html and will be served on port 8300
+
+The application is a complete and fully functional webapp with no additional code required to run.
+
+**File: skeleton.py**
+
+```python
+import logging
+import datetime
+from pylinkjs.PyLinkJS import run_pylinkjs_app
+
+def button_clicked(jsc):
+    """
+    Handles button click events, updating the webpage's HTML and styles.
+
+    Parameters:
+        jsc : A communication channel automatically injected by the framework into the webpage, allowing Python to interact with and modify JavaScript-controlled page elements in real-time.
+    """
+    # Sets the inner HTML of #divout to display the current time
+    jsc['#divout'].html = "Current Time: " + datetime.datetime.now().strftime('%H:%M:%S')
+    # Changes the text color of #divout to red
+    jsc['#divout'].css.color = 'red'
+
+# Starts the PylinkJS app serving `example.html` on `localhost:8300` (default port) for browser-Python interaction.
+run_pylinkjs_app(default_html='skeleton.html', port=8300)
+```
+
+**File: skeleton.html**
+
+_This HTML file provides the front-end structure, including the button that triggers the Python function and a link to example2.html._
+
+_Note: the call_py javascript function is used to call Python functions in the python source code._
+```html
+<html>
+<!-- Note: jQuery and Bootstrap are automatically injected by the framework. -->
+
+<body>
+  <!-- Note: The PyLinkJS JavaScript function `call_py` is used to call Python functions from JavaScript. -->
+  <button onclick="call_py('button_clicked');">Click me</button>
+  <div id='divout'>?</div>
+</body>
+</html>
+```
+
+---
 
 ## Basic Example
 
