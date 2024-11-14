@@ -99,30 +99,28 @@ _This HTML file provides the front-end structure, including the button that trig
 
 ## Basic Example
 
-To create a simple PylinkJS example application, follow the stesp below to create the 3 files example.py, example.html, and example2.html used in the application.
+This example demonstrates a simple PylinkJS application with interactive Python-JavaScript functionality. Unlike the **Skeleton Application Example**, this example shows how to modify JavaScript event handlers from Python using the `Code` object and demonstrates passing parameters from JavaScript to Python by including dummy parameters in the function call.
 
-**File: example.py**
+- The application consists of three files: `basic_example.py`, `basic_example.html`, and `basic_example2.html`.
+- The HTML and Python files share the same name by convention, though this is not required.
+- Runs on port 8300.
+- This application is fully functional and requires no additional code to run.
 
-_This Python file defines a function button_clicked that updates an HTML element in response to a button click on the web page._
+**File: basic_example.py**
 
-_Note: the name of the package to import is pylinkjs not pyLinkJS_
-
-_Note: the run_pylinkjs_app function starts the application webserver, see the run_pylinkjs_app documentation for more details_
-_
 ```python
 import logging
 import datetime
 from pylinkjs.PyLinkJS import run_pylinkjs_app, Code
 
-def button_clicked(jsc: PyLinkJSClient, a, b):
+def button_clicked(jsc, a, b):
     """
     Handles button click events, updating the webpage's HTML and styles.
 
     Parameters:
-        jsc (PyLinkJSClient): A bridge to the current session's webpage, automatically injected 
-                              by the framework, enabling Python to interact with and modify page elements in real-time.
-        a (any): A dummy parameter demonstrating passing data from JavaScript to Python.
-        b (any): A dummy parameter demonstrating passing data from JavaScript to Python.
+        jsc : A communication channel automatically injected by the framework into the webpage, allowing Python to interact with and modify JavaScript-controlled page elements in real-time.
+        a : A dummy parameter to demonstrate passing data from JavaScript to Python.
+        b : A dummy parameter to demonstrate passing data from JavaScript to Python.
 
     JavaScript Example:
         call_py('button_clicked', 'param1', 'param2');
@@ -131,47 +129,53 @@ def button_clicked(jsc: PyLinkJSClient, a, b):
     jsc['#divout'].html = "Current Time: " + datetime.datetime.now().strftime('%H:%M:%S')
     # Changes the text color of #divout to red
     jsc['#divout'].css.color = 'red'
-    # Assigns a new click handler to #divout that displays an alert with the message "AA" when #divout is clicked
+    # Adds a click event to #divout that shows an alert with the message "AA" when clicked
     jsc['#divout'].click = Code('function() { alert("AA"); }')
 
-# Starts the PylinkJS app serving `example.html` on `localhost:8300` (default port) for browser-Python interaction.
-run_pylinkjs_app(default_html='example.html')
+# Starts the PylinkJS app serving `basic_example.html` on `localhost:8300` for browser-Python interaction.
+logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
+run_pylinkjs_app(default_html='basic_example.html', port=8300)
 ```
 
-**File: example.html**
+**File: basic_example.html**
 
-_This HTML file provides the front-end structure, including the button that triggers the Python function and a link to example2.html._
+_This HTML file provides the front-end structure, including the button that triggers the Python function and a link to `basic_example2.html`._
 
-_Note: the call_py javascript function is used to call Python functions in the python source code._
 ```html
-<head>
-    <!-- jquery (requires for pyLinkJS) -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
-
-    <!-- bootstrap (requires for pyLinkJS UI Helpers) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"></script>
-</head>
+<html>
+<!-- Note: jQuery and Bootstrap are automatically injected by the framework. -->
+<!-- Note: HTML comment-based template systems like Tornado are not compatible with PylinkJS.
+           Avoid using templating syntax within HTML comments to ensure compatibility. -->
+<!-- Note: The `call_py` JavaScript function is used to call Python functions in the Python source code. -->
 
 <body>
-  <a href='example2.html'>Click here to go to example 2 page</a>
+  <a href='basic_example2.html'>Click here to go to example 2 page</a>
   <br>
-
-  <!-- Button triggers the Python function `button_clicked` with parameters 'param1' and 'param2' when clicked. -->
+  
+  <!-- Button triggers the Python function `button_clicked` with parameters 'param1' and 'param2' when clicked.
+       These parameters are passed to the Python function to demonstrate data transfer from JavaScript to Python. -->
   <button onclick="call_py('button_clicked', 'param1', 'param2');">Click me</button>
+  
+  <!-- The `divout` element will be updated by Python code to show the current time and
+       will also have a new click handler attached that triggers an alert when clicked. -->
   <div id='divout'>?</div>
 </body>
+</html>
 ```
 
-**File: example2.html**
+**File: basic_example2.html**
 
-_This is a simple HTML file that serves as the target page for the link in example.html._
+_This is a simple HTML file that serves as the target page for the link in `basic_example.html`._
+
 ```html
-This is the example 2 page
+<html>
+  <body>
+    <p>This is the example 2 page.</p>
+  </body>
+</html>
 ```
 
-<br>
-<br>
+---
 
 # Documentation
 
