@@ -193,20 +193,35 @@ for jsc in PyLinkJS.get_broadcast_jsclients('\'):
 ### run_pylinkjs_app
 ```python
 def run_pylinkjs_app(**kwargs):
-    """ this function runs a pylinkjs application
+    """
+    Starts a PylinkJS app with configurable settings.
+
+    Parameters:
+    -----------
+    port : int, optional
+        Port number for the app (default: 8300).
+    default_html : str, optional
+        Main HTML file (default: "index.html").
+    html_dir : str, optional
+        Directory for HTML files (default: ".").
+    login_html_page : str, optional
+        Login page file (default: "login.html").
+    cookie_secret : str, required
+        Secret for cookie encryption; set a unique, random string.
+    heartbeat_callback : callable, optional
+        Function called periodically for heartbeats (default: None).
+    heartbeat_interval : int, optional
+        Time in seconds between heartbeats (default: None).
+    login_handler : tornado.web.RequestHandler, optional
+        Custom login handler (default: built-in).
+    logout_handler : tornado.web.RequestHandler, optional
+        Custom logout handler (default: built-in).
+    extra_settings : dict, optional
+        Extra settings for the Tornado app.
     
-        Note: The extra settings are available in the application.settings and in the jsc.tags
-    
-        port - port number to run application on, default is 8300
-        default_html - filename for the default html file, defaults to index.html
-        html_dir - directory containing html files, defaults to .
-        login_html_page - filename for the default login html page, defaults to prepackaged login.html
-        cookie_secret - secret cookie string, please set this to a random string
-        heartbeat_callback - heartbeat function name which will be called periodically, defaults to None
-        heartbeat_interval - interval in seconds when the heartbeat_callback function will be called, defaults to None
-        login_handler - tornado handler for login, defaults to built in Login Handler
-        logout_handler - tornado handler for login, defaults to built in Logout Handler
-        extra_settings - dictionary of extra settings that will be made available to the tornado application
+    Example:
+    --------
+    run_pylinkjs_app(port=8500, default_html="example.html", cookie_secret="random_string")
     """
 ```
 
