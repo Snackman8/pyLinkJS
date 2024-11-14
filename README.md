@@ -50,28 +50,25 @@ import logging
 import datetime
 from pylinkjs.PyLinkJS import run_pylinkjs_app, Code
 
-def button_clicked(jsc, a, b):
+def button_clicked(jsc: PyLinkJSClient, a, b):
     """
     Handles button click events, updating the webpage's HTML and styles.
 
     Parameters:
-    -----------
-    jsc : javascript_context
-        The JavaScript context for the current session, used to interact with page elements.
-    a, b : any
-        Dummy parameters to demonstrate passing data from JavaScript to Python.
+        jsc (PyLinkJSClient): A bridge to the current session's webpage, automatically injected 
+                              by the framework, enabling Python to interact with and modify page elements in real-time.
+        a (any): A dummy parameter demonstrating passing data from JavaScript to Python.
+        b (any): A dummy parameter demonstrating passing data from JavaScript to Python.
 
     JavaScript Example:
-    -------------------
-    call_py('button_clicked', 'param1', 'param2');
+        call_py('button_clicked', 'param1', 'param2');
     """
+    # Sets the inner HTML of #divout to display the current time
     jsc['#divout'].html = "Current Time: " + datetime.datetime.now().strftime('%H:%M:%S')
+    # Changes the text color of #divout to red
     jsc['#divout'].css.color = 'red'
+    # Assigns a new click handler to #divout that displays an alert with the message "AA" when #divout is clicked
     jsc['#divout'].click = Code('function() { alert("AA"); }')
-
-
-# start the thread and the app
-logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
 
 # Starts the PylinkJS app serving `example.html` on `localhost:8300` (default port) for browser-Python interaction.
 run_pylinkjs_app(default_html='example.html')
