@@ -153,40 +153,49 @@ def reconnect(javascript_context: PyLinkJSClient, origin: str, pathname: str, se
 
 ## PyLinkJS
 
-### get_all_jsclients
+### `get_all_jsclients`
 ```python
-def get_all_jsclients():
-    """ return all JSClient instances known by this server
-    
-        Returns
-            a list of JSClient instances
-     """
+def get_all_jsclients() -> list[PyLinkJSClient]:
+    """
+    Retrieves all JSClient instances from the server application when not in a callback where a jsc instance is provided.
+
+    Returns:
+        list[PyLinkJSClient]: A list of all `JSClient` instances managed by the server.
+    """
 ```
 
 This function is used to retrieve JSClient instances from the server application when not in a callback where the jsc is provided.
 
+**Example**
 ```python
+# Loop through all JSClient instances connected to the server
 for jsc in PyLinkJS.get_all_jsclients():
+    # Execute JavaScript code in each connected client's browser
+    # In this example, it triggers an alert with the message "Hello to All!"
     jsc.eval_js_code('alert("Hello to All!")')
 ```
 
-
 ### get_broadcast_jsclients
 ```python
-def get_broadcast_jsclients(pathname):
-    """ return all JSClient instances known by this server filtered by the pathname
-    
-        pathname - the pathname to filter by, i.e. /
-    
-        Returns
-            a list of JSClient instances with the correct pathname
+def get_broadcast_jsclients(pathname: str) -> list[PyLinkJSClient]:
+    """
+    Retrieves all PyLinkJSClient instances from the server application filtered by the specified pathname.
+    Useful when not in a callback where a `jsc` instance is provided.
+
+    Args:
+        pathname (str): The pathname to filter by, e.g., "/".
+
+    Returns:
+        list[PyLinkJSClient]: A list of `PyLinkJSClient` instances with the specified pathname.
     """
 ```
 
 This function is used to retrieve JSClient instances from the server application when not in a callback where the jsc is provided.
 
 ```python
-for jsc in PyLinkJS.get_broadcast_jsclients('\'):
+# Loop through all PyLinkJSClient instances connected with the specified pathname
+for jsc in PyLinkJS.get_broadcast_jsclients('/'):
+    # Execute JavaScript code in each matching client's browser
     jsc.eval_js_code('alert("Hello to All!")')
 ```
 
