@@ -444,17 +444,19 @@ jsc.modal_show()
 
 ## JSClient (Select Element Methods)
 
-### select_get_options
+### `select_get_options`
+
 ```python
 def select_get_options(self, select_selector):
-    """ retrieve the value / text pair of each option in the selector
+    """
+    Retrieves value/text pairs for each option in a `<select>` element.
 
-        Args:
-            select_selector - jquery selector for the select element
+    Args:
+        select_selector (str): jQuery selector for the `<select>` element.
 
-        Returns:
-            list of options.  each option is a two element list, first element is the value, second element is the text
-            i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
+    Returns:
+        list: A list of `[value, text]` pairs for each option.
+              Example: [['value_a', 'text_a'], ['value_b', 'text_b']]
     """
 ```
 Example
@@ -463,18 +465,19 @@ jsc.select_get_options('#myselect')
 # returns [['a_val', 'a_text'], ['b_val', 'b_text']]
 ```
 
-### select_get_selected_options
+### `select_get_selected_options`
+
+Retrieves the selected options from a `<select>` element.
+
 ```python
 def select_get_selected_options(self, select_selector):
-    """ retrieve the selected options
+    """
+    Args:
+        select_selector (str): jQuery selector for the `<select>` element.
 
-        Args:
-            select_selector - jquery selector for the select element
-
-        Returns:
-            list of selected options.  each option is a two element list,
-            first element is the value, second element is the text
-            i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
+    Returns:
+        list: A list of selected `[value, text]` pairs.
+              Example: [['value_a', 'text_a'], ['value_b', 'text_b']]
     """
 ```
 Example
@@ -513,14 +516,16 @@ jsc.select_set_options('#myselect', [['a_val', 'a_text'], ['b_val', 'b_text']])
 jsc.select_set_options('#myselect', ['a', 'b']])
 ```
 
-### select_set_selected_options
+### `select_set_selected_options`
+
+Sets the selected options in a `<select>` element.
+
 ```python
 def select_set_selected_options(self, select_selector, option_values):
-    """ selectes options in the select
-
-        Args:
-            select_selector - jquery selector for the select element
-            option_values - list of options values to select to a single value to select
+    """
+    Args:
+        select_selector (str): jQuery selector for the `<select>` element.
+        option_values (list or str): List of option values to select, or a single value to select.
     """
 ```
 Example
