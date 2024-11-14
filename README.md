@@ -45,13 +45,12 @@ To install `pyLinkJS`, you have two options:
 
 ## Skeleton Application Example
 
-This is a minimal structure that serves as the starting point for building a pylinkjs application.  A hello world app if you will.
+This minimal structure serves as a starting point for building a PylinkJS application—a "Hello World" app.
 
-By convention, the html file and python file will be the same name as the appliation, although they don't have to be.
-
-This skeleton application example consists of two files, skeleton.py and skeleton.html and will be served on port 8300
-
-The application is a complete and fully functional webapp with no additional code required to run.
+- By convention, the HTML and Python files share the same name, though this is not required.
+- This skeleton example consists of two files: `skeleton.py` and `skeleton.html`.
+- Runs on port 8300.
+- The application is fully functional and requires no additional code to run.
 
 **File: skeleton.py**
 
@@ -79,12 +78,14 @@ run_pylinkjs_app(default_html='skeleton.html', port=8300)
 
 **File: skeleton.html**
 
-_This HTML file provides the front-end structure, including the button that triggers the Python function and a link to example2.html._
+_This HTML file provides the front-end structure, including the button that triggers the Python function._
 
-_Note: the call_py javascript function is used to call Python functions in the python source code._
 ```html
 <html>
 <!-- Note: jQuery and Bootstrap are automatically injected by the framework. -->
+<!-- Note: HTML comment-based template systems like Tornado are not compatible with PylinkJS.
+           Avoid using templating syntax within HTML comments to ensure compatibility. -->
+<!-- Note: the call_py JavaScript function is used to call Python functions in the Python source code. -->
 
 <body>
   <!-- Note: The PyLinkJS JavaScript function `call_py` is used to call Python functions from JavaScript. -->
