@@ -73,6 +73,7 @@ def button_clicked(jsc):
     jsc['#divout'].css.color = 'red'
 
 # Starts the PylinkJS app serving `example.html` on `localhost:8300` (default port) for browser-Python interaction.
+logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
 run_pylinkjs_app(default_html='skeleton.html', port=8300)
 ```
 
