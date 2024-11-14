@@ -487,15 +487,17 @@ jsc.select_get_selected_options('#myselect')
 ### select_set_options
 ```python
 def select_set_options(self, select_selector, new_options):
-    """ replaces all the options in the select with new options
+    """
+    Replaces all options in a `<select>` element with new options.
 
-        Args:
-            select_selector - jquery selector for the select element
-            new_options - list of new options,
-                          each option is a two element list of value and text,
-                          i.e. [['value_a', 'text_a'], ['value_b', 'text_b']]
-                          each option can also just be one value which be both value and text
-                          i.e. ['a', 'b', 'c']
+    Args:
+        select_selector (str): jQuery selector for the target `<select>` element.
+        new_options (list): List of options, each as:
+            - `[value, text]` pair: sets `value` and display text separately.
+            - Single string: sets both `value` and text to the same string.
+
+    Example:
+        select_set_options('#dropdown', [['v1', 'Option 1'], 'Option 2'])
     """
 ```
 Example
