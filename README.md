@@ -122,32 +122,32 @@ def popstate(jsc, state, target):
 ```
 
 ### ready
+Called when a webpage establishes a new connection for the first time on load.
 ```python
-def ready(jsc, origin, pathname, search, *args):
+def ready(jsc: PyLinkJSClient, origin: str, pathname: str, search: str, *args: tuple):
     """
-    Called when a webpage creates a new connection for the first time on load.
-
     Parameters:
-        jsc - JavaScriptController object for interacting with the webpage elements.
-        origin - The origin portion of the calling URL, such as "http://www.test.com".
-        pathname - The path portion of the calling URL, like "/myapp.html".
-        search - The query string portion of the calling URL, for example, "?query=a".
-        *args - Additional arguments passed from the client (if any).
+        jsc (PyLinkJSClient): Client object for interacting with webpage elements.
+        origin (str): Origin portion of the calling URL, e.g., "http://www.test.com".
+        pathname (str): Path portion of the calling URL, e.g., "/myapp.html".
+        search (str): Query string of the calling URL, e.g., "?query=a".
+        *args (tuple): Additional arguments passed from the client, if any.
     """
+
 ```
 
 ### reconnect
-```python
-def reconnect(javascript_context, origin, pathname, search, *args):
-    """
-    Called when a webpage reconnects to the backend server after a broken connection.
+Called when a webpage reconnects to the backend server after a broken connection.
 
+```python
+def reconnect(javascript_context: PyLinkJSClient, origin: str, pathname: str, search: str, *args: tuple):
+    """
     Parameters:
-        javascript_context - Object for interacting with webpage elements dynamically.
-        origin - The origin portion of the calling URL, such as "http://www.test.com".
-        pathname - The path portion of the calling URL, like "/myapp.html".
-        search - The query string portion of the calling URL, for example, "?query=a".
-        *args - Additional arguments passed from the client (if any).
+        javascript_context (PyLinkJSClient): Object for interacting with webpage elements dynamically.
+        origin (str): Origin portion of the calling URL, e.g., "http://www.test.com".
+        pathname (str): Path portion of the calling URL, e.g., "/myapp.html".
+        search (str): Query string of the calling URL, e.g., "?query=a".
+        *args (tuple): Additional arguments passed from the client, if any.
     """
 ```
 
