@@ -346,6 +346,7 @@ jsc.browser_download('test.txt', "Hello World!")
 ```python
 def eval_js_code(self, js_code, blocking=True):
     """ request that the browser evaluate javascript code
+        the javascript code is executed in the global javascript context so it remembers which variables have been previously declared
     
         js_code - the javascript code to execute
         blocking - if True, this function will not return until the javascript has completed execution
