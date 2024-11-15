@@ -131,6 +131,8 @@ def button_clicked(jsc, a, b):
     jsc['#divout'].css.color = 'red'
     # Adds a click event to #divout that shows an alert with the message "AA" when clicked
     jsc['#divout'].click = Code('function() { alert("AA"); }')
+    # use eval_js_code to run arbitrary javascript code to change the output
+    jsc.eval_js_code(f"""$('#divout2').html('{datetime.datetime.now().strftime('%H:%M:%S')}');""")
 
 # Starts the PylinkJS app serving `basic_example.html` on `localhost:8300` for browser-Python interaction.
 logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
@@ -159,6 +161,10 @@ _This HTML file provides the front-end structure, including the button that trig
   <!-- The `divout` element will be updated by Python code to show the current time and
        will also have a new click handler attached that triggers an alert when clicked. -->
   <div id='divout'>?</div>
+
+  <!-- The `divout2` element will be updated by the Python code using the `eval_js_code` function,
+       which can execute arbitrary JavaScript code. -->
+  <div id='divout2'></div>
 </body>
 </html>
 ```
