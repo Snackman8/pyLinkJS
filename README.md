@@ -716,6 +716,7 @@ ProxyPassReverse /foo/ http://127.0.0.1:9150/
 - Tornado Template is not allowed in the HTML file
 - use the ready event handler for code that should be run when the page is loaded, do not use call_py inside the onload, it won't work
 - use the run_pylinkjs_app function to start the web service
+- pylinkjs uses jQuery internally, so jQuery properties can be accessed from the jsClient.  i.e. so use jsc['#input'].val (jquery property) and not jsc['#input'].value (DOM property)
 
 
 
