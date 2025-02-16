@@ -10,29 +10,28 @@ A simple bridge to allow Python to communicate with JavaScript.
 - **[Basic Example](#basic-example)**
 - **[Documentation](#documentation)**
   - [Event Handlers](#event-handlers)
-  - [PyLinkJS](#pylinkjs-1)
-  - [PyLinkJSClient (Core Methods)](#PyLinkJSClient-core-methods)
-  - [PyLinkJSClient (Modal UI Methods)](#PyLinkJSClient-modal-ui-methods)
-  - [PyLinkJSClient (Select Element Methods)](#PyLinkJSClient-select-element-methods)
+  - [PyLinkJS](#pylinkjs)
+  - [PyLinkJSClient (Core Methods)](#pylinkjsclient-core-methods)
+  - [PyLinkJSClient (Modal UI Methods)](#pylinkjsclient-modal-ui-methods)
+  - [PyLinkJSClient (Select Element Methods)](#pylinkjsclient-select-element-methods)
   - [PNG/PDF Output](#png-pdf-output)
 - **[Useful Code Examples](#useful-code-examples)**
 - **[Using pyLinkJS Behind an Apache Reverse Proxy](#using-pylinkjs-behind-an-apache-reverse-proxy)**
-- **[Important Hints for ChatGPT to Generate Correct Code](##to-use-pylinkjs-behind-an-apache-reverse-proxy-subdirectory-foo)**
-
+- **[Important Hints for ChatGPT to Generate Correct Code](#important-hints-for-chatgpt-to-generate-correct-code)**
 
 ---
 
 ## Installation
 
-To install `pyLinkJS`, you have two options:
+To install `pyLinkJS` you have two options:
 
-1. **Install directly from the Git repository using `pip`:**
+**Install directly from the Git repository using `pip` :**
 
    ```bash
    pip3 install git+https://github.com/Snackman8/pyLinkJS
    ```
 
-2. **Clone the repository and install using `pip`:**
+**Clone the repository and install using `pip` :**
 
    ```bash
    cd ~
@@ -48,13 +47,14 @@ To install `pyLinkJS`, you have two options:
 This minimal structure serves as a starting point for building a PylinkJS application—a "Hello World" app.
 
 - By convention, the HTML and Python files share the same name, though this is not required.
-- This skeleton example consists of two files: `skeleton.py` and `skeleton.html`.
+- This skeleton example consists of two files: `skeleton.py` and `skeleton.html` .
 - Runs on port 8300.
 - The application is fully functional and requires no additional code to run.
 
 **File: skeleton.py**
 
 ```python
+import argparse
 import logging
 import datetime
 from pylinkjs.PyLinkJS import run_pylinkjs_app
@@ -71,9 +71,14 @@ def button_clicked(jsc):
     # Changes the text color of #divout to red
     jsc['#divout'].css.color = 'red'
 
+# handle the --port argument
+parser = argparse.ArgumentParser()
+parser.add_argument('--port', type=int, required=False, default=8300)
+args = parser.parse_args()
+
 # Starts the PylinkJS app serving `example.html` on `localhost:8300` (default port) for browser-Python interaction.
 logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-run_pylinkjs_app(default_html='skeleton.html', port=8300)
+run_pylinkjs_app(default_html='skeleton.html', port=args.port)
 ```
 
 **File: skeleton.html**
@@ -101,7 +106,7 @@ _This HTML file provides the front-end structure, including the button that trig
 
 This example demonstrates a simple PylinkJS application with interactive Python-JavaScript functionality. Unlike the **Skeleton Application Example**, this example shows how to modify JavaScript event handlers from Python using the `Code` object and demonstrates passing parameters from JavaScript to Python by including dummy parameters in the function call.
 
-- The application consists of three files: `basic_example.py`, `basic_example.html`, and `basic_example2.html`.
+- The application consists of three files: `basic_example.py` , `basic_example.html` , and `basic_example2.html` .
 - The HTML and Python files share the same name by convention, though this is not required.
 - Runs on port 8300.
 - This application is fully functional and requires no additional code to run.
@@ -109,6 +114,7 @@ This example demonstrates a simple PylinkJS application with interactive Python-
 **File: basic_example.py**
 
 ```python
+import argparse
 import logging
 import datetime
 from pylinkjs.PyLinkJS import run_pylinkjs_app, Code
@@ -132,27 +138,33 @@ def button_clicked(jsc, a, b):
     # Adds a click event to #divout that shows an alert with the message "AA" when clicked
     jsc['#divout'].click = Code('function() { alert("AA"); }')
     # use eval_js_code to run arbitrary javascript code to change the output
-    jsc.eval_js_code(f"""$('#divout2').html('{datetime.datetime.now().strftime('%H:%M:%S')}');""")
+    jsc.eval_js_code(f"""$("#divout2").html("{datetime.datetime.now().strftime('%H:%M:%S')}");""")
+
+# handle the --port argument
+parser = argparse.ArgumentParser()
+parser.add_argument('--port', type=int, required=False, default=8300)
+args = parser.parse_args()
 
 # Starts the PylinkJS app serving `basic_example.html` on `localhost:8300` for browser-Python interaction.
 logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-run_pylinkjs_app(default_html='basic_example.html', port=8300)
+run_pylinkjs_app(default_html='basic_example.html', port=args.port)
 ```
 
 **File: basic_example.html**
 
-_This HTML file provides the front-end structure, including the button that triggers the Python function and a link to `basic_example2.html`._
+_This HTML file provides the front-end structure, including the button that triggers the Python function and a link to `basic_example2.html` .
 
 ```html
 <html>
 <!-- Note: jQuery and Bootstrap are automatically injected by the framework. -->
 <!-- Note: HTML comment-based template systems like Tornado are not compatible with PylinkJS.
            Avoid using templating syntax within HTML comments to ensure compatibility. -->
-<!-- Note: The `call_py` JavaScript function is used to call Python functions in the Python source code. -->
+<!-- Note: The call_py JavaScript function is used to call Python functions in the Python source code. -->
+
 
 <body>
   <a href='basic_example2.html'>Click here to go to example 2 page</a>
-  <br>
+  <br/>
   
   <!-- Button triggers the Python function `button_clicked` with parameters 'param1' and 'param2' when clicked.
        These parameters are passed to the Python function to demonstrate data transfer from JavaScript to Python. -->
@@ -171,7 +183,7 @@ _This HTML file provides the front-end structure, including the button that trig
 
 **File: basic_example2.html**
 
-_This is a simple HTML file that serves as the target page for the link in `basic_example.html`._
+_This is a simple HTML file that serves as the target page for the link in `basic_example.html` .
 
 ```html
 <html>
@@ -282,7 +294,6 @@ for jsc in PyLinkJS.get_broadcast_jsclients('/'):
     jsc.eval_js_code('alert("Hello to All!")')
 ```
 
-
 ### run_pylinkjs_app
 ```python
 def run_pylinkjs_app(**kwargs):
@@ -322,7 +333,7 @@ def run_pylinkjs_app(**kwargs):
 
 ### \__getitem\__
 
-HTML elements in the browser can be accessed by their ID using the jsc item accessor.  For example if there was an element such as `<div id=x>Hello</div>` in the html page, then it could be accessed in python using `jsc['x']`.
+HTML elements in the browser can be accessed by their ID using the jsc item accessor.  For example if there was an element such as `<div id=x>Hello</div>` in the html page, then it could be accessed in python using `jsc['x']` .
 
 ### browser_download
 ```python
@@ -423,7 +434,7 @@ Example
 ```python
 # show a messagebox with an OK button, if callback is specified, a python function can
 # be called when the OK button is clicked
-jsc.modal_alert('title html', 'body html)
+jsc.modal_alert('title html', 'body html')
 
 # print the response
 print(jsc.modal_input_get_text())
@@ -608,7 +619,7 @@ jsc.select_set_options('#myselect', [['a_val', 'a_text'], ['b_val', 'b_text']])
 # will replace all options with two options
 #   <option value='a'>a</option>
 #   <option value='b'>b</option>
-jsc.select_set_options('#myselect', ['a', 'b']])
+jsc.select_set_options('#myselect', ['a', 'b'])
 ```
 
 ### `select_set_selected_options`
@@ -635,9 +646,9 @@ jsc.select_set_selected_options('#myselect', ['a_val'])
 jsc.select_set_selected_options('#myselect', [a_val])
 ```
 
-<br>
-<br>
-<br>
+<br/>
+<br/>
+<br/>
 
 ## PNG PDF Output
 There is built in functionality to generate PNG and PDF output of a pyLinkJS website.  Simply add the output=png or output=pdf parameter to the url
@@ -667,9 +678,9 @@ The printing engine will use the HINT_PRINT_TIMEOUT as the timeout value if prin
 Example
 ```http://mywebsite.com?output=pdf&print_timeout=15&print_orientation=portrait&print_force_fit=1&print_extra_delay=5```
 
-<br>
-<br>
-<br>
+<br/>
+<br/>
+<br/>
 
 # Useful Code Examples
 
@@ -677,6 +688,8 @@ Example
 This example will update the html of the element with id of divout_broadcast on all connected browsers
 ```python
 """ example of how to broadcast a change to all webpages """
+import time
+
 t = time.time()
 for bjsc in jsc.get_broadcast_jscs():
     bjsc['#divout_broadcast'].html = t
@@ -701,7 +714,7 @@ t = threading.Thread(target=thread_worker, daemon=True)
 t.start()
 ```
 
-# To use pyLinkJS behind an Apache Reverse Proxy subdirectory /foo
+# Using pyLinkJS Behind an Apache Reverse Proxy
 The application will run on port 9150 on localhost, apache will reverse proxy the application from http://localhost/foo
 ```python
 ProxyPreserveHost On
@@ -717,9 +730,3 @@ ProxyPassReverse /foo/ http://127.0.0.1:9150/
 - use the ready event handler for code that should be run when the page is loaded, do not use call_py inside the onload, it won't work
 - use the run_pylinkjs_app function to start the web service
 - pylinkjs uses jQuery internally, so jQuery properties can be accessed from the jsClient.  i.e. so use jsc['#input'].val (jquery property) and not jsc['#input'].value (DOM property)
-
-
-
-
-
-
