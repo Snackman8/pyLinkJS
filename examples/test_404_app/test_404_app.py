@@ -1,15 +1,10 @@
 # --------------------------------------------------
 #    Imports
 # --------------------------------------------------
+import argparse
 import logging
-from urllib.parse import urlparse, parse_qs
-from pylinkjs.PyLinkJS import run_pylinkjs_app, execute_in_subprocess
-
-
-# --------------------------------------------------
-#    Constants
-# --------------------------------------------------
-PORT = 9150
+import os
+from pylinkjs.PyLinkJS import run_pylinkjs_app
 
 
 # --------------------------------------------------
@@ -39,5 +34,13 @@ def handle_404(path, uri, *args):
 #    Main
 # --------------------------------------------------
 if __name__ == '__main__':
+    # setup the logger
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-    run_pylinkjs_app(default_html='test_404_app.html', on_404=handle_404, port=PORT)
+    
+    # handle the --port argument
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', type=int, required=False, default=8300)
+    args = vars(parser.parse_args())
+
+    # run the app
+    run_pylinkjs_app(default_html='test_404_app.html', html_dir=os.path.dirname(__file__), internal_polling_interval=0.025, on_404=handle_404, port=args['port'])

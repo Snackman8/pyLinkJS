@@ -1,6 +1,7 @@
 # --------------------------------------------------
 #    Imports
 # --------------------------------------------------
+import argparse
 import logging
 import os
 from pylinkjs.PyLinkJS import run_pylinkjs_app
@@ -50,8 +51,17 @@ def select_host_changed(jsc):
     jsc['#ip_address'].html = ip_address
 
 
-
+# --------------------------------------------------
+#    Main
+# --------------------------------------------------
 if __name__ == '__main__':
-    # start the thread and the app
+    # setup the logger
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-    run_pylinkjs_app(default_html='ping_app.html', app_mode=True, app_top=100, app_left=100, app_width=800, app_height=520)
+    
+    # handle the --port argument
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', type=int, required=False, default=8300)
+    args = vars(parser.parse_args())
+
+    # run the app
+    run_pylinkjs_app(default_html='ping_app.html', html_dir=os.path.dirname(__file__), internal_polling_interval=0.025, port=args['port'], app_mode=True, app_top=100, app_left=100, app_width=800, app_height=520)

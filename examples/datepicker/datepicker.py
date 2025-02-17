@@ -1,5 +1,7 @@
+import argparse
 import datetime
 import logging
+import os
 from pylinkjs.PyLinkJS import run_pylinkjs_app
 
 
@@ -19,7 +21,17 @@ def button_clicked(jsc):
     jsc['#divout'].html = f"Date on the web page is {datepick}"
 
 
+# --------------------------------------------------
+#    Main
+# --------------------------------------------------
 if __name__ == '__main__':
-    # start the thread and the app
+    # setup the logger
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-    run_pylinkjs_app(default_html='datepicker.html')
+    
+    # handle the --port argument
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', type=int, required=False, default=8300)
+    args = vars(parser.parse_args())
+
+    # run the app
+    run_pylinkjs_app(default_html='datepicker.html', html_dir=os.path.dirname(__file__), internal_polling_interval=0.025, port=args['port'])

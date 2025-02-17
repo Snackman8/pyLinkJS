@@ -1,8 +1,10 @@
 #--------------------------------------------------
 #   Imports
 #--------------------------------------------------
+import argparse
 import json
 import logging
+import os
 import numpy as np
 import pandas as pd
 from pylinkjs.PyLinkJS import run_pylinkjs_app
@@ -136,20 +138,17 @@ def get_data(**kwargs):
 # --------------------------------------------------
 #    Main
 # --------------------------------------------------
-def main():
-    # configure logger
+if __name__ == '__main__':
+    # setup the logger
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-
-    # define the port
-    port = 8300
+    
+    # handle the --port argument
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', type=int, required=False, default=8300)
+    args = vars(parser.parse_args())
 
     # init the google oauth2 plugin
     bokeh_plugin = pluginBokeh(get_data_handler=get_data)
 
-    # run the application
-    run_pylinkjs_app(default_html='plotly_app.html',
-                     port=port,
-                     plugins=[bokeh_plugin])
-
-if __name__ == '__main__':
-    main()
+    # run the app
+    run_pylinkjs_app(default_html='plotly_app.html', html_dir=os.path.dirname(__file__), internal_polling_interval=0.025, port=args['port'], plugins=[bokeh_plugin])
