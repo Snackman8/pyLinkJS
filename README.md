@@ -49,8 +49,12 @@ playwright install chromium
 # (Optional) Clone the repository to access example code (see the examples/ directory)
 git clone https://github.com/Snackman8/pyLinkJS
 
-# (Optional) Install additional packages required by the examples
-pip install pandas numpy requests pretty_html_table
+# (Optional) Enable printing support in PyLinkJS apps.
+# Install Playwright's Chromium browser so PNG and PDF output can be generated.
+# NOTE: Read the command's output carefully; it may ask you to install system dependencies.
+# If it suggests "sudo playwright install-deps", run this instead to use the venv's binary:
+#     sudo $(which playwright) install-deps
+playwright install chromium
 
 # (Optional) Run the Hello World example.
 # This starts a server on port 8300 — open http://localhost:8300 in your browser to see it.
