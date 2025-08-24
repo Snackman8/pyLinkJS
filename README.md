@@ -23,24 +23,25 @@ A simple bridge to allow Python to communicate with JavaScript.
 
 ## Installation
 
-To install `pyLinkJS` you have two options:
+It is highly recommended to install `pyLinkdJS` in a virtual environment.  
+Follow the steps below to install into a virtual environment on Ubuntu.
 
-**Install directly from the Git repository using `pip` :**
+**Create a virtual environment and install using `pip`:**
 
-   ```bash
-   pip3 install git+https://github.com/Snackman8/pyLinkJS
-   ```
+```bash
+# install dependencies on Ubuntu
+sudo apt-get update
+sudo apt-get install -y python3-pip python3-venv
 
-**Clone the repository and install using `pip` :**
+# create a virtual environment in the venv directory
+python3 -m venv venv
 
-   ```bash
-   cd ~
-   git clone https://github.com/Snackman8/pyLinkJS
-   cd pyLinkJS
-   sudo pip3 install .
-   ```
-   
----
+# activate the virtual environment
+source venv/bin/activate
+
+# install the pyLinkJS package directly from GitHub
+pip install git+https://github.com/Snackman8/pyLinkJS
+```
 
 ## Skeleton Application Example
 
