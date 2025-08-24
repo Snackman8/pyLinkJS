@@ -44,7 +44,7 @@ pip install git+https://github.com/Snackman8/pyLinkJS
 
 # (optional) Clone the repository to get code examples in the examples directory, install packages the examples need
 git clone https://github.com/Snackman8/pyLinkJS
-pip install pandas numpy requests pretty_html_table
+pip install pandas numpy requests pretty_html_table git+https://github.com/Snackman8/pyLinkJS_Bokeh
 ```
 
 ## Skeleton Application Example
