@@ -30,7 +30,7 @@ import tornado.websocket
 from tornado.ioloop import IOLoop
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 from tornado.websocket import WebSocketClosedError
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Error as pw_Error
 
 
 # --------------------------------------------------
@@ -137,6 +137,8 @@ def print_url(url, output_type, timeout=None, orientation='landscape', force_sca
             else:
                 pdf_bytes = page.pdf(landscape=(orientation == 'landscape'))
             return pdf_bytes, 'application/pdf; charset="utf-8"'
+    except pw_Error:
+        raise RuntimeError("Playwright is not installed. Run `playwright install` to enable printing.")
     except Exception as e:
         traceback.print_exc()
         print(e)
@@ -318,7 +320,7 @@ class PyLinkJSClient(object):
     def get_broadcast_jscs(self):
         """ return all JSClient instances known by this server """
         retval = []
-        for jsc in self._websocket._all_jsclients.values():
+        for jsc in self._websocket._all_jsclients:
             if jsc.get_pathname() == self.get_pathname():
                 retval.append(jsc)
         return retval
@@ -794,13 +796,19 @@ class LogoutHandler(tornado.web.RequestHandler):
 class MainHandler(BaseHandler):
     def print_thread_worker(self, url, print_output_type='pdf', print_timeout=None, print_orientation='landscape', print_force_scale=None, print_force_fit=False,
                             print_extra_delay=1):
-        print_bytes, content_type = print_url(url=url, output_type=print_output_type, timeout=print_timeout,
-                                              orientation=print_orientation, force_scale=print_force_scale,
-                                              force_fit=print_force_fit, extra_delay=print_extra_delay)
-        self.set_header("Content-Type", content_type)
-        self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-        self.write(print_bytes)
-        self.finish()
+        try:
+            print_bytes, content_type = print_url(url=url, output_type=print_output_type, timeout=print_timeout,
+                                                  orientation=print_orientation, force_scale=print_force_scale,
+                                                  force_fit=print_force_fit, extra_delay=print_extra_delay)
+            self.set_header("Content-Type", content_type)
+            self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            self.write(print_bytes)
+        except Exception as e:
+            self.set_status(500)
+            self.set_header("Content-Type", "text/plain; charset=utf-8")
+            self.write(f"{e}")
+        finally:
+            self.finish()
 
     def _send_response(self, b):
         # inject monkeypatch top
@@ -1177,6 +1185,8 @@ def run_pylinkjs_app(**kwargs):
         height = kwargs['app_height']
         url = f"http://localhost:{kwargs['port']}"
         exe = shutil.which('chromium')
+        if not exe:
+            raise FileNotFoundError("Chromium executable not found. Please install chromium-browser.  i.e. 'sudo apt install chromium-browser -y'")
         my_env = os.environ.copy()
         my_env["XAUTHORITY"] = os.path.expanduser('~/.Xauthority')
         p = subprocess.Popen(f'{exe} --window-size="{width},{height}" --window-position="{left},{top}" --user-data-dir="/tmp/{time.time()}" --app={url} ',

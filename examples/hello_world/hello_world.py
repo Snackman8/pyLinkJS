@@ -30,7 +30,7 @@ def button_broadcast(jsc):
     """ example of how to broadcast a change to all webpages """
     t = time.time()
     for bjsc in jsc.get_broadcast_jscs():
-        bjsc['#divout_broadcast'].html = t
+        bjsc['#divout_broadcast'].html = 'TIME BROADCASTED TO ALL PAGES = ' + str(t)
 
 
 def py_select_changed(jsc, a, b, c):

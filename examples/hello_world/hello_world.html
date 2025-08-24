@@ -8,17 +8,25 @@
 </head>
 
 
-Hello World!
+Hello World!<br>
+
+Open this webpage is multiple tabs or computers to see broadcast functionality.
+
 <br>
 <br>
-<button onclick="call_py('button_clicked', 1, 2, 3);">Click me</button>
+
+<button onclick="call_py('button_clicked', 1, 2, 3);">Click me to generate a random string in Python and send to webrowser</button>
+<div id='divout'>Random String...</div>
 <br>
 <br>
-<div id='divout'>Random Numbers</div>
 
 
-<button onclick="call_py('button_broadcast');">Update broadcast</button>
+<button onclick="call_py('button_broadcast');">Broadcast (Send info to all webbrowsers showing this webpage)</button>
+<div id='divout_broadcast'>(Pending Manual Broadcast)</div>
+<br>
+<br>
 
-<div id='divout_broadcast'>Broadcast</div>
-
+<h3>This example time stamp is automatically broadcasted from the server to all web pages</h3>
 <div id='divout_automatic_broadcast'>Automatic Broadcast</div>
+<br>
+<br>
