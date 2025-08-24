@@ -23,7 +23,7 @@ A simple bridge to allow Python to communicate with JavaScript.
 
 ## Installation
 
-It is highly recommended to install `pyLinkdJS` in a virtual environment.  
+It is highly recommended to install `pyLinkJS` in a virtual environment.  
 Follow the steps below to install into a virtual environment on Ubuntu.
 
 **Create a virtual environment and install using `pip`:**
@@ -42,10 +42,23 @@ source venv/bin/activate
 # install the pyLinkJS package directly from GitHub
 pip install git+https://github.com/Snackman8/pyLinkJS
 
-# (optional) Clone the repository to get code examples in the examples directory, install packages the examples need
+# (Optional) Enable printing support in PyLinkJS apps.
+# Install Playwright's Chromium browser so PNG and PDF output can be generated.
+playwright install chromium
+
+# (Optional) Clone the repository to access example code (see the examples/ directory)
 git clone https://github.com/Snackman8/pyLinkJS
-pip install pandas numpy requests pretty_html_table git+https://github.com/Snackman8/pyLinkJS_Bokeh
-sudo apt install chromium-browser -y
+
+# (Optional) Install additional packages required by the examples
+pip install pandas numpy requests pretty_html_table
+
+# (Optional) Run the Hello World example.
+# This starts a server on port 8300 — open http://localhost:8300 in your browser to see it.
+# If accessing from another machine, replace "localhost" with the IP of the server running pyLinkJS.
+# If running on a locked-down server, you may need to open port 8300 in the firewall to allow access.
+# In a corporate environment, your IT department may be able to assist.
+# Press Ctrl+C in the terminal to stop the server.
+python3 pyLinkJS/examples/hello_world/hello_world.py
 ```
 
 ## Skeleton Application Example
