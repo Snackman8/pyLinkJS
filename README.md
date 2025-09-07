@@ -269,6 +269,27 @@ def reconnect(javascript_context: PyLinkJSClient, origin: str, pathname: str, se
     """
 ```
 
+### on_404
+```python
+def on_404(path, uri, host, extra_settings, headers=None, body=b"", method="GET", *args):
+    """
+    Called when no static .html matches the path.
+    Use this to implement ad hoc REST endpoints.
+
+    Args:
+        path: str  # path without leading slash, e.g. "run"
+        uri: str   # full URI with query string
+        host: str  # Host header
+        extra_settings: dict  # app-defined settings
+        headers: dict  # request headers (flattened)
+        body: bytes  # raw request body (may be empty)
+        method: str  # "GET", "POST", etc.
+    Returns:
+        tuple: (bytes response_body, str content_type, int status_code, dict headers_out?)
+               headers_out is optional
+    """
+```
+
 ## PyLinkJS
 
 ### `get_all_jsclients`
@@ -345,6 +366,9 @@ def run_pylinkjs_app(**kwargs):
         Custom logout handler (default: built-in).
     extra_settings : dict, optional
         Extra settings for the Tornado app.
+    on_404: callable, optional
+        If provided, is called for GET and POST misses.
+        Recommended signature: on_404(path, uri, host, extra_settings, headers, body, method, *args).
     
     Example:
     --------
@@ -753,3 +777,5 @@ ProxyPassReverse /foo/ http://127.0.0.1:9150/
 - use the ready event handler for code that should be run when the page is loaded, do not use call_py inside the onload, it won't work
 - use the run_pylinkjs_app function to start the web service
 - pylinkjs uses jQuery internally, so jQuery properties can be accessed from the jsClient.  i.e. so use jsc['#input'].val (jquery property) and not jsc['#input'].value (DOM property)
+- Use on_404(path, uri, host, extra_settings, headers, body, method) to implement REST-style GET/POST endpoints.
+- Do not infer method from headers; use self.request.method and pass it to on_404.
