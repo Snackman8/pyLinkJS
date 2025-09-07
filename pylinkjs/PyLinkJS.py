@@ -880,8 +880,21 @@ class MainHandler(BaseHandler):
         # return 404 if file does not exist or is a directory
         if not os.path.exists(filename):
             if self.application.settings['on_404']:
-                handle_result = await IOLoop.current().run_in_executor(None, self.application.settings['on_404'], self.request.path[1:],
-                                                                       self.request.uri, self.request.headers['host'], self.settings['extra_settings'])
+                headers = dict(self.request.headers)
+                body = b""                       # GET: no body
+                method = self.request.method     # "GET"
+
+                handle_result = await IOLoop.current().run_in_executor(
+                    None,
+                    self.application.settings['on_404'],
+                    self.request.path[1:],             # path
+                    self.request.uri,                  # uri
+                    self.request.headers['host'],      # host
+                    self.settings['extra_settings'],   # extra_settings
+                    headers,                           # NEW: all headers
+                    body,                              # NEW: (empty) body
+                    method,                            # NEW: method
+                )
                 if handle_result is not None:
                     if len(handle_result) == 4:
                         html, content_type, status_code, headers = handle_result
@@ -940,6 +953,56 @@ class MainHandler(BaseHandler):
         # serve the page
         self.write(b)
         self.finish()
+
+    async def post(self):
+        """Divert ALL POSTs to the on_404 handler, carrying headers/body."""
+        self._auto_finish = False
+
+        if not self.application.settings.get('on_404'):
+            raise tornado.web.HTTPError(404)
+
+        # Flatten headers and grab raw body
+        headers = dict(self.request.headers)
+        body = self.request.body  # bytes (may be empty)
+
+        # Optionally pass method too (handy for handler branching)
+        method = self.request.method  # "POST"
+
+        # Call your on_404 handler with extra args (headers/body/method)
+        handle_result = await IOLoop.current().run_in_executor(
+            None,
+            self.application.settings['on_404'],
+            self.request.path[1:],                 # path
+            self.request.uri,                      # uri
+            self.request.headers['host'],          # host
+            self.settings['extra_settings'],       # extra_settings
+            headers,                               # <-- NEW: all headers
+            body,                                  # <-- NEW: raw POST body
+            method,                                # <-- optional
+        )
+
+        if handle_result is None:
+            raise tornado.web.HTTPError(404)
+
+        # Write response (same pattern as in get())
+        if len(handle_result) == 4:
+            html, content_type, status_code, out_headers = handle_result
+        else:
+            html, content_type, status_code = handle_result
+            out_headers = {}
+
+        if content_type is not None:
+            self.set_header("Content-Type", f'{content_type}; charset="utf-8"')
+        if out_headers.get('Content-Encoding'):
+            self.set_header("Content-Encoding", out_headers['Content-Encoding'])
+        if status_code is not None:
+            self.set_status(status_code)
+        if html is not None:
+            if content_type == 'text/html':
+                self._send_response(html.encode('UTF-8'))
+            else:
+                self.write(html)
+                self.finish()
 
 
 class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):

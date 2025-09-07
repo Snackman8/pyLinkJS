@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<body>
+  <h3>POST with string in JSON body</h3>
+
+  <input id="hdrval" type="text" value="hello world" style="width:300px"/>
+  <button id="send">Send POST</button>
+
+  <pre id="out">waiting</pre>
+
+  <script>
+  document.getElementById('send').onclick = async () => {
+    const val = document.getElementById('hdrval').value;
+
+    const resp = await fetch("/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        plugin: "ocr",
+        job_id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
+        value: val
+      })
+    }).catch(err => ({ ok:false, statusText:String(err) }));
+
+    let text;
+    if (resp && resp.ok) text = await resp.text();
+    else text = "request failed";
+
+    document.getElementById('out').textContent = text;
+  };
+  </script>
+</body>
+</html>

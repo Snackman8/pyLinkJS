@@ -61,7 +61,7 @@ def btn_get_data_random_data(jsc, *args):
     jsc.eval_js_code("""$("*").css("cursor", "default");""")
 
 
-def handle_404(path, uri, *args):
+def handle_404(path, uri, host, extra_settings, headers, body, method, *args):
     # handle URLS that do not have html pages
     if path.startswith('random_data.html/csv'):
         # init

@@ -16,7 +16,7 @@ def ready(jsc, *args):
         jsc['#mydiv'].html = 'Hello World!'
 
 
-def handle_404(path, uri, *args):
+def handle_404(path, uri, host, extra_settings, headers, body, method, *args):
     # handle URLS that do not have html pages
     if path == 'text_output':
         content_type = 'text/plain'
