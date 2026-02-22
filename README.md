@@ -8,6 +8,7 @@ A simple bridge to allow Python to communicate with JavaScript.
 - **[Installation](#installation)**
 - **[Skeleton Example](#skeleton-application-example)**
 - **[Basic Example](#basic-example)**
+- **[How to Use with Codex in VS Code](#how-to-use-with-codex-in-vs-code)**
 - **[Documentation](#documentation)**
   - [Event Handlers](#event-handlers)
   - [PyLinkJS](#pylinkjs)
@@ -17,7 +18,7 @@ A simple bridge to allow Python to communicate with JavaScript.
   - [PNG/PDF Output](#png-pdf-output)
 - **[Useful Code Examples](#useful-code-examples)**
 - **[Using pyLinkJS Behind an Apache Reverse Proxy](#using-pylinkjs-behind-an-apache-reverse-proxy)**
-- **[Important Hints for ChatGPT to Generate Correct Code](#important-hints-for-chatgpt-to-generate-correct-code)**
+- **[LLM Reference (Code Generation Contract)](#llm-reference-code-generation-contract)**
 
 ---
 
@@ -218,6 +219,39 @@ _This is a simple HTML file that serves as the target page for the link in `basi
 
 ---
 
+## How to Use with Codex in VS Code
+
+If you start from an empty folder and want Codex to scaffold a working demo:
+
+1. Open an empty folder in VS Code.
+2. Open Codex in VS Code.
+3. Paste the prompt below.
+
+Prompt to use with Codex:
+
+```text
+First, download this project's README from GitHub into this empty folder as `pyLinkJS_readme.md`:
+- URL: https://raw.githubusercontent.com/Snackman8/pyLinkJS/master/README.md
+- Prefer: `curl -fL "https://raw.githubusercontent.com/Snackman8/pyLinkJS/master/README.md" -o pyLinkJS_readme.md`
+- Fallback: `wget -O pyLinkJS_readme.md "https://raw.githubusercontent.com/Snackman8/pyLinkJS/master/README.md"`
+
+Then read `pyLinkJS_readme.md` in this workspace and follow it as the project spec.
+Match the generated app to the "Minimal End-to-End Example" contract in that file (same structure, naming, handlers, and default behavior).
+If any section conflicts, treat "LLM Reference (Code Generation Contract)" as authoritative for generated code.
+
+Starting from this empty folder:
+1) Create a Python virtual environment named .venv if it does not already exist.
+2) Activate/use .venv and install prerequisites needed for pyLinkJS demos.
+3) Create `mini_app.py` and `mini_app.html` aligned to the full example contract.
+4) Include required pyLinkJS event handlers (`ready`, `reconnect`) and one `call_py(...)` action handler.
+5) Use `run_pylinkjs_app(default_html='mini_app.html', port=8300)`.
+6) Keep the code simple and well-commented.
+7) When the app starts, print the exact browser URL to open, e.g. `Open http://localhost:8300 in your browser.`
+8) At the end, print exact run commands.
+
+Do not ask me follow-up questions unless something is truly blocking.
+```
+
 # Documentation
 
 ## Event Handlers
@@ -354,8 +388,8 @@ def run_pylinkjs_app(**kwargs):
         Directory for HTML files (default: ".").
     login_html_page : str, optional
         Login page file (default: "login.html").
-    cookie_secret : str, required
-        Secret for cookie encryption; set a unique, random string.
+    cookie_secret : str, optional (recommended for production)
+        Secret for cookie encryption. For production deployments, set a unique random string.
     heartbeat_callback : callable, optional
         Function called periodically for heartbeats (default: None).
     heartbeat_interval : int, optional
@@ -555,7 +589,7 @@ def modal_new(self, title, body, buttons, modal_id='jsclient_modal', autoshow=Tr
                       classes - additional classes for the button
                       text - text of the button
                       i.e. [{'text': 'Cancel', 'classes': 'btn-secondary', 'attributes': 'data-bs-dismiss="modal"'},
-                            {'text': 'OK', 'classes': 'btn-primary', 'attributes': 'onclick="call_py("btn_clicked", "ok_btn")'}])
+                            {'text': 'OK', 'classes': 'btn-primary', 'attributes': "onclick=\"call_py('btn_clicked', 'ok_btn')\""}])
             modal_id - id of the modal to create
             autoshow - if True, this modal will be automatically shown, if False, an explicit call to modal_show is needed
                        to show this modal
@@ -568,7 +602,7 @@ Example
 jsc.modal_new('title html',
               'body html',
               [{'text': 'Cancel', 'classes': 'btn-secondary', 'attributes': 'data-bs-dismiss="modal"'},
-               {'text': 'OK', 'classes': 'btn-primary', 'attributes': 'onclick="call_py("btn_clicked", "ok_btn")'}])
+               {'text': 'OK', 'classes': 'btn-primary', 'attributes': "onclick=\"call_py('btn_clicked', 'ok_btn')\""}])
 ```
 
 ### modal_show
@@ -586,7 +620,7 @@ Example
 jsc.modal_new('title html',
               'body html',
               [{'text': 'Cancel', 'classes': 'btn-secondary', 'attributes': 'data-bs-dismiss="modal"'},
-               {'text': 'OK', 'classes': 'btn-primary', 'attributes': 'onclick="call_py("btn_clicked", "ok_btn")'}],
+               {'text': 'OK', 'classes': 'btn-primary', 'attributes': "onclick=\"call_py('btn_clicked', 'ok_btn')\""}],
                autoshow=False)
 
 # modify the dialog classes, styles, etc. using eval_js_code
@@ -772,10 +806,119 @@ ProxyPass /foo/ http://127.0.0.1:9150/
 ProxyPassReverse /foo/ http://127.0.0.1:9150/
 ```
 
-# Important Hints for ChatGPT to Generate Correct Code
-- Tornado Template is not allowed in the HTML file
-- use the ready event handler for code that should be run when the page is loaded, do not use call_py inside the onload, it won't work
-- use the run_pylinkjs_app function to start the web service
-- pylinkjs uses jQuery internally, so jQuery properties can be accessed from the jsClient.  i.e. so use jsc['#input'].val (jquery property) and not jsc['#input'].value (DOM property)
-- Use on_404(path, uri, host, extra_settings, headers, body, method) to implement REST-style GET/POST endpoints.
-- Do not infer method from headers; use self.request.method and pass it to on_404.
+## LLM Reference (Code Generation Contract)
+
+Use this section when generating pyLinkJS code without source access.
+
+### Required Python Imports
+
+```python
+from pylinkjs.PyLinkJS import run_pylinkjs_app
+```
+
+`Code` is optional (only if assigning JS functions from Python):
+
+```python
+from pylinkjs.PyLinkJS import run_pylinkjs_app, Code
+```
+
+### Required Runtime Setup
+
+```python
+port = 8300
+print(f"Open http://localhost:{port} in your browser.")
+run_pylinkjs_app(default_html="mini_app.html", port=port)
+```
+
+### Required Event Handlers
+
+- `ready(jsc, origin, pathname, search, *args)` -> initialize page state.
+- `reconnect(jsc, origin, pathname, search, *args)` -> call `ready(...)`.
+- At least one user action handler called from HTML via `call_py(...)`.
+
+### Required HTML Contract
+
+The page should include:
+
+- At least one clickable element that calls Python with `call_py('handler_name', ...)`.
+- At least one output element with an `id` that Python updates via `jsc['#id']...`.
+
+Hard rules:
+
+- Python and HTML handler names must match exactly.
+- Do not call `call_py(...)` inside `onload`; use `ready(...)` for initial logic.
+- Do not include Tornado template markers in HTML (`{{`, `}}`, `{%`, `%}`).
+- pyLinkJS uses jQuery semantics; prefer `jsc['#input'].val` over DOM `.value`.
+- Use `run_pylinkjs_app(...)` to start the service.
+- Use `on_404(path, uri, host, extra_settings, headers, body, method, *args)` for REST-style GET/POST endpoints.
+- Do not infer request method from headers; use the `method` argument passed to `on_404`.
+
+### Minimal End-to-End Example
+
+`mini_app.py`
+
+```python
+import argparse
+import datetime
+import logging
+from pylinkjs.PyLinkJS import run_pylinkjs_app, Code
+
+
+def ready(jsc, origin, pathname, search, *args):
+    jsc["#status"].html = f"ready: {origin}{pathname}{search}"
+    jsc["#divout"].html = "Click the button to update the time."
+
+
+def reconnect(jsc, origin, pathname, search, *args):
+    return ready(jsc, origin, pathname, search, *args)
+
+
+def button_clicked(jsc, a="param1", b="param2"):
+    now = datetime.datetime.now().strftime("%H:%M:%S")
+    jsc["#divout"].html = f"Current Time: {now} ({a}, {b})"
+    jsc["#divout"].css.color = "red"
+    jsc["#divout"].click = Code('function() { alert("AA"); }')
+    jsc.eval_js_code(f'$("#divout2").html("Updated at {now}");')
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=8300)
+    args = parser.parse_args()
+
+    logging.basicConfig(level=logging.DEBUG, format="%(relativeCreated)6d %(threadName)s %(message)s")
+    print(f"Open http://localhost:{args.port} in your browser.")
+    run_pylinkjs_app(default_html="mini_app.html", port=args.port)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+`mini_app.html`
+
+```html
+<html>
+  <body>
+    <p id="status"></p>
+    <button onclick="call_py('button_clicked', 'param1', 'param2');">Click me</button>
+    <div id="divout">?</div>
+    <div id="divout2"></div>
+  </body>
+</html>
+```
+
+### Code Generation Checklist
+
+Before returning generated code, ensure:
+
+1. Imports include `run_pylinkjs_app` (and `Code` only if needed).
+2. `mini_app.py` and `mini_app.html` are created.
+3. `ready` and `reconnect` handlers exist with pyLinkJS-compatible signatures.
+4. At least one `call_py(...)` handler exists in HTML and matches a Python function name exactly.
+5. Generated HTML avoids Tornado template markers (`{{`, `}}`, `{%`, `%}`).
+6. No `call_py(...)` call is made from `onload` logic.
+7. Python updates at least one HTML element by ID via `jsc['#id']`.
+8. `run_pylinkjs_app(default_html='mini_app.html', port=...)` is called.
+9. If exposing REST endpoints, use `on_404(..., method=...)` and branch on `method`.
+10. Startup prints the exact URL format: `Open http://localhost:<port> in your browser.`
