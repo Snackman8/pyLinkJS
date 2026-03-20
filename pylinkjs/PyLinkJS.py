@@ -1146,6 +1146,8 @@ def run_pylinkjs_app(**kwargs):
         heartbeat_interval - interval in seconds when the heartbeat_callback function will be called, defaults to None
         login_handler - tornado handler for login, defaults to built in Login Handler
         logout_handler - tornado handler for login, defaults to built in Logout Handler
+        route_handlers - optional list of tornado handler tuples, i.e.
+                         [(r"/admin/users", MyHandler), (r"/api", MyApiHandler, {"db_path": "users.sqlite3"})]
         extra_settings - dictionary of properties that will be loaded into the tag property of the jsc client
         on_404 - handler if a URL does not have a matching .html file.  Allows dynamic generation of pages
         app_mode - if True, enables single page app mode, default is False
@@ -1184,6 +1186,8 @@ def run_pylinkjs_app(**kwargs):
         kwargs['logout_post_action_url'] = '/'
     if 'require_auth' not in kwargs:
         kwargs['require_auth'] = False
+    if 'route_handlers' not in kwargs:
+        kwargs['route_handlers'] = []
 
     if 'extra_settings' not in kwargs:
         kwargs['extra_settings'] = {}
@@ -1239,11 +1243,12 @@ def run_pylinkjs_app(**kwargs):
 
     asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
 
-    request_handlers = [
-        (r"/websocket/.*", PyLinkJSWebSocketHandler, {'all_jsclients': ALL_JSCLIENTS}),
+    request_handlers = [(r"/websocket/.*", PyLinkJSWebSocketHandler, {'all_jsclients': ALL_JSCLIENTS})]
+    request_handlers.extend(list(kwargs.get('route_handlers', [])))
+    request_handlers.extend([
         (r"/login", kwargs['login_handler']),
         (r"/logout", kwargs['logout_handler']),
-        (r"/.*", MainHandler), ]
+        (r"/.*", MainHandler), ])
 
     app = tornado.web.Application(
         request_handlers,

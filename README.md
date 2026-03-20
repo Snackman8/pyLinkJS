@@ -401,6 +401,10 @@ def run_pylinkjs_app(**kwargs):
         Custom login handler (default: built-in).
     logout_handler : tornado.web.RequestHandler, optional
         Custom logout handler (default: built-in).
+    route_handlers : list, optional
+        Additional Tornado handler tuples, for example
+        [(r"/admin/users", AdminUsersHandler), (r"/api/users", UsersHandler, {"db_path": "users.sqlite3"})].
+        This is useful for plugins that need to expose their own HTTP pages or APIs.
     extra_settings : dict, optional
         Extra settings for the Tornado app.
     on_404: callable, optional
@@ -812,8 +816,27 @@ See the example app:
 python3 pyLinkJS/examples/require_auth/require_auth.py
 ```
 
-The bundled examples default to the demo cookie secret `CHANGEME` so they run without modification. For real use,
-pass your own long random value with `--cookie_secret`.
+## Local username/password auth with SQLite
+pyLinkJS includes a built-in local auth plugin for applications that want persistent username/password login without
+LDAP or OAuth. The plugin stores users in a SQLite database and stores password hashes rather than plaintext passwords.
+An optional local auth admin plugin can expose a minimal web UI for creating and deleting users.
+
+Run the example app:
+```python
+python3 pyLinkJS/examples/local_auth/local_auth.py
+```
+
+The example creates a SQLite database next to the app. On first run, visit:
+```text
+http://localhost:8302/admin/users
+```
+
+If the database is empty, pylinkjs exposes a one-time bootstrap page there so you can create the first admin user.
+After at least one user exists, the bootstrap page is disabled and the normal admin page requires an authenticated
+admin login.
+
+For real use, create your own users, choose your own `cookie_secret`, and keep the SQLite database in a directory with
+appropriate filesystem permissions.
 
 # Using pyLinkJS Behind an Apache Reverse Proxy
 The application will run on port 9150 on localhost, apache will reverse proxy the application from http://localhost/foo

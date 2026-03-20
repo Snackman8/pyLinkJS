@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- jquery (requires for pyLinkJS) -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+
+    <!-- bootstrap (requires for pyLinkJS UI Helpers) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        :root {
+            --page-bg: #eef2f6;
+            --panel-bg: #ffffff;
+            --panel-border: #d7dee7;
+            --text-main: #1f2937;
+            --text-muted: #5f6b7a;
+            --accent: #184e77;
+            --accent-strong: #123b5d;
+            --danger-bg: #fdf0f2;
+            --danger-border: #efc2cb;
+            --danger-text: #8a1c2b;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #f7f9fb 0%, var(--page-bg) 100%);
+            color: var(--text-main);
+        }
+
+        .login-shell {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 20px;
+        }
+
+        .login-panel {
+            width: 100%;
+            max-width: 920px;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(31, 41, 55, 0.10);
+        }
+
+        .login-brand {
+            padding: 48px;
+            background:
+                radial-gradient(circle at top right, rgba(24, 78, 119, 0.18), transparent 36%),
+                linear-gradient(180deg, #fcfdff 0%, #edf3f8 100%);
+            border-right: 1px solid var(--panel-border);
+        }
+
+        .login-kicker {
+            font-size: 0.78rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--accent);
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+
+        .login-brand h1 {
+            font-size: 2.2rem;
+            line-height: 1.1;
+            margin: 0 0 16px 0;
+        }
+
+        .login-brand p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin: 0 0 28px 0;
+            max-width: 34rem;
+        }
+
+        .login-meta {
+            display: grid;
+            gap: 12px;
+        }
+
+        .login-meta-card {
+            padding: 16px 18px;
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+        }
+
+        .login-meta-card strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.94rem;
+        }
+
+        .login-form-wrap {
+            padding: 48px;
+            display: flex;
+            align-items: center;
+        }
+
+        .login-form-card {
+            width: 100%;
+            max-width: 360px;
+            margin: 0 auto;
+        }
+
+        .login-form-card h2 {
+            font-size: 1.55rem;
+            margin: 0 0 8px 0;
+        }
+
+        .login-form-card p {
+            color: var(--text-muted);
+            margin: 0 0 24px 0;
+        }
+
+        .login-error {
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--danger-border);
+            background: var(--danger-bg);
+            color: var(--danger-text);
+            font-weight: 600;
+        }
+
+        .login-error:empty {
+            display: none;
+        }
+
+        .form-label {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #425166;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            height: 46px;
+            border-radius: 10px;
+            border-color: #c9d4df;
+        }
+
+        .form-control:focus {
+            border-color: #7aa5c7;
+            box-shadow: 0 0 0 0.2rem rgba(24, 78, 119, 0.12);
+        }
+
+        .btn-login {
+            width: 100%;
+            height: 46px;
+            border: 0;
+            border-radius: 10px;
+            background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+            font-weight: 600;
+        }
+
+        @media (max-width: 900px) {
+            .login-panel {
+                grid-template-columns: 1fr;
+            }
+
+            .login-brand {
+                border-right: 0;
+                border-bottom: 1px solid var(--panel-border);
+                padding: 32px 28px;
+            }
+
+            .login-form-wrap {
+                padding: 32px 28px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="login-shell">
+    <div class="login-panel">
+        <section class="login-brand">
+            <div class="login-kicker">Local Access</div>
+            <h1>Business Access Portal</h1>
+            <p>Use your local application credentials to access internal workflows, user administration, and protected pages served by this pyLinkJS app.</p>
+            <div class="login-meta">
+                <div class="login-meta-card">
+                    <strong>Persistent local accounts</strong>
+                    User credentials are stored in the application SQLite database.
+                </div>
+                <div class="login-meta-card">
+                    <strong>Administrator controls</strong>
+                    Administrators can create and remove users from the built-in admin interface.
+                </div>
+            </div>
+        </section>
+        <section class="login-form-wrap">
+            <div class="login-form-card">
+                <h2>Sign in</h2>
+                <p>Enter your assigned username and password to continue.</p>
+                <form action="/login" method="post">
+                    <input type="hidden" name="next" value="{next_url}">
+                    <div class="login-error">{error_message}</div>
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input name="username" class="form-control" placeholder="Enter username" required autofocus>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Password</label>
+                        <input name="password" class="form-control" placeholder="Enter password" type="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-login">Sign In</button>
+                </form>
+            </div>
+        </section>
+    </div>
+</div>
+</body>
+</html>
