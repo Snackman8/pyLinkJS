@@ -803,6 +803,10 @@ To have pylinkjs enforce login before serving pages or opening websocket connect
 to `run_pylinkjs_app(...)`. The bundled authentication examples default to the demo cookie secret `CHANGEME` so
 they run without modification, but real apps should pass `cookie_secret="..."` with their own long random value.
 
+A common strategy is to persist the cookie secret in a file in the same directory as the application, then read that
+file and pass its contents into `run_pylinkjs_app(..., cookie_secret=secret)`. This is useful for deployments because
+the secret remains stable across restarts, and in distributed deployments each instance should use the same secret.
+
 See the example app:
 ```python
 python3 pyLinkJS/examples/require_auth/require_auth.py
