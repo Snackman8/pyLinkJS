@@ -819,7 +819,8 @@ python3 pyLinkJS/examples/require_auth/require_auth.py
 ## Local username/password auth with SQLite
 pyLinkJS includes a built-in local auth plugin for applications that want persistent username/password login without
 LDAP or OAuth. The plugin stores users in a SQLite database and stores password hashes rather than plaintext passwords.
-An optional local auth admin plugin can expose a minimal web UI for creating and deleting users.
+If you need to administer users through a web UI, it is recommended to also use `pluginLocalAuthAdmin`, which exposes
+a minimal interface for creating and deleting users.
 
 Run the example app:
 ```python
