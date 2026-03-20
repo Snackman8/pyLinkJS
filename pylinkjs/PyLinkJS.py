@@ -842,7 +842,12 @@ class MainHandler(BaseHandler):
         self._auto_finish = False
 
         # strip off the leading slash, then combine with web directory
-        filename = os.path.abspath(os.path.join(self.application.settings['html_dir'], self.request.path[1:]))
+        html_dir = os.path.abspath(self.application.settings['html_dir'])
+        filename = os.path.abspath(os.path.join(html_dir, self.request.path[1:]))
+
+        # reject path traversal attempts that escape the configured html_dir
+        if os.path.commonpath([html_dir, filename]) != html_dir:
+            raise tornado.web.HTTPError(403)
 
         # default to index.html if this is a directory
         if os.path.isdir(filename):

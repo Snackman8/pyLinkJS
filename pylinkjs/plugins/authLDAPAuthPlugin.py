@@ -3,6 +3,7 @@
 # --------------------------------------------------
 import os
 import ldap
+from ldap.filter import escape_filter_chars
 from pylinkjs.PyLinkJS import LoginHandler, LogoutHandler
 
 
@@ -38,12 +39,15 @@ class pluginLDAPAuth:
 class LDAPAuthLoginHandler(LoginHandler):
     @classmethod
     def _check_ldap_login(cls, ldap_server, ldap_base, username, password, memberof_group):
+        username_filter = escape_filter_chars(username)
+        group_filter = escape_filter_chars(memberof_group)
+
         # connect to LDAP
         l = ldap.initialize(ldap_server)
     
         # get the gid of the group
         try:
-            results = l.search_s('ou=Group,' + ldap_base, ldap.SCOPE_SUBTREE, f'(cn={memberof_group})', [])
+            results = l.search_s('ou=Group,' + ldap_base, ldap.SCOPE_SUBTREE, f'(cn={group_filter})', [])
         except ldap.SERVER_DOWN:
             return False
         if len(results) == 0:
@@ -51,7 +55,7 @@ class LDAPAuthLoginHandler(LoginHandler):
         group_gidNumber = results[0][1]['gidNumber'][0].decode('ASCII')
     
         # given the uid of the user, get the cn (Full Name)
-        results = l.search_s('ou=People,' + ldap_base, ldap.SCOPE_SUBTREE, f'(uid={username})', [])
+        results = l.search_s('ou=People,' + ldap_base, ldap.SCOPE_SUBTREE, f'(uid={username_filter})', [])
         if len(results) == 0:
             return False
         cn = results[0][1]['cn'][0].decode('ASCII')
@@ -68,7 +72,7 @@ class LDAPAuthLoginHandler(LoginHandler):
             return True
     
         # verify the user is a member by member id
-        results = l.search_s('ou=Group,' + ldap_base, ldap.SCOPE_SUBTREE, f'(&(memberUid={username})(gidNumber={group_gidNumber}))', [])
+        results = l.search_s('ou=Group,' + ldap_base, ldap.SCOPE_SUBTREE, f'(&(memberUid={username_filter})(gidNumber={group_gidNumber}))', [])
         if len(results) > 0:
             return True
     

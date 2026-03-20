@@ -1,8 +1,10 @@
 # --------------------------------------------------
 #    Imports
 # --------------------------------------------------
+import secrets
 import requests
 import tornado.auth
+import tornado.web
 from pylinkjs.PyLinkJS import LoginHandler, LogoutHandler
 
 
@@ -32,8 +34,21 @@ class pluginGoogleOAuth2:
 # --------------------------------------------------
 class GoogleOAuth2LoginHandler(LoginHandler,
                                tornado.auth.GoogleOAuth2Mixin):
+    _state_cookie_name = 'pylinkjs_google_oauth_state'
+    _next_cookie_name = 'pylinkjs_google_oauth_next'
+
     async def get(self):
         if self.get_argument('code', False):
+            expected_state = self.get_secure_cookie(self._state_cookie_name)
+            next_url = self.get_secure_cookie(self._next_cookie_name)
+            actual_state = self.get_argument('state', '')
+            if expected_state is None or not secrets.compare_digest(expected_state.decode(), actual_state):
+                self.clear_cookie(self._state_cookie_name)
+                self.clear_cookie(self._next_cookie_name)
+                raise tornado.web.HTTPError(403)
+
+            self.clear_cookie(self._state_cookie_name)
+            self.clear_cookie(self._next_cookie_name)
             access = await self.get_authenticated_user(
                 redirect_uri=self.settings['google_oauth_redirect_uri'],
                 code=self.get_argument('code'))
@@ -47,14 +62,20 @@ class GoogleOAuth2LoginHandler(LoginHandler,
                 self.settings['cookiename_user_auth_method']: 'GoogleOAuth2'}
     
             # delegeate to the login hanlder get_handler which will set the cookies and display the login_html_page
-            self.post_handler(cookies)
+            for k, v in cookies.items():
+                self.set_secure_cookie(k, v)
+            self.redirect(next_url.decode() if next_url is not None else '/')
         else:
+            next_url = self.get_argument('next', '/')
+            state = secrets.token_urlsafe(32)
+            self.set_secure_cookie(self._state_cookie_name, state, httponly=True)
+            self.set_secure_cookie(self._next_cookie_name, next_url, httponly=True)
             self.authorize_redirect(
                 redirect_uri=self.settings['google_oauth_redirect_uri'],
                 client_id=self.settings['google_oauth']['key'],
                 scope=['profile', 'email'],
                 response_type='code',
-                extra_params={'approval_prompt': 'auto', 'state': f'next={self.get_argument("next", "/")}'})
+                extra_params={'approval_prompt': 'auto', 'state': state})
 
 
 # --------------------------------------------------
