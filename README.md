@@ -390,6 +390,9 @@ def run_pylinkjs_app(**kwargs):
         Login page file (default: "login.html").
     cookie_secret : str, optional (recommended for production)
         Secret for cookie encryption. For production deployments, set a unique random string.
+    require_auth : bool, optional
+        If True, unauthenticated HTTP requests are redirected to /login and unauthenticated
+        websocket connections are rejected (default: False).
     heartbeat_callback : callable, optional
         Function called periodically for heartbeats (default: None).
     heartbeat_interval : int, optional
@@ -793,6 +796,15 @@ def thread_worker():
 # start the thread
 t = threading.Thread(target=thread_worker, daemon=True)
 t.start()
+```
+
+## Require authentication for all pages
+To have pylinkjs enforce login before serving pages or opening websocket connections, pass `require_auth=True`
+to `run_pylinkjs_app(...)`.
+
+See the example app:
+```python
+python3 pyLinkJS/examples/require_auth/require_auth.py
 ```
 
 # Using pyLinkJS Behind an Apache Reverse Proxy

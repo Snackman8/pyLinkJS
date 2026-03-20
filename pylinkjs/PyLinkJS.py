@@ -23,6 +23,7 @@ import traceback
 import time
 import uuid
 from types import ModuleType
+from urllib.parse import urlencode
 
 import tornado.template
 import tornado.web
@@ -794,6 +795,10 @@ class LogoutHandler(tornado.web.RequestHandler):
 
 
 class MainHandler(BaseHandler):
+    def _redirect_to_login(self):
+        next_query = urlencode({'next': self.request.uri})
+        self.redirect(f'/login?{next_query}')
+
     def print_thread_worker(self, url, print_output_type='pdf', print_timeout=None, print_orientation='landscape', print_force_scale=None, print_force_fit=False,
                             print_extra_delay=1):
         try:
@@ -840,6 +845,10 @@ class MainHandler(BaseHandler):
 
     async def get(self):
         self._auto_finish = False
+
+        if self.settings.get('require_auth') and not self.current_user:
+            self._redirect_to_login()
+            return
 
         # strip off the leading slash, then combine with web directory
         html_dir = os.path.abspath(self.application.settings['html_dir'])
@@ -963,6 +972,10 @@ class MainHandler(BaseHandler):
         """Divert ALL POSTs to the on_404 handler, carrying headers/body."""
         self._auto_finish = False
 
+        if self.settings.get('require_auth') and not self.current_user:
+            self._redirect_to_login()
+            return
+
         if not self.application.settings.get('on_404'):
             raise tornado.web.HTTPError(404)
 
@@ -1020,6 +1033,12 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
         self._all_jsclients = all_jsclients
 
     def open(self):
+        if self.application.settings.get('require_auth'):
+            user = self.get_secure_cookie(self.application.settings['cookiename_user_auth_username'])
+            if user is None:
+                self.close(code=4401, reason='Authentication required')
+                return
+
         # create a context
         remote_ip = self.request.headers.get("X-Real-IP") or self.request.headers.get("X-Forwarded-For") or self.request.remote_ip
         logging.info(f'pylinkjs: websocket connect {remote_ip}')
@@ -1164,6 +1183,8 @@ def run_pylinkjs_app(**kwargs):
         kwargs['logout_handler'] = LogoutHandler
     if 'logout_post_action_url' not in kwargs:
         kwargs['logout_post_action_url'] = '/'
+    if 'require_auth' not in kwargs:
+        kwargs['require_auth'] = False
 
     if 'extra_settings' not in kwargs:
         kwargs['extra_settings'] = {}
