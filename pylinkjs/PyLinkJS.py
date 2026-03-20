@@ -1034,6 +1034,11 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
     def initialize(self, all_jsclients):
         self._all_jsclients = all_jsclients
 
+    def _get_optional_secure_cookie(self, cookie_name):
+        if not self.application.settings.get('cookie_secret'):
+            return None
+        return self.get_secure_cookie(cookie_name)
+
     def open(self):
         if self.application.settings.get('require_auth'):
             user = self.get_secure_cookie(self.application.settings['cookiename_user_auth_username'])
@@ -1069,7 +1074,7 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
                      'user_auth_method':  self.settings['cookiename_user_auth_method'],
                      'user_auth_email':  self.settings['cookiename_user_auth_email']}
             for k, v in props.items():
-                setattr(self._jsc, k, self.get_secure_cookie(v))
+                setattr(self._jsc, k, self._get_optional_secure_cookie(v))
                 if getattr(self._jsc, k) is not None:
                     setattr(self._jsc, k, getattr(self._jsc, k).decode())
             INCOMING_PYCALLBACK_QUEUE.put((self._jsc, js_data), True, None)
