@@ -27,10 +27,16 @@ if __name__ == '__main__':
     # handle the --port argument
     parser = argparse.ArgumentParser(description='PyLinkJS Development Auth Example')    
     parser.add_argument('--port', type=int, required=False, default=8300)
+    parser.add_argument('--cookie_secret', help='cookie signing secret for the example app', required=False, default='CHANGEME')
     args = vars(parser.parse_args())
 
     # init the ldap auth plugin
     devauth_plugin = pluginDevAuth()
 
     # run the app
-    run_pylinkjs_app(default_html='dev_auth.html', html_dir=os.path.dirname(__file__), internal_polling_interval=0.025, port=args['port'], plugins=[devauth_plugin])
+    run_pylinkjs_app(default_html='dev_auth.html',
+                     html_dir=os.path.dirname(__file__),
+                     internal_polling_interval=0.025,
+                     port=args['port'],
+                     plugins=[devauth_plugin],
+                     cookie_secret=args['cookie_secret'])

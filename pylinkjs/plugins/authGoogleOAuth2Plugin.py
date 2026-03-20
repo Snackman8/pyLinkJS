@@ -12,6 +12,8 @@ from pylinkjs.PyLinkJS import LoginHandler, LogoutHandler
 #    Plugin
 # --------------------------------------------------
 class pluginGoogleOAuth2:
+    requires_cookie_secret = True
+
     def __init__(self, client_id, secret, redirect_url, logout_post_action_url='/'):
         self._kwargs = {
             'login_handler': GoogleOAuth2LoginHandler,

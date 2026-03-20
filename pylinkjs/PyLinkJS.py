@@ -51,6 +51,8 @@ INCOMING_PYCALLBACK_QUEUE = queue.Queue()
 INCOMING_RETVAL_QUEUE = queue.Queue()
 OUTGOING_EXECJS_QUEUE = queue.Queue()
 INTERNAL_POLLING_INTERVAL = 0.015
+README_EXAMPLE_COOKIE_SECRET = '7l7j9mF2QvP4xN8sR1kT6wZ3cB5uH0yD_aE2pL9nJ4qM'
+EXAMPLE_ONLY_COOKIE_SECRET = 'CHANGEME'
 
 # --------------------------------------------------
 #    Functions
@@ -1170,9 +1172,6 @@ def run_pylinkjs_app(**kwargs):
         kwargs['default_html'] = 'index.html'
     if 'html_dir' not in kwargs:
         kwargs['html_dir'] = '.'
-    if 'cookie_secret' not in kwargs:
-        logging.warning('COOKIE SECRET IS INSECURE!  PLEASE CHANGE')
-        kwargs['cookie_secret'] = 'GENERIC COOKIE SECRET'
     if 'heartbeat_callback' not in kwargs:
         kwargs['heartbeat_callback'] = None
     if 'heartbeat_interval' not in kwargs:
@@ -1216,6 +1215,28 @@ def run_pylinkjs_app(**kwargs):
     for plugin in kwargs['plugins']:
         plugin.register(kwargs)
 
+    uses_secure_cookies = kwargs.get('require_auth', False)
+    for plugin in kwargs['plugins']:
+        if getattr(plugin, 'requires_cookie_secret', False):
+            uses_secure_cookies = True
+            break
+
+    if uses_secure_cookies and not kwargs.get('cookie_secret'):
+        raise ValueError('cookie_secret is required when using authentication or require_auth=True. '
+                         'Pass it as a named argument to run_pylinkjs_app(...), for example '
+                         'run_pylinkjs_app(..., cookie_secret="your-long-random-secret"). '
+                         'Use a long random value such as secrets.token_urlsafe(32) or a 32+ byte '
+                         'hex/base64 value stored outside source control.')
+    if kwargs.get('cookie_secret') == README_EXAMPLE_COOKIE_SECRET:
+        raise ValueError('You cannot use the example cookie_secret from the README. '
+                         'Please make up your own long random cookie_secret value.')
+    if kwargs.get('cookie_secret') == EXAMPLE_ONLY_COOKIE_SECRET:
+        logging.warning('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+        logging.warning('WARNING: cookie_secret is set to CHANGEME')
+        logging.warning('This is a bad cookie secret and is only OK if you are running one of the bundled examples.')
+        logging.warning('Do not use CHANGEME for a real app. Set cookie_secret to your own long random value.')
+        logging.warning('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+
     asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
 
     request_handlers = [
@@ -1228,7 +1249,7 @@ def run_pylinkjs_app(**kwargs):
         request_handlers,
         default_html=kwargs['default_html'],
         html_dir=kwargs['html_dir'],
-        cookie_secret=kwargs['cookie_secret'],
+        cookie_secret=kwargs.get('cookie_secret'),
         on_404=kwargs.get('on_404', None),
         extra_settings=kwargs['extra_settings']
     )

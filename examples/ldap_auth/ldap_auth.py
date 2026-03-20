@@ -21,44 +21,27 @@ def ready(jsc, *args):
 #    Main
 # --------------------------------------------------
 if __name__ == '__main__':
-    # parse the arguments
-    parser = argparse.ArgumentParser(description='PyLinkJS LDAP Auth Example')
-    parser.add_argument('--ldap_server', help='LDAP Server, i.e. ldap://localhost', required=True)
-    parser.add_argument('--ldap_base', help='LDAP Base, i.e. dc=example,dc=com', required=True)
-    parser.add_argument('--ldap_group', help='LDAP Group to authenticate against, i.e. developers', required=True)
-    args = vars(parser.parse_args())
-
-    # configure logger
-    logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-
-    # define the port
-    port = 8320
-    
-    # init the ldap auth plugin
-    ldap_plugin = pluginLDAPAuth(ldap_server=args['ldap_server'],
-                                 ldap_base=args['ldap_base'],
-                                 ldap_group=args['ldap_group'])
-
-    # run the application
-    run_pylinkjs_app(default_html='ldap_auth.html',
-                     port=port,
-                     plugins=[ldap_plugin])
-
-
-# --------------------------------------------------
-#    Main
-# --------------------------------------------------
-if __name__ == '__main__':
     # setup the logger
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
 
     # handle the --port argument
     parser = argparse.ArgumentParser(description='PyLinkJS LDAP Auth Example')
     parser.add_argument('--port', type=int, required=False, default=8300)
+    parser.add_argument('--cookie_secret', help='cookie signing secret for the example app', required=False, default='CHANGEME')
     parser.add_argument('--ldap_server', help='LDAP Server, i.e. ldap://localhost', required=True)
     parser.add_argument('--ldap_base', help='LDAP Base, i.e. dc=example,dc=com', required=True)
     parser.add_argument('--ldap_group', help='LDAP Group to authenticate against, i.e. developers', required=True)
     args = vars(parser.parse_args())
 
+    # init the ldap auth plugin
+    ldap_plugin = pluginLDAPAuth(ldap_server=args['ldap_server'],
+                                 ldap_base=args['ldap_base'],
+                                 ldap_group=args['ldap_group'])
+
     # run the app
-    run_pylinkjs_app(default_html='index.html', html_dir=os.path.dirname(__file__), internal_polling_interval=0.025, port=args['port'])
+    run_pylinkjs_app(default_html='ldap_auth.html',
+                     html_dir=os.path.dirname(__file__),
+                     internal_polling_interval=0.025,
+                     port=args['port'],
+                     plugins=[ldap_plugin],
+                     cookie_secret=args['cookie_secret'])

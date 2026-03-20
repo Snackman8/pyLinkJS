@@ -28,6 +28,7 @@ if __name__ == '__main__':
     # handle the --port argument
     parser = argparse.ArgumentParser(description='PyLinkJS Require Auth Example')
     parser.add_argument('--port', type=int, required=False, default=8301)
+    parser.add_argument('--cookie_secret', help='cookie signing secret for the example app', required=False, default='CHANGEME')
     args = vars(parser.parse_args())
 
     # init the dev auth plugin
@@ -39,4 +40,5 @@ if __name__ == '__main__':
                      internal_polling_interval=0.025,
                      port=args['port'],
                      plugins=[devauth_plugin],
+                     cookie_secret=args['cookie_secret'],
                      require_auth=True)

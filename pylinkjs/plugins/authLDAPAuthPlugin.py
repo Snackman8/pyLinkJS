@@ -11,6 +11,8 @@ from pylinkjs.PyLinkJS import LoginHandler, LogoutHandler
 #    Plugin
 # --------------------------------------------------
 class pluginLDAPAuth:    
+    requires_cookie_secret = True
+
     def __init__(self, ldap_server, ldap_base, ldap_group, login_html_page=None, logout_post_action_url=None):
         # use a default login_html_page if none is provided
         if login_html_page is None:

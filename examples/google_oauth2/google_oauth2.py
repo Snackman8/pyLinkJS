@@ -28,6 +28,7 @@ if __name__ == '__main__':
     # handle the --port argument
     parser = argparse.ArgumentParser(description='PyLinkJS Google Oauth2 Example')
     parser.add_argument('--port', type=int, required=False, default=8300)
+    parser.add_argument('--cookie_secret', help='cookie signing secret for the example app', required=False, default='CHANGEME')
     parser.add_argument('--oauth2_clientid', help='google oath2 client id', required=True)
     parser.add_argument('--oauth2_secret', help='google oath2 secret', required=True)
     parser.add_argument('--oauth2_redirect_url', help='google oath2 redirect url', default='http://localhost:8300')    
@@ -39,4 +40,9 @@ if __name__ == '__main__':
                                               redirect_url=f'{args["oauth2_redirect_url"]}/login')
 
     # run the app
-    run_pylinkjs_app(default_html='google_oauth2.html', html_dir=os.path.dirname(__file__), internal_polling_interval=0.025, port=args['port'], plugins=[google_oauth2_plugin])
+    run_pylinkjs_app(default_html='google_oauth2.html',
+                     html_dir=os.path.dirname(__file__),
+                     internal_polling_interval=0.025,
+                     port=args['port'],
+                     plugins=[google_oauth2_plugin],
+                     cookie_secret=args['cookie_secret'])

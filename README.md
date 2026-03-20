@@ -800,12 +800,16 @@ t.start()
 
 ## Require authentication for all pages
 To have pylinkjs enforce login before serving pages or opening websocket connections, pass `require_auth=True`
-to `run_pylinkjs_app(...)`.
+to `run_pylinkjs_app(...)`. The bundled authentication examples default to the demo cookie secret `CHANGEME` so
+they run without modification, but real apps should pass `cookie_secret="..."` with their own long random value.
 
 See the example app:
 ```python
 python3 pyLinkJS/examples/require_auth/require_auth.py
 ```
+
+The bundled examples default to the demo cookie secret `CHANGEME` so they run without modification. For real use,
+pass your own long random value with `--cookie_secret`.
 
 # Using pyLinkJS Behind an Apache Reverse Proxy
 The application will run on port 9150 on localhost, apache will reverse proxy the application from http://localhost/foo
