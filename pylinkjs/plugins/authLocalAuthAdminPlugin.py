@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 
 import tornado.web
 
-from pylinkjs.PyLinkJS import BaseHandler
+from pylinkjs.PyLinkJS import BaseHandler, set_auth_cookie
 from pylinkjs.plugins.authLocalAuthPlugin import create_local_auth_user, delete_local_auth_user, get_local_auth_user, get_local_auth_user_count, list_local_auth_users
 
 
@@ -521,8 +521,8 @@ class LocalAuthAdminBootstrapHandler(_LocalAuthAdminBaseHandler):
             self.redirect(f'{self._bootstrap_url}?{urlencode({"error": str(e)})}')
             return
 
-        self.set_secure_cookie(self.settings['cookiename_user_auth_username'], username.encode('UTF-8'))
-        self.set_secure_cookie(self.settings['cookiename_user_auth_method'], 'LocalAuth')
+        set_auth_cookie(self, self.settings['cookiename_user_auth_username'], username.encode('UTF-8'))
+        set_auth_cookie(self, self.settings['cookiename_user_auth_method'], 'LocalAuth')
         self.redirect(self._base_url)
 
 

@@ -390,6 +390,12 @@ def run_pylinkjs_app(**kwargs):
         Login page file (default: "login.html").
     cookie_secret : str, optional (recommended for production)
         Secret for cookie encryption. For production deployments, set a unique random string.
+    cookie_secure : bool, optional
+        If True, authentication cookies are sent only over HTTPS (default: False for local HTTP development).
+    cookie_httponly : bool, optional
+        Prevents JavaScript from reading authentication cookies (default: True).
+    cookie_samesite : {'Lax', 'Strict', 'None', None}, optional
+        SameSite policy for authentication cookies (default: 'Lax').
     require_auth : bool, optional
         If True, unauthenticated HTTP requests are redirected to /login and unauthenticated
         websocket connections are rejected (default: False).
@@ -416,6 +422,68 @@ def run_pylinkjs_app(**kwargs):
     run_pylinkjs_app(port=8500, default_html="example.html", cookie_secret="random_string")
     """
 ```
+
+### High-security callback mode
+
+Browser JavaScript is always under the user's control.  If the application must
+not allow the browser to select arbitrary Python functions, enable
+`high_security=True` and explicitly register every browser-callable function.
+This does **not** require changing existing `call_py(...)` JavaScript or HTML.
+
+**Recommendation:** Enable high-security mode for production deployments, or
+whenever the application is exposed to untrusted users, a shared network, the
+internet, or data and operations that require authorization.  It is optional
+only for local development or other fully trusted environments.
+
+High-security mode refuses the known development secret `CHANGEME` at startup.
+Use your own long, random `cookie_secret` for every deployment that sets one.
+
+For an authenticated HTTPS deployment, also set `cookie_secure=True`.  The
+default is `False` so local HTTP development continues to work; `cookie_httponly`
+defaults to `True` and `cookie_samesite` defaults to `'Lax'` in every mode.
+
+```python
+import os
+
+from pylinkjs.PyLinkJS import PyLinkJSCallback, run_pylinkjs_app
+
+def ready(jsc, *_args):
+    pass
+
+def save_report(jsc, report_id):
+    # Authorize the current user and validate report_id here.
+    pass
+
+def generate_report(jsc, report_id):
+    pass
+
+run_pylinkjs_app(
+    default_html='index.html',
+    high_security=True,
+    require_auth=True,
+    cookie_secret=os.environ['PYLINKJS_COOKIE_SECRET'],
+    cookie_secure=True,
+    max_background_callbacks=4,
+    callback_registry={
+        '/': {
+            'ready': ready,
+            'save_report': save_report,
+            # Only this callback is permitted to use call_py_new_thread(...).
+            'generate_report': PyLinkJSCallback(generate_report, allow_new_thread=True),
+        },
+    },
+)
+```
+
+In this mode, PyLinkJS derives the page route from the WebSocket endpoint and
+rejects requests for callbacks not registered for that route.  It does not
+perform dynamic module imports or name lookup for browser requests.  Register
+`ready`, `reconnect`, and `popstate` if the page uses those automatic callbacks.
+Each callback must still perform its own authorization and validate its
+arguments; the registry controls which server entry points the browser may call.
+Background callbacks are limited to `max_background_callbacks` concurrent
+threads (four by default), so repeated browser requests cannot create unbounded
+threads.
 
 ## PyLinkJSClient (Core Methods)
 
@@ -810,6 +878,9 @@ they run without modification, but real apps should pass `cookie_secret="..."` w
 A common strategy is to persist the cookie secret in a file in the same directory as the application, then read that
 file and pass its contents into `run_pylinkjs_app(..., cookie_secret=secret)`. This is useful for deployments because
 the secret remains stable across restarts, and in distributed deployments each instance should use the same secret.
+
+For HTTPS deployments, pass `cookie_secure=True` so browsers send authentication cookies only over HTTPS.  It defaults
+to `False` for local HTTP development.  Authentication cookies are `HttpOnly` and `SameSite=Lax` by default.
 
 See the example app:
 ```python

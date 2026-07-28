@@ -41,6 +41,7 @@ ALL_JSCLIENTS = []
 RETVALS = {}
 DEFAULT_PRINT_TIMEOUT = 10
 INITIAL_JSC_MAPPINGS = {}
+INITIAL_JSC_REQUEST_PATHS = {}
 
 
 # --------------------------------------------------
@@ -187,6 +188,58 @@ def signal_handler(_signum, _frame):
 class Code(object):
     def __init__(self, code):
         self.code = code
+
+
+class PyLinkJSCallback(object):
+    """A callback that is safe to expose when ``high_security=True``.
+
+    By default, callbacks run on the normal PyLinkJS callback worker.  Set
+    ``allow_new_thread=True`` only for callbacks whose work is appropriate to
+    run in a background thread.
+    """
+    def __init__(self, func, allow_new_thread=False):
+        if not callable(func):
+            raise TypeError('func must be callable')
+        self.func = func
+        self.allow_new_thread = bool(allow_new_thread)
+
+
+def _normalize_callback_registry(callback_registry):
+    """Validate and normalize the explicit callback registry used in high-security mode."""
+    if not isinstance(callback_registry, dict) or not callback_registry:
+        raise ValueError('high_security=True requires a non-empty callback_registry mapping routes to callbacks')
+
+    normalized = {}
+    for route, callbacks in callback_registry.items():
+        if not isinstance(route, str) or not route.startswith('/') or '?' in route or '#' in route:
+            raise ValueError('callback_registry routes must be absolute paths without a query string or fragment')
+        if not isinstance(callbacks, dict):
+            raise TypeError('each callback_registry route must map callback names to callables')
+
+        normalized_callbacks = {}
+        for callback_name, callback in callbacks.items():
+            if not isinstance(callback_name, str) or not callback_name.isidentifier():
+                raise ValueError('callback names must be valid Python identifiers')
+            if isinstance(callback, PyLinkJSCallback):
+                normalized_callbacks[callback_name] = callback
+            elif callable(callback):
+                normalized_callbacks[callback_name] = PyLinkJSCallback(callback)
+            else:
+                raise TypeError('callback_registry values must be callables or PyLinkJSCallback instances')
+        normalized[route] = normalized_callbacks
+    return normalized
+
+
+def _run_background_callback(callback, jsc, args, background_callback_slots):
+    try:
+        callback.func(jsc, *args)
+    finally:
+        background_callback_slots.release()
+
+
+def set_auth_cookie(handler, name, value):
+    """Set an authentication cookie using the application's cookie policy."""
+    handler.set_secure_cookie(name, value, **handler.application.settings['auth_cookie_options'])
 
 
 class PyLinkJQueryAttrWrapper(object):
@@ -603,7 +656,8 @@ def start_execjs_handler_ioloop():
     execjs_ioloop.run_forever()
 
 
-def start_pycallback_handler_ioloop(caller_globals):
+def start_pycallback_handler_ioloop(caller_globals, high_security=False, callback_registry=None,
+                                    background_callback_slots=None):
     # thread to handle calls when javascript wants to execute python code
     async def coro_pycallback_handler(caller_globals):
         # This coroutine runs in the PYCALLBACK_HANDLER ioloop
@@ -618,10 +672,39 @@ def start_pycallback_handler_ioloop(caller_globals):
                 await asyncio.sleep(INTERNAL_POLLING_INTERVAL)
                 continue
 
-            jsc, js_data = INCOMING_PYCALLBACK_QUEUE.get()
+            jsc, js_data, request_path = INCOMING_PYCALLBACK_QUEUE.get()
 
             if js_data['cmd'] == 'call_py':
                 try:
+                    if high_security:
+                        callback = callback_registry.get(request_path, {}).get(js_data['py_func_name'])
+                        if callback is None:
+                            logging.warning('pylinkjs: rejected unregistered callback %r for route %r',
+                                            js_data['py_func_name'], request_path)
+                            continue
+
+                        if js_data.get('new_thread', False) and not callback.allow_new_thread:
+                            logging.warning('pylinkjs: rejected background execution for callback %r on route %r',
+                                            js_data['py_func_name'], request_path)
+                            continue
+
+                        if js_data.get('new_thread', False):
+                            if not background_callback_slots.acquire(blocking=False):
+                                logging.warning('pylinkjs: rejected background callback %r because the limit was reached',
+                                                js_data['py_func_name'])
+                                continue
+                            t = threading.Thread(target=_run_background_callback,
+                                                 args=(callback, jsc, js_data['args'], background_callback_slots),
+                                                 daemon=True)
+                            try:
+                                t.start()
+                            except Exception:
+                                background_callback_slots.release()
+                                raise
+                        else:
+                            callback.func(jsc, *js_data['args'])
+                        continue
+
                     # prepend module path if this is a subdirectory
                     subdir = js_data['window_location_pathname']
 
@@ -782,7 +865,7 @@ class LoginHandler(tornado.web.RequestHandler):
 
     def post_handler(self, cookies):
         for k, v in cookies.items():
-            self.set_secure_cookie(k, v)
+            set_auth_cookie(self, k, v)
         self.redirect(self.get_argument('next', '/'))
 
 
@@ -841,6 +924,7 @@ class MainHandler(BaseHandler):
         template_vars['page_instance_id'] = '0.' + str(uuid.uuid4())
         template_vars['jsc_sequence_number'] = 0
         INITIAL_JSC_MAPPINGS[template_vars['jsc_id']] = template_vars['page_instance_id']
+        INITIAL_JSC_REQUEST_PATHS[template_vars['jsc_id']] = self.request.path
         self.write(t.generate(**template_vars))
         self.finish()
         return
@@ -1039,6 +1123,21 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
             return None
         return self.get_secure_cookie(cookie_name)
 
+    def _get_websocket_route(self):
+        """Return the served page path encoded in this websocket endpoint."""
+        prefix = '/websocket/'
+        if not self.request.path.startswith(prefix):
+            return None, None
+        websocket_target = self.request.path[len(prefix):]
+        jsc_id, separator, request_path = websocket_target.partition('/')
+        if not separator or not jsc_id:
+            return None, None
+        return jsc_id, '/' + request_path
+
+    def _reject_invalid_message(self, reason):
+        logging.warning('pylinkjs: rejected websocket message: %s', reason)
+        self.close(code=4400, reason='Invalid websocket message')
+
     def open(self):
         if self.application.settings.get('require_auth'):
             user = self.get_secure_cookie(self.application.settings['cookiename_user_auth_username'])
@@ -1046,30 +1145,69 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
                 self.close(code=4401, reason='Authentication required')
                 return
 
+        jsc_id, request_path = self._get_websocket_route()
+        if jsc_id is None:
+            self.close(code=4400, reason='Invalid websocket path')
+            return
+
+        if self.application.settings.get('high_security'):
+            expected_path = INITIAL_JSC_REQUEST_PATHS.get(jsc_id)
+            if expected_path != request_path:
+                self.close(code=4403, reason='Unrecognized page websocket')
+                return
+
         # create a context
         remote_ip = self.request.headers.get("X-Real-IP") or self.request.headers.get("X-Forwarded-For") or self.request.remote_ip
         logging.info(f'pylinkjs: websocket connect {remote_ip}')
         self.set_nodelay(True)
-        jsc_id = self.request.uri.split('/')[2]
         self._jsc = PyLinkJSClient(self, jsc_id, threading.get_ident(), self.application.settings['extra_settings'])
         self._jsc.page_instance_id = INITIAL_JSC_MAPPINGS.get(jsc_id, None)
+        self._request_path = request_path
         self._all_jsclients.append(self._jsc)
         for func in self.application.settings['on_context_open']:
             func(self._jsc)
 
     def on_message(self, message):
         #        context_id = self.request.path
-        js_data = json.loads(message)
+        try:
+            js_data = json.loads(message)
+        except (TypeError, ValueError):
+            self._reject_invalid_message('malformed JSON')
+            return
+
+        if not isinstance(js_data, dict):
+            self._reject_invalid_message('message is not an object')
+            return
+
+        cmd = js_data.get('cmd')
+        event_time_ms = js_data.get('event_time_ms')
+        if cmd not in ('synchronize_time', 'call_py', 'return_py'):
+            self._reject_invalid_message('unknown command')
+            return
+        if isinstance(event_time_ms, bool) or not isinstance(event_time_ms, (int, float)):
+            self._reject_invalid_message('event_time_ms must be numeric')
+            return
 
         # correct the time between different client and server
-        if js_data['cmd'] == 'synchronize_time':
-            self._jsc.time_offset_ms = js_data['event_time_ms'] - time.time() * 1000
+        if cmd == 'synchronize_time':
+            self._jsc.time_offset_ms = event_time_ms - time.time() * 1000
+            return
 
-        self._jsc.event_time_ms = (js_data['event_time_ms'] - self._jsc.time_offset_ms)
+        if self._jsc.time_offset_ms is None:
+            self._reject_invalid_message('time has not been synchronized')
+            return
+
+        self._jsc.event_time_ms = (event_time_ms - self._jsc.time_offset_ms)
         del js_data['event_time_ms']
 
         # put the packet in the queue
-        if js_data['cmd'] == 'call_py':
+        if cmd == 'call_py':
+            if not isinstance(js_data.get('py_func_name'), str) or not isinstance(js_data.get('args'), list):
+                self._reject_invalid_message('invalid callback request')
+                return
+            if self.application.settings.get('high_security') and not isinstance(js_data.get('new_thread', False), bool):
+                self._reject_invalid_message('new_thread must be a boolean')
+                return
             props = {'user_auth_username': self.settings['cookiename_user_auth_username'],
                      'user_auth_method':  self.settings['cookiename_user_auth_method'],
                      'user_auth_email':  self.settings['cookiename_user_auth_email']}
@@ -1077,19 +1215,25 @@ class PyLinkJSWebSocketHandler(tornado.websocket.WebSocketHandler):
                 setattr(self._jsc, k, self._get_optional_secure_cookie(v))
                 if getattr(self._jsc, k) is not None:
                     setattr(self._jsc, k, getattr(self._jsc, k).decode())
-            INCOMING_PYCALLBACK_QUEUE.put((self._jsc, js_data), True, None)
+            INCOMING_PYCALLBACK_QUEUE.put((self._jsc, js_data, self._request_path), True, None)
 
-        if js_data['cmd'] == 'return_py':
+        if cmd == 'return_py':
+            if not isinstance(js_data.get('caller_id'), str):
+                self._reject_invalid_message('invalid return value')
+                return
             INCOMING_RETVAL_QUEUE.put((self._jsc, js_data['caller_id'], js_data.get('retval', None)), True, None)
 
     def on_close(self):
+        if self._jsc is None:
+            return
         # clean up the context
         remote_ip = self.request.headers.get("X-Real-IP") or self.request.headers.get("X-Forwarded-For") or self.request.remote_ip
         logging.info(f'pylinkjs: websocket close {remote_ip}')
 
         for func in self.application.settings['on_context_close']:
             func(self._jsc)
-        self._all_jsclients.remove(self._jsc)
+        if self._jsc in self._all_jsclients:
+            self._all_jsclients.remove(self._jsc)
         del self._jsc
 
 
@@ -1162,6 +1306,14 @@ def run_pylinkjs_app(**kwargs):
         app_width - position in pixels for the width of the application
         onQueryTemplateVariables - handler to provide variables for the template before rendering
         internal_polling_interval - internal polling interval, decrease for less cpu usage with higher latency.  default is 0.015 seconds
+        high_security - if True, use only callbacks explicitly supplied in callback_registry, default is False
+        callback_registry - a mapping of page paths to {callback_name: callable}.  Values can be PyLinkJSCallback
+                            instances to opt a callback into call_py_new_thread.
+        max_background_callbacks - maximum concurrent callbacks allowed to use call_py_new_thread in high-security
+                                   mode, default is 4
+        cookie_secure - if True, mark authentication cookies Secure and send them only over HTTPS, default is False
+        cookie_httponly - prevent JavaScript from reading authentication cookies, default is True
+        cookie_samesite - SameSite attribute for authentication cookies, default is 'Lax'
         **kwargs - additional named arguments will be placed into the settings property of the tornado app but will not be available to the jsc context
     """
 
@@ -1193,6 +1345,32 @@ def run_pylinkjs_app(**kwargs):
         kwargs['require_auth'] = False
     if 'route_handlers' not in kwargs:
         kwargs['route_handlers'] = []
+    if 'high_security' not in kwargs:
+        kwargs['high_security'] = False
+    if 'callback_registry' not in kwargs:
+        kwargs['callback_registry'] = None
+    if 'max_background_callbacks' not in kwargs:
+        kwargs['max_background_callbacks'] = 4
+    if 'cookie_secure' not in kwargs:
+        kwargs['cookie_secure'] = False
+    if 'cookie_httponly' not in kwargs:
+        kwargs['cookie_httponly'] = True
+    if 'cookie_samesite' not in kwargs:
+        kwargs['cookie_samesite'] = 'Lax'
+
+    if not isinstance(kwargs['cookie_secure'], bool):
+        raise ValueError('cookie_secure must be a boolean')
+    if not isinstance(kwargs['cookie_httponly'], bool):
+        raise ValueError('cookie_httponly must be a boolean')
+    if kwargs['cookie_samesite'] not in (None, 'Lax', 'Strict', 'None'):
+        raise ValueError("cookie_samesite must be None, 'Lax', 'Strict', or 'None'")
+
+    if kwargs['high_security']:
+        kwargs['callback_registry'] = _normalize_callback_registry(kwargs['callback_registry'])
+        if (isinstance(kwargs['max_background_callbacks'], bool)
+                or not isinstance(kwargs['max_background_callbacks'], int)
+                or kwargs['max_background_callbacks'] < 1):
+            raise ValueError('max_background_callbacks must be a positive integer')
 
     if 'extra_settings' not in kwargs:
         kwargs['extra_settings'] = {}
@@ -1240,6 +1418,9 @@ def run_pylinkjs_app(**kwargs):
         raise ValueError('You cannot use the example cookie_secret from the README. '
                          'Please make up your own long random cookie_secret value.')
     if kwargs.get('cookie_secret') == EXAMPLE_ONLY_COOKIE_SECRET:
+        if kwargs['high_security']:
+            raise ValueError('high_security=True cannot be used with the example cookie_secret CHANGEME. '
+                             'Set cookie_secret to your own long random value.')
         logging.warning('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
         logging.warning('WARNING: cookie_secret is set to CHANGEME')
         logging.warning('This is a bad cookie secret and is only OK if you are running one of the bundled examples.')
@@ -1261,13 +1442,23 @@ def run_pylinkjs_app(**kwargs):
         html_dir=kwargs['html_dir'],
         cookie_secret=kwargs.get('cookie_secret'),
         on_404=kwargs.get('on_404', None),
-        extra_settings=kwargs['extra_settings']
+        extra_settings=kwargs['extra_settings'],
+        auth_cookie_options={
+            'secure': kwargs['cookie_secure'],
+            'httponly': kwargs['cookie_httponly'],
+            'samesite': kwargs['cookie_samesite'],
+        },
     )
 
     caller_globals = inspect.stack()[1][0].f_globals
 
     # start additional ioloops on new threads
-    threading.Thread(target=start_pycallback_handler_ioloop, args=(caller_globals,), daemon=True).start()
+    background_callback_slots = None
+    if kwargs['high_security']:
+        background_callback_slots = threading.BoundedSemaphore(kwargs['max_background_callbacks'])
+    threading.Thread(target=start_pycallback_handler_ioloop,
+                     args=(caller_globals, kwargs['high_security'], kwargs['callback_registry'], background_callback_slots),
+                     daemon=True).start()
     threading.Thread(target=start_retval_handler_ioloop, args=(), daemon=True).start()
     threading.Thread(target=start_execjs_handler_ioloop, args=(), daemon=True).start()
     if kwargs['heartbeat_interval']:
