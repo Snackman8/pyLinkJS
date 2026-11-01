@@ -386,6 +386,9 @@ def run_pylinkjs_app(**kwargs):
         Main HTML file (default: "index.html").
     html_dir : str, optional
         Directory for HTML files (default: ".").
+    servable_file_regex : str, optional
+        Fullmatch allowlist for file paths relative to html_dir. Defaults to case-insensitive
+        HTML, CSS, JavaScript, common images and fonts. Overrides replace the default.
     login_html_page : str, optional
         Login page file (default: "login.html").
     cookie_secret : str, optional (recommended for production)
@@ -422,6 +425,61 @@ def run_pylinkjs_app(**kwargs):
     run_pylinkjs_app(port=8500, default_html="example.html", cookie_secret="random_string")
     """
 ```
+
+### Controlling which files can be served
+
+`html_dir` sets the directory from which files are served (default: `"."`).
+`servable_file_regex` adds an allowlist: an existing file is served only if its
+path relative to `html_dir` fully matches the regex. Paths use `/` separators,
+without a leading slash, for example `images/logo.png`. Directory requests such
+as `/` or `/reports/` are checked after resolving `default_html`.
+
+The default is:
+
+```python
+r"(?i).*\.(?:html?|css|m?js|png|jpe?g|gif|svg|webp|avif|ico|bmp|woff2?|ttf|otf|eot)"
+```
+
+This allows `.html`, `.htm`, `.css`, `.js`, `.mjs`, `.png`, `.jpg`, `.jpeg`,
+`.gif`, `.svg`, `.webp`, `.avif`, `.ico`, `.bmp`, `.woff`, `.woff2`, `.ttf`,
+`.otf`, and `.eot`. The `(?i)` makes matching case-insensitive, so `.HTML`
+and `.PNG` also work. A custom regex controls its own case sensitivity; omit
+`(?i)` for case-sensitive matching. Invalid regexes fail at startup.
+
+Other file types, including `.py`, `.txt`, `.md`, `.json`, configuration files,
+databases, logs, and backups, are blocked by default. **Compatibility:** apps
+that previously served these files must explicitly allow their intended
+downloads. A custom pattern **replaces** the default rather than extending it.
+For example, to add PDF downloads:
+
+```python
+from pylinkjs.PyLinkJS import DEFAULT_SERVABLE_FILE_REGEX, run_pylinkjs_app
+
+run_pylinkjs_app(
+    servable_file_regex=DEFAULT_SERVABLE_FILE_REGEX + r"|.*\.pdf",
+)
+```
+
+To expose just one Python source file alongside the default assets:
+
+```python
+run_pylinkjs_app(
+    servable_file_regex=DEFAULT_SERVABLE_FILE_REGEX + r"|downloads/example\.py",
+)
+```
+
+This serves `downloads/example.py` as source bytes; it does not execute the file.
+Because the default includes `(?i)`, these extended patterns also ignore case.
+Other Python files remain blocked. For a separate public directory, use
+`html_dir="public"`; Python files can also remain alongside HTML, with the
+allowlist preventing their download. Python callback lookup remains unchanged:
+it follows page URLs and importable modules, or the explicit `callback_registry`.
+
+Disallowed existing files return 404 without invoking `on_404`, including requests
+with `?output=pdf` or `?output=png`. Hidden path components (such as `.env` or
+`.git`) and symlinks below `html_dir` are always blocked, even if the regex allows
+them. These restrictions apply to built-in file serving; custom route handlers,
+missing-path `on_404` responses, and POST handling retain their existing behavior.
 
 ### High-security callback mode
 

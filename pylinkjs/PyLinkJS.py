@@ -14,6 +14,7 @@ from multiprocessing import Process, Queue
 import os
 import queue
 import random
+import re
 import shutil
 import signal
 import subprocess
@@ -42,6 +43,9 @@ RETVALS = {}
 DEFAULT_PRINT_TIMEOUT = 10
 INITIAL_JSC_MAPPINGS = {}
 INITIAL_JSC_REQUEST_PATHS = {}
+DEFAULT_SERVABLE_FILE_REGEX = (
+    r'(?i).*\.(?:html?|css|m?js|png|jpe?g|gif|svg|webp|avif|ico|bmp|woff2?|ttf|otf|eot)'
+)
 
 
 # --------------------------------------------------
@@ -947,11 +951,22 @@ class MainHandler(BaseHandler):
         # default to index.html if this is a directory
         if os.path.isdir(filename):
             dirname = filename
-            filename = os.path.join(dirname, self.application.settings['default_html'])
+            filename = os.path.abspath(os.path.join(dirname, self.application.settings['default_html']))
             # if not os.path.exists(filename):
             #     filename_index = os.path.join(dirname, os.path.basename(self.request.path[1:]) + '.html')
             #     if os.path.exists(filename_index):
             #         filename = filename_index
+
+        relative_path = os.path.relpath(filename, html_dir).replace(os.sep, '/')
+        checked_path = html_dir
+        for part in relative_path.split('/'):
+            checked_path = os.path.join(checked_path, part)
+            if part.startswith('.') or os.path.islink(checked_path):
+                raise tornado.web.HTTPError(404)
+        if os.path.exists(filename) and (
+                not os.path.isfile(filename)
+                or not self.settings['servable_file_regex'].fullmatch(relative_path)):
+            raise tornado.web.HTTPError(404)
 
         if 'output' in self.request.query_arguments:
             if self.request.query_arguments.get('output', '')[0].lower() in [b'pdf', b'png']:
@@ -1026,28 +1041,29 @@ class MainHandler(BaseHandler):
         f.close()
 
         # monkey patch in the websocket hooks
-        if filename.endswith('.html'):
+        extension = os.path.splitext(filename)[1].lower()
+        if extension in ('.html', '.htm'):
             self._send_response(b)
             return
 
         # apply proper mime type for css
-        if filename.endswith('.css'):
+        if extension == '.css':
             self.set_header("Content-Type", 'text/css; charset="utf-8"')
 
         # apply proper mime type for js
-        if filename.endswith('.js'):
+        if extension in ('.js', '.mjs'):
             self.set_header("Content-Type", 'text/javascript; charset="utf-8"')
 
         # apply proper mime type for js
-        if filename.endswith('.svg'):
+        if extension == '.svg':
             self.set_header("Content-Type", 'image/svg+xml')
 
         # apply proper mime type for js
-        if filename.endswith('.png'):
+        if extension == '.png':
             self.set_header("Content-Type", 'image/png')
 
         # apply proper mime type for js
-        if filename.endswith('.jpg'):
+        if extension in ('.jpg', '.jpeg'):
             self.set_header("Content-Type", 'image/jpg')
 
         # serve the page
@@ -1289,6 +1305,8 @@ def run_pylinkjs_app(**kwargs):
         port - port number to run application on, default is 8300
         default_html - filename for the default html file, defaults to index.html
         html_dir - directory containing html files, defaults to .
+        servable_file_regex - fullmatch allowlist for paths relative to html_dir; defaults to case-insensitive
+                              HTML, CSS, JavaScript, common images and fonts. Overrides replace the default.
         login_html_page - filename for the default login html page, defaults to prepackaged login.html
         cookie_secret - secret cookie string, please set this to a random string
         heartbeat_callback - heartbeat function name which will be called periodically, defaults to None
@@ -1331,6 +1349,7 @@ def run_pylinkjs_app(**kwargs):
         kwargs['default_html'] = 'index.html'
     if 'html_dir' not in kwargs:
         kwargs['html_dir'] = '.'
+    kwargs['servable_file_regex'] = re.compile(kwargs.get('servable_file_regex', DEFAULT_SERVABLE_FILE_REGEX))
     if 'heartbeat_callback' not in kwargs:
         kwargs['heartbeat_callback'] = None
     if 'heartbeat_interval' not in kwargs:
@@ -1440,6 +1459,7 @@ def run_pylinkjs_app(**kwargs):
         request_handlers,
         default_html=kwargs['default_html'],
         html_dir=kwargs['html_dir'],
+        servable_file_regex=kwargs['servable_file_regex'],
         cookie_secret=kwargs.get('cookie_secret'),
         on_404=kwargs.get('on_404', None),
         extra_settings=kwargs['extra_settings'],
