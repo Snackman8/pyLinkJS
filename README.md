@@ -1147,6 +1147,12 @@ If the database is empty, pylinkjs exposes a one-time bootstrap page there so yo
 After at least one user exists, the bootstrap page is disabled and the normal admin page requires an authenticated
 admin login.
 
+Admin create, delete, and bootstrap forms include CSRF tokens automatically.
+Scripts calling these endpoints must send the `_xsrf` cookie and its token as
+an `_xsrf` form field or `X-XSRFToken` header. Missing or mismatched tokens return
+`403`. This protection is scoped to the admin plugin; application POST handlers
+are unchanged.
+
 For real use, create your own users, choose your own `cookie_secret`, and keep the SQLite database in a directory with
 appropriate filesystem permissions.
 

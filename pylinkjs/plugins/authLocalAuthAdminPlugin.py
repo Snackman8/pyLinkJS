@@ -20,6 +20,9 @@ class _LocalAuthAdminBaseHandler(BaseHandler):
         self._bootstrap_url = self._base_url + '/bootstrap'
 
     def prepare(self):
+        if self.request.method == 'POST':
+            self.check_xsrf_cookie()
+
         if get_local_auth_user_count(self._db_path) == 0:
             if self.request.path != self._bootstrap_url:
                 self.redirect(self._bootstrap_url)
@@ -45,6 +48,7 @@ class _LocalAuthAdminBaseHandler(BaseHandler):
             disabled = 'Yes' if user['is_disabled'] else 'No'
             delete_button = f"""
                 <form action="{self._base_url}/delete" method="post" style="display:inline;">
+                    {self.xsrf_form_html()}
                     <input type="hidden" name="username" value="{username_html}">
                     <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                 </form>
@@ -263,6 +267,7 @@ class _LocalAuthAdminBaseHandler(BaseHandler):
                 <div class="card-body">
                     <div class="section-note">Add a new local account. Administrators can access this management console.</div>
                     <form action="{self._base_url}/create" method="post">
+                        {self.xsrf_form_html()}
                         <div class="mb-3">
                             <label class="form-label">Username</label>
                             <input name="username" class="form-control" placeholder="Enter username" required>
@@ -474,6 +479,7 @@ class _LocalAuthAdminBaseHandler(BaseHandler):
                     <p>Choose the credentials for the initial administrator account.</p>
                     {error_html}
                     <form action="{self._bootstrap_url}" method="post">
+                        {self.xsrf_form_html()}
                         <div class="mb-3">
                             <label class="form-label">Administrator Username</label>
                             <input name="username" class="form-control" placeholder="Enter username" required autofocus>
