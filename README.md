@@ -1,5 +1,5 @@
 # pyLinkJS
-A simple bridge to allow Python to communicate with JavaScript.
+Call Python from browser JavaScript and update the page from Python.
 
 ---
 
@@ -8,10 +8,14 @@ A simple bridge to allow Python to communicate with JavaScript.
 - **[Installation](#installation)**
 - **[Skeleton Example](#skeleton-application-example)**
 - **[Basic Example](#basic-example)**
+- **[Development to Deployment](#development-to-deployment)**
+- **[Security Controls](#security-controls)**
 - **[How to Use with Codex in VS Code](#how-to-use-with-codex-in-vs-code)**
 - **[Documentation](#documentation)**
   - [Event Handlers](#event-handlers)
   - [PyLinkJS](#pylinkjs)
+  - [Controlling which files can be served](#controlling-which-files-can-be-served)
+  - [High-security callback mode](#high-security-callback-mode)
   - [PyLinkJSClient (Core Methods)](#pylinkjsclient-core-methods)
   - [PyLinkJSClient (Modal UI Methods)](#pylinkjsclient-modal-ui-methods)
   - [PyLinkJSClient (Select Element Methods)](#pylinkjsclient-select-element-methods)
@@ -24,10 +28,7 @@ A simple bridge to allow Python to communicate with JavaScript.
 
 ## Installation
 
-It is highly recommended to install `pyLinkJS` in a virtual environment.  
-Follow the steps below to install into a virtual environment on Ubuntu.
-
-**Create a virtual environment and install using `pip`:**
+Install `pyLinkJS` in a virtual environment. On Ubuntu:
 
 ```bash
 # install dependencies on Ubuntu
@@ -43,16 +44,12 @@ source venv/bin/activate
 # install the pyLinkJS package directly from GitHub
 pip install git+https://github.com/Snackman8/pyLinkJS
 
-# (Optional) Enable printing support in PyLinkJS apps.
-# Install Playwright's Chromium browser so PNG and PDF output can be generated.
-playwright install chromium
-
 # (Optional) Clone the repository to access example code (see the examples/ directory)
 git clone https://github.com/Snackman8/pyLinkJS
 
 # (Optional) Enable printing support in PyLinkJS apps.
 # Install Playwright's Chromium browser so PNG and PDF output can be generated.
-# NOTE: Read the command's output carefully; it may ask you to install system dependencies.
+# The command may ask you to install system dependencies.
 # If it suggests "sudo playwright install-deps", run this instead to use the venv's binary:
 #     sudo $(which playwright) install-deps
 playwright install chromium
@@ -61,19 +58,18 @@ playwright install chromium
 # This starts a server on port 8300 — open http://localhost:8300 in your browser to see it.
 # If accessing from another machine, replace "localhost" with the IP of the server running pyLinkJS.
 # If running on a locked-down server, you may need to open port 8300 in the firewall to allow access.
-# In a corporate environment, your IT department may be able to assist.
 # Press Ctrl+C in the terminal to stop the server.
 python3 pyLinkJS/examples/hello_world/hello_world.py
 ```
 
 ## Skeleton Application Example
 
-This minimal structure serves as a starting point for building a PylinkJS application—a "Hello World" app.
+A button calls Python, which updates the page. Save `skeleton.py` and
+`skeleton.html` in the same directory, then run `python3 skeleton.py` and open
+`http://localhost:8300/`.
 
-- By convention, the HTML and Python files share the same name, though this is not required.
-- This skeleton example consists of two files: `skeleton.py` and `skeleton.html` .
-- Runs on port 8300.
-- The application is fully functional and requires no additional code to run.
+This example uses automatic callback lookup for rapid development. Before
+release, [switch to high-security mode](#switching-to-high-security-mode).
 
 **File: skeleton.py**
 
@@ -84,41 +80,38 @@ import datetime
 from pylinkjs.PyLinkJS import run_pylinkjs_app
 
 def button_clicked(jsc):
-    """
-    Handles button click events, updating the webpage's HTML and styles.
+    """Show the time in red.
 
     Parameters:
-        jsc : A communication channel automatically injected by the framework into the webpage, allowing Python to interact with and modify JavaScript-controlled page elements in real-time.
+        jsc: The client object supplied by pyLinkJS for the page that called
+             this function. Use it to read or update page elements.
     """
-    # Sets the inner HTML of #divout to display the current time
+    # Set the inner HTML of the element with id="divout" to the current time.
     jsc['#divout'].html = "Current Time: " + datetime.datetime.now().strftime('%H:%M:%S')
-    # Changes the text color of #divout to red
+    # Change that element's CSS text color to red.
     jsc['#divout'].css.color = 'red'
 
-# handle the --port argument
+# Accept an optional --port argument; use port 8300 if it is omitted.
 parser = argparse.ArgumentParser()
 parser.add_argument('--port', type=int, required=False, default=8300)
 args = parser.parse_args()
 
-# Starts the PylinkJS app serving `example.html` on `localhost:8300` (default port) for browser-Python interaction.
+# Open http://localhost:8300 in your browser.
 logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
+# Serve skeleton.html from the current directory and handle its Python callbacks.
 run_pylinkjs_app(default_html='skeleton.html', port=args.port)
 ```
 
 **File: skeleton.html**
 
-_This HTML file provides the front-end structure, including the button that triggers the Python function._
-
 ```html
 <html>
-<!-- Note: jQuery and Bootstrap are automatically injected by the framework. -->
-<!-- Note: HTML comment-based template systems like Tornado are not compatible with PylinkJS.
-           Avoid using templating syntax within HTML comments to ensure compatibility. -->
-<!-- Note: the call_py JavaScript function is used to call Python functions in the Python source code. -->
+<!-- pyLinkJS injects jQuery and Bootstrap. -->
 
 <body>
-  <!-- Note: The PyLinkJS JavaScript function `call_py` is used to call Python functions from JavaScript. -->
+  <!-- call_py sends the function name to Python; pyLinkJS supplies its jsc argument. -->
   <button onclick="call_py('button_clicked');">Click me</button>
+  <!-- Python updates this element through jsc['#divout']. -->
   <div id='divout'>?</div>
 </body>
 </html>
@@ -128,12 +121,13 @@ _This HTML file provides the front-end structure, including the button that trig
 
 ## Basic Example
 
-This example demonstrates a simple PylinkJS application with interactive Python-JavaScript functionality. Unlike the **Skeleton Application Example**, this example shows how to modify JavaScript event handlers from Python using the `Code` object and demonstrates passing parameters from JavaScript to Python by including dummy parameters in the function call.
+Pass arguments with `call_py`, assign a JavaScript event handler with `Code`,
+and run JavaScript with `eval_js_code`.
 
-- The application consists of three files: `basic_example.py` , `basic_example.html` , and `basic_example2.html` .
-- The HTML and Python files share the same name by convention, though this is not required.
-- Runs on port 8300.
-- This application is fully functional and requires no additional code to run.
+It uses the same development setup as the skeleton example.
+
+Save these three files in the same directory. Run `python3 basic_example.py`
+and open `http://localhost:8300/`.
 
 **File: basic_example.py**
 
@@ -144,70 +138,66 @@ import datetime
 from pylinkjs.PyLinkJS import run_pylinkjs_app, Code
 
 def button_clicked(jsc, a, b):
-    """
-    Handles button click events, updating the webpage's HTML and styles.
+    """Handle a button click and update the page's HTML and styles.
 
     Parameters:
-        jsc : A communication channel automatically injected by the framework into the webpage, allowing Python to interact with and modify JavaScript-controlled page elements in real-time.
-        a : A dummy parameter to demonstrate passing data from JavaScript to Python.
-        b : A dummy parameter to demonstrate passing data from JavaScript to Python.
+        jsc: The client object supplied by pyLinkJS for the page that called
+             this function. Use it to read or update page elements.
+        a: The first argument passed from JavaScript ('param1' below).
+        b: The second argument passed from JavaScript ('param2' below).
 
-    JavaScript Example:
+    JavaScript example:
         call_py('button_clicked', 'param1', 'param2');
+
+    JavaScript supplies a and b; pyLinkJS supplies jsc as the first parameter.
+    This example accepts a and b to demonstrate argument passing; it does not
+    otherwise use them.
     """
-    # Sets the inner HTML of #divout to display the current time
+    # Set the inner HTML of the element with id="divout" to the current time.
     jsc['#divout'].html = "Current Time: " + datetime.datetime.now().strftime('%H:%M:%S')
-    # Changes the text color of #divout to red
+    # Change that element's CSS text color to red.
     jsc['#divout'].css.color = 'red'
-    # Adds a click event to #divout that shows an alert with the message "AA" when clicked
+    # Add a JavaScript click handler to #divout that shows an alert saying "AA".
+    # Code(...) sends a JavaScript function, rather than treating it as a string.
     jsc['#divout'].click = Code('function() { alert("AA"); }')
-    # use eval_js_code to run arbitrary javascript code to change the output
+    # Run JavaScript in the browser to update a second element, #divout2.
     jsc.eval_js_code(f"""$("#divout2").html("{datetime.datetime.now().strftime('%H:%M:%S')}");""")
 
-# handle the --port argument
+# Accept an optional --port argument; use port 8300 if it is omitted.
 parser = argparse.ArgumentParser()
 parser.add_argument('--port', type=int, required=False, default=8300)
 args = parser.parse_args()
 
-# Starts the PylinkJS app serving `basic_example.html` on `localhost:8300` for browser-Python interaction.
+# Open http://localhost:8300 in your browser.
 logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
+# Serve basic_example.html from the current directory with automatic callback lookup.
 run_pylinkjs_app(default_html='basic_example.html', port=args.port)
 ```
 
 **File: basic_example.html**
 
-_This HTML file provides the front-end structure, including the button that triggers the Python function and a link to `basic_example2.html` .
-
 ```html
 <html>
-<!-- Note: jQuery and Bootstrap are automatically injected by the framework. -->
-<!-- Note: HTML comment-based template systems like Tornado are not compatible with PylinkJS.
-           Avoid using templating syntax within HTML comments to ensure compatibility. -->
-<!-- Note: The call_py JavaScript function is used to call Python functions in the Python source code. -->
-
+<!-- pyLinkJS injects jQuery and Bootstrap. -->
 
 <body>
+  <!-- Follow a normal HTML link to another page served by the app. -->
   <a href='basic_example2.html'>Click here to go to example 2 page</a>
   <br/>
   
-  <!-- Button triggers the Python function `button_clicked` with parameters 'param1' and 'param2' when clicked.
-       These parameters are passed to the Python function to demonstrate data transfer from JavaScript to Python. -->
+  <!-- Pass 'param1' and 'param2' as a and b to button_clicked(jsc, a, b). -->
   <button onclick="call_py('button_clicked', 'param1', 'param2');">Click me</button>
   
-  <!-- The `divout` element will be updated by Python code to show the current time and
-       will also have a new click handler attached that triggers an alert when clicked. -->
+  <!-- Python updates this element and gives it a JavaScript click handler. -->
   <div id='divout'>?</div>
 
-  <!-- The `divout2` element will be updated by the Python code using the `eval_js_code` function,
-       which can execute arbitrary JavaScript code. -->
+  <!-- Python updates this element by running JavaScript with eval_js_code. -->
   <div id='divout2'></div>
 </body>
 </html>
 ```
 
 **File: basic_example2.html**
-
-_This is a simple HTML file that serves as the target page for the link in `basic_example.html` .
 
 ```html
 <html>
@@ -219,15 +209,131 @@ _This is a simple HTML file that serves as the target page for the link in `basi
 
 ---
 
+## Development to Deployment
+
+Develop with automatic callback lookup, the default (`high_security=False`).
+When the app is finished, enable high-security mode and register the callbacks
+before release or access by untrusted users. The file allowlist stays active
+in both modes.
+
+```text
+my_app/
+├── mini_app.py
+└── mini_app.html
+```
+
+**File: mini_app.py**
+
+```python
+import argparse
+import datetime
+import logging
+
+from pylinkjs.PyLinkJS import run_pylinkjs_app
+
+
+def ready(jsc, origin, pathname, search, *args):
+    # pyLinkJS calls ready when the page first connects to the server.
+    # .text sets an element's text content; '#status' selects id="status".
+    jsc["#status"].text = "Connected"
+    jsc["#divout"].text = "Click the button to update the time."
+
+
+def reconnect(jsc, origin, pathname, search, *args):
+    # Restore the page's initial state after reconnecting.
+    ready(jsc, origin, pathname, search, *args)
+
+
+def button_clicked(jsc):
+    # Replace the output text when the HTML button calls this function.
+    jsc["#divout"].text = datetime.datetime.now().strftime("Current Time: %H:%M:%S")
+
+
+def main():
+    # Let the app run on a different port with --port.
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=8300)
+    args = parser.parse_args()
+
+    logging.basicConfig(level=logging.INFO)
+    print(f"Open http://localhost:{args.port} in your browser.")
+    # During development, pyLinkJS finds the callbacks automatically.
+    run_pylinkjs_app(default_html="mini_app.html", port=args.port)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+**File: mini_app.html**
+
+```html
+<html>
+  <body>
+    <!-- ready updates the connection status when the page connects. -->
+    <p id="status"></p>
+    <!-- call_py invokes button_clicked in Python, with jsc supplied by pyLinkJS. -->
+    <button onclick="call_py('button_clicked');">Click me</button>
+    <!-- Python writes the current time into this element. -->
+    <div id="divout">?</div>
+  </body>
+</html>
+```
+
+From the app directory, run `python3 mini_app.py` and open
+`http://localhost:8300/`.
+
+### Switching to high-security mode
+
+When the app is finished, replace the startup call in `main()` with:
+
+```python
+# Map callback names used by the browser to the Python functions it may call.
+page_callbacks = {
+    "ready": ready,
+    "reconnect": reconnect,
+    "button_clicked": button_clicked,
+}
+run_pylinkjs_app(
+    default_html="mini_app.html",
+    port=args.port,
+    # Disable automatic lookup; allow only callbacks in the registry below.
+    high_security=True,
+    # These two URLs serve the same HTML file, so give them the same callbacks.
+    callback_registry={"/": page_callbacks, "/mini_app.html": page_callbacks},
+)
+```
+
+The callbacks and HTML stay the same. Register every callback each page uses,
+including `ready` and `reconnect`. Only registered callbacks can then be invoked.
+
+For deployment, we also recommend moving browser assets into `public/` and
+setting `html_dir="public"`; Python files can stay outside it. See the
+[backend layout](#high-security-callback-mode) for larger apps. Add
+[authentication](#require-authentication-for-all-pages) if the app needs login.
+High-security callback mode alone does not require authentication or a cookie
+secret, and anyone who can reach the app can invoke its registered callbacks.
+
+## Security Controls
+
+| Control | What it controls |
+| --- | --- |
+| `html_dir` | The directory from which built-in file serving reads files. |
+| `servable_file_regex` | Which files inside that directory may be downloaded. |
+| `high_security=True` + `callback_registry` | Which Python callbacks browsers may invoke on each page. |
+| `require_auth=True` + authentication setup | Whether built-in pages and WebSocket connections require login. |
+
+Registered callbacks must still validate their arguments and check permissions
+for the requested operation. Custom HTTP handlers must enforce their own access
+controls. High-security callback mode can be used for public or authenticated apps.
+
 ## How to Use with Codex in VS Code
 
-If you start from an empty folder and want Codex to scaffold a working demo:
+To create an app with Codex:
 
 1. Open an empty folder in VS Code.
 2. Open Codex in VS Code.
 3. Paste the prompt below.
-
-Prompt to use with Codex:
 
 ```text
 First, download this project's README from GitHub into this empty folder as `pyLinkJS_readme.md`:
@@ -235,16 +341,17 @@ First, download this project's README from GitHub into this empty folder as `pyL
 - Prefer: `curl -fL "https://raw.githubusercontent.com/Snackman8/pyLinkJS/master/README.md" -o pyLinkJS_readme.md`
 - Fallback: `wget -O pyLinkJS_readme.md "https://raw.githubusercontent.com/Snackman8/pyLinkJS/master/README.md"`
 
-Then read `pyLinkJS_readme.md` in this workspace and follow it as the project spec.
-Match the generated app to the "Minimal End-to-End Example" contract in that file (same structure, naming, handlers, and default behavior).
-If any section conflicts, treat "LLM Reference (Code Generation Contract)" as authoritative for generated code.
+Read `pyLinkJS_readme.md` and follow its "Development to Deployment" example
+and "LLM Reference (Code Generation Contract)".
 
 Starting from this empty folder:
 1) Create a Python virtual environment named .venv if it does not already exist.
 2) Activate/use .venv and install prerequisites needed for pyLinkJS demos.
-3) Create `mini_app.py` and `mini_app.html` aligned to the full example contract.
+3) Create `mini_app.py` and `mini_app.html` in the same directory using the development example.
 4) Include required pyLinkJS event handlers (`ready`, `reconnect`) and one `call_py(...)` action handler.
-5) Use `run_pylinkjs_app(default_html='mini_app.html', port=8300)`.
+5) Use `run_pylinkjs_app(default_html='mini_app.html', port=8300)` for rapid development.
+   When asked to prepare the app for release, enable high_security=True and register
+   its callbacks. Recommend a public directory for browser assets at that stage.
 6) Keep the code simple and well-commented.
 7) When the app starts, print the exact browser URL to open, e.g. `Open http://localhost:8300 in your browser.`
 8) At the end, print exact run commands.
@@ -260,10 +367,8 @@ Do not ask me follow-up questions unless something is truly blocking.
 ```python
 def popstate(jsc, state, target):
     """
-    Event handler called when the webpage is transitioned to using the back or forward buttons on the browser.
-    
-    For single page apps, the state should be used to change the state of the page to mimic a back
-    or forward button page movement
+    Handle browser back/forward navigation. In a single-page app, restore the
+    page state from the supplied history entry.
 
     Parameters:
         state (str): state of the page to transition to, i.e. "show_login"
@@ -276,7 +381,7 @@ def popstate(jsc, state, target):
 ```python
 def ready(jsc: PyLinkJSClient, origin: str, pathname: str, search: str, *args: tuple):
     """
-    Event handler Called when a webpage establishes a new connection for the first time on load.
+    Called when the page first connects to the server.
 
     Parameters:
         jsc (PyLinkJSClient): Client object for interacting with webpage elements.
@@ -292,10 +397,10 @@ def ready(jsc: PyLinkJSClient, origin: str, pathname: str, search: str, *args: t
 ```python
 def reconnect(javascript_context: PyLinkJSClient, origin: str, pathname: str, search: str, *args: tuple):
     """
-    Event handler called when a webpage reconnects to the backend server after a broken connection.
+    Called when the page reconnects after losing its connection.
 
     Parameters:
-        javascript_context (PyLinkJSClient): Object for interacting with webpage elements dynamically.
+        javascript_context (PyLinkJSClient): Client object for updating the page.
         origin (str): Origin portion of the calling URL, e.g., "http://www.test.com".
         pathname (str): Path portion of the calling URL, e.g., "/myapp.html".
         search (str): Query string of the calling URL, e.g., "?query=a".
@@ -307,8 +412,9 @@ def reconnect(javascript_context: PyLinkJSClient, origin: str, pathname: str, se
 ```python
 def on_404(path, uri, host, extra_settings, headers=None, body=b"", method="GET", *args):
     """
-    Called when no static .html matches the path.
-    Use this to implement ad hoc REST endpoints.
+    Called for GET requests with no existing file and for POST requests handled
+    by the built-in handler. Use this to implement ad hoc REST endpoints.
+    Existing files rejected by servable_file_regex do not invoke this handler.
 
     Args:
         path: str  # path without leading slash, e.g. "run"
@@ -330,21 +436,17 @@ def on_404(path, uri, host, extra_settings, headers=None, body=b"", method="GET"
 ```python
 def get_all_jsclients() -> list[PyLinkJSClient]:
     """
-    Retrieves all JSClient instances from the server application when not in a callback where a jsc instance is provided.
+    Return all connected clients. Useful outside callbacks, where no jsc is supplied.
 
     Returns:
         list[PyLinkJSClient]: A list of all `JSClient` instances managed by the server.
     """
 ```
 
-This function is used to retrieve JSClient instances from the server application when not in a callback where the jsc is provided.
-
 **Example**
 ```python
-# Loop through all JSClient instances connected to the server
+# Send the JavaScript alert to every connected client.
 for jsc in PyLinkJS.get_all_jsclients():
-    # Execute JavaScript code in each connected client's browser
-    # In this example, it triggers an alert with the message "Hello to All!"
     jsc.eval_js_code('alert("Hello to All!")')
 ```
 
@@ -352,8 +454,7 @@ for jsc in PyLinkJS.get_all_jsclients():
 ```python
 def get_broadcast_jsclients(pathname: str) -> list[PyLinkJSClient]:
     """
-    Retrieves all PyLinkJSClient instances from the server application filtered by the specified pathname.
-    Useful when not in a callback where a `jsc` instance is provided.
+    Return connected clients on the given page URL path.
 
     Args:
         pathname (str): The pathname to filter by, e.g., "/".
@@ -363,12 +464,9 @@ def get_broadcast_jsclients(pathname: str) -> list[PyLinkJSClient]:
     """
 ```
 
-This function is used to retrieve JSClient instances from the server application when not in a callback where the jsc is provided.
-
 ```python
-# Loop through all PyLinkJSClient instances connected with the specified pathname
+# Send the alert only to clients whose page URL path is '/'.
 for jsc in PyLinkJS.get_broadcast_jsclients('/'):
-    # Execute JavaScript code in each matching client's browser
     jsc.eval_js_code('alert("Hello to All!")')
 ```
 
@@ -376,7 +474,7 @@ for jsc in PyLinkJS.get_broadcast_jsclients('/'):
 ```python
 def run_pylinkjs_app(**kwargs):
     """
-    Starts a PylinkJS app with configurable settings.
+    Start a pyLinkJS application.
 
     Parameters:
     -----------
@@ -385,14 +483,24 @@ def run_pylinkjs_app(**kwargs):
     default_html : str, optional
         Main HTML file (default: "index.html").
     html_dir : str, optional
-        Directory for HTML files (default: ".").
+        Root directory for built-in file serving (default: ".").
     servable_file_regex : str, optional
         Fullmatch allowlist for file paths relative to html_dir. Defaults to case-insensitive
         HTML, CSS, JavaScript, common images and fonts. Overrides replace the default.
+    high_security : bool, optional
+        Restrict browser calls to callback_registry (default: False for rapid development).
+        Enable before release.
+    callback_registry : dict, optional
+        Maps exact page URL paths to {callback_name: callable}; required when high_security=True.
+        Use PyLinkJSCallback(func, allow_new_thread=True) to permit background execution.
+    max_background_callbacks : int, optional
+        Maximum concurrent background callbacks in high-security mode (default: 4).
+    plugins : list, optional
+        Plugin instances, such as an authentication plugin (default: []).
     login_html_page : str, optional
-        Login page file (default: "login.html").
-    cookie_secret : str, optional (recommended for production)
-        Secret for cookie encryption. For production deployments, set a unique random string.
+        Login page path used by a login handler. Authentication plugins configure their own page.
+    cookie_secret : str, optional (required when using authentication)
+        Secret for signing cookies, not encrypting them. Use a long random value.
     cookie_secure : bool, optional
         If True, authentication cookies are sent only over HTTPS (default: False for local HTTP development).
     cookie_httponly : bool, optional
@@ -407,7 +515,7 @@ def run_pylinkjs_app(**kwargs):
     heartbeat_interval : int, optional
         Time in seconds between heartbeats (default: None).
     login_handler : tornado.web.RequestHandler, optional
-        Custom login handler (default: built-in).
+        Custom login handler. Configure an authentication plugin or implement a login handler.
     logout_handler : tornado.web.RequestHandler, optional
         Custom logout handler (default: built-in).
     route_handlers : list, optional
@@ -422,11 +530,15 @@ def run_pylinkjs_app(**kwargs):
     
     Example:
     --------
-    run_pylinkjs_app(port=8500, default_html="example.html", cookie_secret="random_string")
+    See Development to Deployment for a runnable app and its high-security configuration.
     """
 ```
 
 ### Controlling which files can be served
+
+The default allowlist covers common browser assets; most apps need no regex
+override. Point `html_dir` at `public/` to keep Python code and other private
+files outside built-in file serving.
 
 `html_dir` sets the directory from which files are served (default: `"."`).
 `servable_file_regex` adds an allowlist: an existing file is served only if its
@@ -460,20 +572,10 @@ run_pylinkjs_app(
 )
 ```
 
-To expose just one Python source file alongside the default assets:
-
-```python
-run_pylinkjs_app(
-    servable_file_regex=DEFAULT_SERVABLE_FILE_REGEX + r"|downloads/example\.py",
-)
-```
-
-This serves `downloads/example.py` as source bytes; it does not execute the file.
-Because the default includes `(?i)`, these extended patterns also ignore case.
-Other Python files remain blocked. For a separate public directory, use
-`html_dir="public"`; Python files can also remain alongside HTML, with the
-allowlist preventing their download. Python callback lookup remains unchanged:
-it follows page URLs and importable modules, or the explicit `callback_registry`.
+Because the default includes `(?i)`, this extended pattern also ignores case.
+Python files can remain alongside HTML, with the default allowlist preventing
+their download. Python callback lookup is independent of this filter: it follows
+page URLs and importable modules, or the explicit `callback_registry`.
 
 Disallowed existing files return 404 without invoking `on_404`, including requests
 with `?output=pdf` or `?output=png`. Hidden path components (such as `.env` or
@@ -481,73 +583,119 @@ with `?output=pdf` or `?output=png`. Hidden path components (such as `.env` or
 them. These restrictions apply to built-in file serving; custom route handlers,
 missing-path `on_404` responses, and POST handling retain their existing behavior.
 
-### High-security callback mode
+#### Advanced: exposing a specific source file
 
-Browser JavaScript is always under the user's control.  If the application must
-not allow the browser to select arbitrary Python functions, enable
-`high_security=True` and explicitly register every browser-callable function.
-This does **not** require changing existing `call_py(...)` JavaScript or HTML.
-
-**Recommendation:** Enable high-security mode for production deployments, or
-whenever the application is exposed to untrusted users, a shared network, the
-internet, or data and operations that require authorization.  It is optional
-only for local development or other fully trusted environments.
-
-High-security mode refuses the known development secret `CHANGEME` at startup.
-Use your own long, random `cookie_secret` for every deployment that sets one.
-
-For an authenticated HTTPS deployment, also set `cookie_secure=True`.  The
-default is `False` so local HTTP development continues to work; `cookie_httponly`
-defaults to `True` and `cookie_samesite` defaults to `'Lax'` in every mode.
+If an app intentionally publishes Python source, allow that exact relative path
+alongside the default assets:
 
 ```python
-import os
-
-from pylinkjs.PyLinkJS import PyLinkJSCallback, run_pylinkjs_app
-
-def ready(jsc, *_args):
-    pass
-
-def save_report(jsc, report_id):
-    # Authorize the current user and validate report_id here.
-    pass
-
-def generate_report(jsc, report_id):
-    pass
+from pylinkjs.PyLinkJS import DEFAULT_SERVABLE_FILE_REGEX, run_pylinkjs_app
 
 run_pylinkjs_app(
+    servable_file_regex=DEFAULT_SERVABLE_FILE_REGEX + r"|downloads/example\.py",
+)
+```
+
+This serves `downloads/example.py` as source bytes; it does not execute it. The
+pattern ignores case, and other Python files remain blocked.
+
+### High-security callback mode
+
+With `high_security=True`, browsers can call only functions registered for their
+page. Existing `call_py(...)` JavaScript works unchanged. Use automatic lookup
+during development, then enable this mode before release or access by untrusted
+users.
+
+**Recommended layout:** Point `html_dir` at a public directory containing browser
+assets, and keep your launching script and Python callback modules outside it.
+The [development example](#development-to-deployment) keeps its callbacks in
+the launching script. When more organization is useful, move them into `backend/`:
+
+```text
+my_app/
+├── app.py
+├── backend/
+│   ├── __init__.py
+│   ├── home.py
+│   └── reports.py
+└── public/
+    ├── index.html
+    └── reports/
+        └── view.html
+```
+
+Use `backend/` for callbacks and other application logic. Start with one file,
+such as `backend/callbacks.py`, then split by section as needed. A section can
+use one module or several, including one per HTML page. Mix these approaches:
+keep simple sections together and split complex ones. Put shared logic in
+separate modules.
+
+For this larger layout, move the main page's functions into `backend/home.py`,
+define the report page's functions in `backend/reports.py`, and import them in
+`app.py`:
+
+```python
+from backend import home, reports
+from pylinkjs.PyLinkJS import run_pylinkjs_app
+
+home_callbacks = {
+    'ready': home.ready,
+    'reconnect': home.reconnect,
+    'button_clicked': home.button_clicked,
+}
+run_pylinkjs_app(
+    html_dir='public',
     default_html='index.html',
     high_security=True,
-    require_auth=True,
-    cookie_secret=os.environ['PYLINKJS_COOKIE_SECRET'],
-    cookie_secure=True,
-    max_background_callbacks=4,
     callback_registry={
-        '/': {
-            'ready': ready,
-            'save_report': save_report,
-            # Only this callback is permitted to use call_py_new_thread(...).
-            'generate_report': PyLinkJSCallback(generate_report, allow_new_thread=True),
+        '/': home_callbacks,
+        '/index.html': home_callbacks,
+        '/reports/view.html': {
+            'ready': reports.ready,
+            'save_report': reports.save_report,
         },
     },
 )
 ```
 
-In this mode, PyLinkJS derives the page route from the WebSocket endpoint and
-rejects requests for callbacks not registered for that route.  It does not
-perform dynamic module imports or name lookup for browser requests.  Register
-`ready`, `reconnect`, and `popstate` if the page uses those automatic callbacks.
-Each callback must still perform its own authorization and validate its
-arguments; the registry controls which server entry points the browser may call.
-Background callbacks are limited to `max_background_callbacks` concurrent
-threads (four by default), so repeated browser requests cannot create unbounded
-threads.
+Registry keys are **exact URL paths**, not HTML filenames or Python module
+names. `/` and `/index.html` need separate entries even when both serve
+`public/index.html`; the same applies to `/reports/` and `/reports/index.html`
+when both serve a directory's default page. Query strings are not part of the
+key. Filenames and directories under `backend/` need not mirror `public/`.
+
+PyLinkJS derives the page route from the WebSocket endpoint and rejects
+unregistered callbacks. It does not perform dynamic imports or name lookup for
+browser requests in this mode. Register `ready`, `reconnect`, and `popstate` if
+the page uses those automatic callbacks. Every callback must still validate
+arguments and check the caller's permissions for its operation.
+
+Background execution requires explicit permission for each callback:
+
+```python
+from pylinkjs.PyLinkJS import PyLinkJSCallback
+
+# Use this value for a callback_registry entry that may run in a background thread.
+background_report_callback = PyLinkJSCallback(reports.generate_report, allow_new_thread=True)
+```
+
+Only use `allow_new_thread=True` for functions suitable for concurrent execution.
+`max_background_callbacks` limits these callbacks to four concurrent threads by
+default.
+
+Authentication is optional and separate from callback registration. For private
+apps, configure an [authentication plugin or login handler](#require-authentication-for-all-pages),
+set `require_auth=True`, and supply a long random `cookie_secret`. High-security
+mode rejects the development secret `CHANGEME`. For HTTPS deployments also set
+`cookie_secure=True`; leave it `False` for local HTTP development. Authentication
+cookies default to `HttpOnly` and `SameSite=Lax`.
 
 ## PyLinkJSClient (Core Methods)
 
 ### \__getitem\__
 
-HTML elements in the browser can be accessed by their ID using the jsc item accessor.  For example if there was an element such as `<div id=x>Hello</div>` in the html page, then it could be accessed in python using `jsc['x']` .
+Select page elements with jQuery selectors: `jsc['#x']` selects the element with
+`id="x"`.
 
 ### browser_download
 ```python
@@ -560,20 +708,17 @@ def browser_download(self, filename, filedata, blocking=False):
     """
 ```
 
-This function will force a download of a file to the user's computer through the browser.
-
 ```python
-# push a download of the file named test.txt containing the text "Hello World!" to the user's browser
+# Ask the browser to download the supplied text as test.txt.
 jsc.browser_download('test.txt', "Hello World!")
 ```
 
 ### eval_js_code
 ```python
 def eval_js_code(self, js_code, blocking=True):
-    """ request that the browser evaluate javascript code
-        the javascript code is executed in the global javascript context so it remembers which variables have been previously declared
-        if the return value from eval_js_code will not be used, set blocking=False to greatly improve performance (best practice)
-        performance can be greatly improved by combining all of the javascript into as few calls to eval_js_code as possible
+    """Execute JavaScript in the browser's global context.
+        Set blocking=False when no return value is needed. Combine operations
+        in one call to reduce round trips.
 
         js_code - the javascript code to execute
         blocking - if True, this function will not return until the javascript has completed execution
@@ -583,29 +728,28 @@ def eval_js_code(self, js_code, blocking=True):
     """
 ```
 
-Any arbitrary javacode can be run using this function
-
 ```python
-# example call to show a messagebox from the browser
+# Run JavaScript that opens an alert in the browser.
 jsc.eval_js_code('alert("Hello");')
 
-# the function will return whatever the javascript code evaluates to, in this case the function will return 6
+# Returns 6.
 jsc.eval_js_code('2 + 4')
 
-# call an javascript function with parameters
+# Call a JavaScript function defined in the page, passing it three arguments.
 jsc.eval_js_code('call_some_javascript_function(2, 3)')
 
-# execute jquery code
+# Use jQuery to replace the HTML of the element with id="myelement".
 jsc.eval_js_code('$("#myelement").html("Hello")')
 ```
 
 ### get_broadcast_jscs
 ```python
 def get_broadcast_jscs(self):
-    """ return all JSClient instances known by this server """                    
+    """Return JSClient instances on the same page URL path as this client."""
 ```
 
-This is used to broadcast commands to all clients connected to this server.  For example, a chat program, this could be used to update the chat messages on all clients.
+Use this to broadcast commands to clients on the same page URL path. For all
+connected clients, use the module-level `get_all_jsclients()` instead.
 
 ```python
 for jsc in jsc.get_broadcast_jscs():
@@ -623,11 +767,12 @@ def get_pathname(self):
 ```
 
 ### tag
-A property bag specific to each jsc which can store application information.  For example if 3 clients connected to the application, each would have it's own instance of a jsClient with their own prospective property bags to store application information.  This can be used to store state for each individual session on the server side.
+A dictionary for this client's state. Each client gets its own copy of
+`extra_settings`.
 
 ```python
-    jsc.tag['current_player_level'] = 5
-    jsc.tag['current_player_stats'] = {'xp': 200, 'name': 'bob'}
+jsc.tag['current_player_level'] = 5
+jsc.tag['current_player_stats'] = {'xp': 200, 'name': 'bob'}
 ```
 
 ## PyLinkJSClient (Modal UI Methods)
@@ -640,14 +785,13 @@ def modal_alert(self, title, body, callback=''):
         Args:
             title - html title to show in the modal dialog
             body - html body to show in the modal dialog
-            callback - callback in string form for when the OK buttion is clicked,
+            callback - HTML event attribute for the OK button,
                        i.e. onclick="call_py('btn_clicked', 'create_new_item_save');"
     """
 ```
 Example
 ```python
-# show a messagebox with an OK button, if callback is specified, a python function can
-# be called when the OK button is clicked
+# Show a message dialog with an OK button.
 jsc.modal_alert('title html', 'body html')
 
 # print the response
@@ -662,14 +806,13 @@ def modal_confirm(self, title, body, callback=''):
         Args:
             title - html title to show in the modal dialog
             body - html body to show in the confirm dialog
-            callback - callback in string form for when the OK buttion is clicked,
+            callback - HTML event attribute for the OK button,
                        i.e. onclick="call_py('btn_clicked', 'create_new_item_save');"
         """
 ```
 Example
 ```python
-# show a confirmation dialog with OK and cancel buttons, a python functon can
-# be called when the OK button is clicked
+# Call btn_clicked when OK is clicked.
 jsc.modal_confirm('title html', 'body html',
                   """onclick="call_py('btn_clicked', 'create_new_item_save');" """)
 ```
@@ -677,12 +820,12 @@ jsc.modal_confirm('title html', 'body html',
 ### modal_input
 ```python
 def modal_input(self, title, hint, callback=''):
-    """ Shows a modal input dialog where the user can input text
+    """Show a text input dialog.
 
         Args:
             title - title to show in the modal dialog
             hint - hint text to show in the input box before the user begins typing
-            callback - callback in string form for when the OK buttion is clicked,
+            callback - HTML event attribute for the OK button,
                        i.e. onclick="call_py('btn_clicked', 'create_new_item_save');"
 
         Returns:
@@ -702,7 +845,7 @@ def modal_input_get_text(self):
 ```
 Example
 ```python
-# show an input modal allowing the user to enter in text
+# Show a text input dialog.
 jsc.modal_input('title html', 'Type your answer in this box')
 
 # print the response
@@ -730,8 +873,7 @@ def modal_new(self, title, body, buttons, modal_id='jsclient_modal', autoshow=Tr
 ```
 Example
 ```python
-# create a new modal dialog which will automatically be shown to the user
-# the python function btn_clicked will be called with parameter "ok_btn" when the OK button is clicked
+# Show a dialog whose OK button calls btn_clicked(jsc, 'ok_btn').
 jsc.modal_new('title html',
               'body html',
               [{'text': 'Cancel', 'classes': 'btn-secondary', 'attributes': 'data-bs-dismiss="modal"'},
@@ -786,8 +928,6 @@ jsc.select_get_options('#myselect')
 ```
 
 ### `select_get_selected_options`
-
-Retrieves the selected options from a `<select>` element.
 
 ```python
 def select_get_selected_options(self, select_selector):
@@ -857,51 +997,45 @@ jsc.select_set_selected_options('#myselect', ['a_val', 'b_val'])
 jsc.select_set_selected_options('#myselect', ['a_val'])
 
 # to set a single selected option, second option without the list
-jsc.select_set_selected_options('#myselect', [a_val])
+jsc.select_set_selected_options('#myselect', 'a_val')
 ```
 
-<br/>
-<br/>
-<br/>
-
 ## PNG PDF Output
-There is built in functionality to generate PNG and PDF output of a pyLinkJS website.  Simply add the output=png or output=pdf parameter to the url
 
-Example
-```http://mywebsite.com?output=png```
-```http://mywebsite.com?output=pdf```
+After installing Playwright's Chromium browser, add `?output=png` or
+`?output=pdf` to a page URL, such as `http://localhost:8300/?output=pdf`.
 
-Additional parameters that can be passed are
+Additional query parameters:
 
-- print_timeout: seconds to wait for webpage to finish loading, default is 10
-- print_orientation: landscape or portrait, default is portrait (pdf only)
-- print_force_scale: force a scaling factor (pdf only)
-- print_force_fit: force the page width to fit on the page (pdf only)
-- print_extra_delay: extra delay in seconds to allow the browser to render after loading has finished, default is 0
+- `print_timeout`: maximum seconds to wait for page readiness; defaults to 10.
+- `print_orientation`: `landscape` (default) or `portrait`, for PDF output.
+- `print_force_scale`: explicit scale factor, for PDF output.
+- `print_force_fit`: fit output to the page width, for PDF output.
+- `print_extra_delay`: seconds to wait after readiness checking; defaults to 1.
 
-In the html javascript template some hints can be provided to the printing engine
+Pages can define these JavaScript hints:
 
-```var HINT_PRINT_PAGE_READY = 0;```
+```javascript
+var HINT_PRINT_PAGE_READY = 0;
+var HINT_PRINT_TIMEOUT = 30;
+```
 
-```var HINT_PRINT_TIMEOUT = 30;```
+Set `HINT_PRINT_PAGE_READY` to a nonzero value when the page is ready. Readiness
+checking stops when the page is ready or the timeout expires.
+`HINT_PRINT_TIMEOUT` supplies the timeout when `print_timeout` is omitted.
 
-The printing engine will wait until HINT_PRINT_PAGE_READY is set to a non-zero value before rendering the PNG or PDF.
+For example:
 
-The printing engine will use the HINT_PRINT_TIMEOUT as the timeout value if print_timeout was not explicitly passed in.
-
-Example
-```http://mywebsite.com?output=pdf&print_timeout=15&print_orientation=portrait&print_force_fit=1&print_extra_delay=5```
-
-<br/>
-<br/>
-<br/>
+```text
+http://localhost:8300/?output=pdf&print_timeout=15&print_orientation=portrait&print_force_fit=1&print_extra_delay=5
+```
 
 # Useful Code Examples
 
 ## Broadcast to all connected browsers
-This example will update the html of the element with id of divout_broadcast on all connected browsers
+Update `#divout_broadcast` for clients on the current page URL path:
+
 ```python
-""" example of how to broadcast a change to all webpages """
 import time
 
 t = time.time()
@@ -910,13 +1044,10 @@ for bjsc in jsc.get_broadcast_jscs():
 ```
 
 ## Broadcast to all connected browsers on a separate thread
-It is possible to broadcast commands to all connected web pages on a different thread by using the example code below.
-This may be useful when polling in the main app and sending updates upon detection of a trigger
+Send updates once per second to clients on `/`:
 
 ```python
-""" example of how to run a periodic update from a different thread """
 def thread_worker():
-    # loop forever
     while True:
         t = time.time()
         for jsc in get_broadcast_jsclients('/'):
@@ -933,6 +1064,12 @@ To have pylinkjs enforce login before serving pages or opening websocket connect
 to `run_pylinkjs_app(...)`. The bundled authentication examples default to the demo cookie secret `CHANGEME` so
 they run without modification, but real apps should pass `cookie_secret="..."` with their own long random value.
 
+Configure an authentication plugin, such as `pluginLocalAuth`, or supply working
+login/logout handlers as well. `require_auth=True` enforces login; it does not
+provide a login implementation. For release, combine authentication with
+`high_security=True` and a callback registry. Custom
+route handlers must enforce their own access controls.
+
 A common strategy is to persist the cookie secret in a file in the same directory as the application, then read that
 file and pass its contents into `run_pylinkjs_app(..., cookie_secret=secret)`. This is useful for deployments because
 the secret remains stable across restarts, and in distributed deployments each instance should use the same secret.
@@ -941,7 +1078,7 @@ For HTTPS deployments, pass `cookie_secure=True` so browsers send authentication
 to `False` for local HTTP development.  Authentication cookies are `HttpOnly` and `SameSite=Lax` by default.
 
 See the example app:
-```python
+```bash
 python3 pyLinkJS/examples/require_auth/require_auth.py
 ```
 
@@ -952,7 +1089,7 @@ If you need to administer users through a web UI, it is recommended to also use 
 a minimal interface for creating and deleting users.
 
 Run the example app:
-```python
+```bash
 python3 pyLinkJS/examples/local_auth/local_auth.py
 ```
 
@@ -969,8 +1106,10 @@ For real use, create your own users, choose your own `cookie_secret`, and keep t
 appropriate filesystem permissions.
 
 # Using pyLinkJS Behind an Apache Reverse Proxy
-The application will run on port 9150 on localhost, apache will reverse proxy the application from http://localhost/foo
-```python
+Configure Apache to proxy `/foo/` to pyLinkJS on port 9150. Restrict direct access
+to the backend port so clients use the proxy.
+
+```apache
 ProxyPreserveHost On
 ProxyRequests Off
 ProxyPassMatch /foo/(websocket/0\..*) ws://127.0.0.1:9150/$1
@@ -981,7 +1120,9 @@ ProxyPassReverse /foo/ http://127.0.0.1:9150/
 
 ## LLM Reference (Code Generation Contract)
 
-Use this section when generating pyLinkJS code without source access.
+Start with the [development example](#development-to-deployment): Python and HTML
+in the same directory, with automatic callback lookup. Add high-security mode
+when preparing the app for release.
 
 ### Required Python Imports
 
@@ -992,16 +1133,26 @@ from pylinkjs.PyLinkJS import run_pylinkjs_app
 `Code` is optional (only if assigning JS functions from Python):
 
 ```python
-from pylinkjs.PyLinkJS import run_pylinkjs_app, Code
+from pylinkjs.PyLinkJS import Code
 ```
 
 ### Required Runtime Setup
+
+After defining `ready`, `reconnect`, and `button_clicked`:
 
 ```python
 port = 8300
 print(f"Open http://localhost:{port} in your browser.")
 run_pylinkjs_app(default_html="mini_app.html", port=port)
 ```
+
+Use the default `servable_file_regex` unless additional downloads are needed.
+Before release, [enable high-security mode](#switching-to-high-security-mode)
+and register all callbacks for each page URL. Recommend `public/` for browser
+assets and set `html_dir="public"` when using that layout.
+Authentication is optional: only add `require_auth=True` with an actual
+authentication plugin or login implementation and a long random `cookie_secret`.
+Use `cookie_secure=True` for HTTPS deployments, not local HTTP demos.
 
 ### Required Event Handlers
 
@@ -1018,7 +1169,9 @@ The page should include:
 
 Hard rules:
 
-- Python and HTML handler names must match exactly.
+- Names passed to `call_py(...)` must match Python functions during automatic lookup,
+  or callback registry keys in high-security mode.
+- In high-security mode, register callbacks for every page URL used, including default-page aliases.
 - Do not call `call_py(...)` inside `onload`; use `ready(...)` for initial logic.
 - Do not include Tornado template markers in HTML (`{{`, `}}`, `{%`, `%}`).
 - pyLinkJS uses jQuery semantics; prefer `jsc['#input'].val` over DOM `.value`.
@@ -1028,70 +1181,21 @@ Hard rules:
 
 ### Minimal End-to-End Example
 
-`mini_app.py`
-
-```python
-import argparse
-import datetime
-import logging
-from pylinkjs.PyLinkJS import run_pylinkjs_app, Code
-
-
-def ready(jsc, origin, pathname, search, *args):
-    jsc["#status"].html = f"ready: {origin}{pathname}{search}"
-    jsc["#divout"].html = "Click the button to update the time."
-
-
-def reconnect(jsc, origin, pathname, search, *args):
-    return ready(jsc, origin, pathname, search, *args)
-
-
-def button_clicked(jsc, a="param1", b="param2"):
-    now = datetime.datetime.now().strftime("%H:%M:%S")
-    jsc["#divout"].html = f"Current Time: {now} ({a}, {b})"
-    jsc["#divout"].css.color = "red"
-    jsc["#divout"].click = Code('function() { alert("AA"); }')
-    jsc.eval_js_code(f'$("#divout2").html("Updated at {now}");')
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=8300)
-    args = parser.parse_args()
-
-    logging.basicConfig(level=logging.DEBUG, format="%(relativeCreated)6d %(threadName)s %(message)s")
-    print(f"Open http://localhost:{args.port} in your browser.")
-    run_pylinkjs_app(default_html="mini_app.html", port=args.port)
-
-
-if __name__ == "__main__":
-    main()
-```
-
-`mini_app.html`
-
-```html
-<html>
-  <body>
-    <p id="status"></p>
-    <button onclick="call_py('button_clicked', 'param1', 'param2');">Click me</button>
-    <div id="divout">?</div>
-    <div id="divout2"></div>
-  </body>
-</html>
-```
+Use `mini_app.py` and `mini_app.html` from
+[Development to Deployment](#development-to-deployment). Add `backend/` modules
+as the app grows, then follow the high-security steps before release.
 
 ### Code Generation Checklist
 
 Before returning generated code, ensure:
 
 1. Imports include `run_pylinkjs_app` (and `Code` only if needed).
-2. `mini_app.py` and `mini_app.html` are created.
+2. `mini_app.py` and `mini_app.html` are created in the same directory for development.
 3. `ready` and `reconnect` handlers exist with pyLinkJS-compatible signatures.
-4. At least one `call_py(...)` handler exists in HTML and matches a Python function name exactly.
+4. Every `call_py(...)` handler has a matching Python function; in high-security mode, each is registered for its page URL.
 5. Generated HTML avoids Tornado template markers (`{{`, `}}`, `{%`, `%}`).
 6. No `call_py(...)` call is made from `onload` logic.
 7. Python updates at least one HTML element by ID via `jsc['#id']`.
-8. `run_pylinkjs_app(default_html='mini_app.html', port=...)` is called.
+8. Development uses the simple startup call. Release configuration enables `high_security=True` and registers every page's callbacks.
 9. If exposing REST endpoints, use `on_404(..., method=...)` and branch on `method`.
 10. Startup prints the exact URL format: `Open http://localhost:<port> in your browser.`
