@@ -64,9 +64,7 @@ EXAMPLE_ONLY_COOKIE_SECRET = 'CHANGEME'
 # --------------------------------------------------
 def backtick_if_string(p):
     if type(p) == str:
-        # special case for backslash
-        p = p.replace('\\', '\\\\')
-        return "`%s`" % p
+        return json.dumps(p)
     else:
         return p
 
