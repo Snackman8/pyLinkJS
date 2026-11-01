@@ -495,6 +495,11 @@ def run_pylinkjs_app(**kwargs):
         Use PyLinkJSCallback(func, allow_new_thread=True) to permit background execution.
     max_background_callbacks : int, optional
         Maximum concurrent background callbacks in high-security mode (default: 4).
+    max_print_jobs : int, optional
+        Maximum concurrent HTTP-triggered PDF/PNG jobs (default: 2, must be positive).
+    print_allowed_origins : list[str], optional
+        Extra trusted HTTP(S) asset origins for printing (default: ["https://cdn.jsdelivr.net"]).
+        The local app is always allowed; an override replaces the default asset list.
     plugins : list, optional
         Plugin instances, such as an authentication plugin (default: []).
     login_html_page : str, optional
@@ -1005,6 +1010,33 @@ jsc.select_set_selected_options('#myselect', 'a_val')
 After installing Playwright's Chromium browser, add `?output=png` or
 `?output=pdf` to a page URL, such as `http://localhost:8300/?output=pdf`.
 
+HTTP-triggered printing loads the page through `http://127.0.0.1:<app port>`;
+request `Host` and forwarded-host headers cannot choose its destination.
+Navigation and WebSockets stay on that local app. Other HTTP(S) requests are
+limited to explicitly trusted asset origins, with `https://cdn.jsdelivr.net`
+allowed by default for the injected jQuery and Bootstrap files.
+
+For another asset host, include it in `print_allowed_origins`. This list replaces
+the default; origins contain a scheme, hostname, and optional port, without paths
+or wildcards:
+
+```python
+run_pylinkjs_app(
+    default_html='index.html',
+    print_allowed_origins=['https://cdn.jsdelivr.net', 'https://cdn.plot.ly'],
+)
+```
+
+HTTP redirects and service workers are blocked during printing to prevent
+unchecked follow-up requests. Print the final page URL directly if a route
+redirects. Additional asset origins must be explicitly allowed for those assets
+to appear in the export. These restrictions apply to HTTP-triggered exports;
+direct Python calls to `print_url(...)` stay unrestricted unless `allowed_origins`
+is supplied.
+
+Printing requires Playwright 1.48 or newer for
+[WebSocket interception](https://playwright.dev/python/docs/api/class-browsercontext#browser-context-route-web-socket).
+
 Additional query parameters:
 
 - `print_timeout`: maximum seconds to wait for page readiness; defaults to 10.
@@ -1012,6 +1044,16 @@ Additional query parameters:
 - `print_force_scale`: explicit scale factor, for PDF output.
 - `print_force_fit`: fit output to the page width, for PDF output.
 - `print_extra_delay`: seconds to wait after readiness checking; defaults to 1.
+
+HTTP-triggered printing runs at most two jobs at once. Set `max_print_jobs` in
+`run_pylinkjs_app(...)` to change the limit. Requests received while all slots
+are occupied return `503` without queuing another job.
+
+Readiness waits, including `HINT_PRINT_TIMEOUT`, are capped at 60 seconds; extra
+delays are capped at 10 seconds. Negative, nonnumeric, and nonfinite query values
+return `400`. Chromium launch, navigation, and screenshot operations use
+30-second timeouts, and the browser is closed when rendering finishes or fails.
+These bounds are not a hard deadline that forcibly terminates a hung process.
 
 Pages can define these JavaScript hints:
 

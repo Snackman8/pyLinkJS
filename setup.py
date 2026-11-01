@@ -26,5 +26,5 @@ setup(name='pylinkjs',
       packages=['pylinkjs', 'pylinkjs.plugins', 'pylinkjs.utils'],
       package_data={'': ['*.js', 'plugins/*.html']},
       include_package_data=True,
-      install_requires=["tornado", "playwright"],
+      install_requires=["tornado", "playwright>=1.48"],
       )

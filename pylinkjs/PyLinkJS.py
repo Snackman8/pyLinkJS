@@ -11,6 +11,7 @@ import importlib
 import inspect
 import json
 import logging
+import math
 from multiprocessing import Process, Queue
 import os
 import queue
@@ -25,7 +26,7 @@ import traceback
 import time
 import uuid
 from types import ModuleType
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit, urlunsplit
 
 import tornado.template
 import tornado.web
@@ -42,6 +43,10 @@ from playwright.sync_api import sync_playwright, Error as pw_Error
 ALL_JSCLIENTS = []
 RETVALS = {}
 DEFAULT_PRINT_TIMEOUT = 10
+MAX_PRINT_TIMEOUT = 60
+MAX_PRINT_EXTRA_DELAY = 10
+PRINT_OPERATION_TIMEOUT = 30000
+DEFAULT_PRINT_ALLOWED_ORIGINS = ('https://cdn.jsdelivr.net',)
 INITIAL_JSC_MAPPINGS = {}
 INITIAL_JSC_REQUEST_PATHS = {}
 DEFAULT_SERVABLE_FILE_REGEX = (
@@ -78,7 +83,57 @@ def _safe_next_url(url):
     return url
 
 
-def print_url(url, output_type, timeout=None, orientation='landscape', force_scale=None, force_fit=False, extra_delay=1):
+def _bounded_print_seconds(value, maximum):
+    seconds = float(value)
+    if not math.isfinite(seconds) or seconds < 0:
+        raise ValueError('Print waits and delays must be finite, non-negative numbers')
+    return min(seconds, maximum)
+
+
+def _print_origin(url):
+    if not isinstance(url, str):
+        return None
+    try:
+        parsed = urlsplit(url)
+        scheme = {'ws': 'http', 'wss': 'https'}.get(parsed.scheme, parsed.scheme)
+        if scheme in ('http', 'https') and parsed.hostname and parsed.username is None and parsed.password is None:
+            port = parsed.port if parsed.port is not None else (443 if scheme == 'https' else 80)
+            return scheme, parsed.hostname.lower(), port
+    except (TypeError, ValueError):
+        pass
+    return None
+
+
+def _restrict_print_requests(context, url, allowed_origins):
+    app_origin = _print_origin(url)
+    allowed = {_print_origin(origin) for origin in allowed_origins}
+    allowed.add(app_origin)
+    if None in allowed:
+        raise ValueError('Print destinations must be valid HTTP(S) origins')
+
+    def handle_request(route):
+        request = route.request
+        origin = _print_origin(request.url)
+        if origin not in allowed or (request.is_navigation_request() and origin != app_origin):
+            route.abort()
+            return
+        # Do not let either the API client or Chromium follow an unchecked redirect.
+        response = route.fetch(max_redirects=0, timeout=PRINT_OPERATION_TIMEOUT)
+        try:
+            if 300 <= response.status < 400:
+                route.abort()
+            else:
+                route.fulfill(response=response)
+        finally:
+            response.dispose()
+
+    context.route('**/*', handle_request)
+    # Routed sockets stay disconnected by default; leave the app's native socket alone.
+    context.route_web_socket(lambda url: _print_origin(url) != app_origin, lambda socket: None)
+
+
+def print_url(url, output_type, timeout=None, orientation='landscape', force_scale=None, force_fit=False, extra_delay=1,
+              allowed_origins=None):
     """
         print url to pdf.
 
@@ -87,31 +142,40 @@ def print_url(url, output_type, timeout=None, orientation='landscape', force_sca
         Args:
             url - url to print
             output_type - pdf or png, default is pdf
-            timeout - number of seconds to wait for page to complete before printing, default is 5
+            timeout - seconds to wait for page readiness, default is 10, maximum is 60
             orientation - landscape or portrait.  Default is landscape
             force_scale - scale to force printing at, default is None
             force_fit - force printout scaling to fit width to page
-            extra_delay - extra time to add after web page is rendering to allow rendering to complete, default is 1
+            extra_delay - seconds to wait after readiness checking, default is 1, maximum is 10
+            allowed_origins - extra asset origins; None leaves trusted Python calls unrestricted
     """
+    if timeout is not None:
+        timeout = _bounded_print_seconds(timeout, MAX_PRINT_TIMEOUT)
+    extra_delay = _bounded_print_seconds(extra_delay, MAX_PRINT_EXTRA_DELAY)
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch()
-            page = browser.new_page()
+        # Close Chromium on success or failure, before stopping Playwright.
+        with sync_playwright() as p, p.chromium.launch(timeout=PRINT_OPERATION_TIMEOUT) as browser:
+            if allowed_origins is None:
+                page = browser.new_page()
+            else:
+                context = browser.new_context(service_workers='block')
+                _restrict_print_requests(context, url, allowed_origins)
+                page = context.new_page()
+            page.set_default_timeout(PRINT_OPERATION_TIMEOUT)
             page.goto(url)
 
             if timeout is None:
                 try:
-                    print_timeout = page.evaluate('''() => HINT_PRINT_TIMEOUT''')
-                    timeout = print_timeout
+                    timeout = _bounded_print_seconds(page.evaluate('''() => HINT_PRINT_TIMEOUT'''), MAX_PRINT_TIMEOUT)
                     print(f'USING OVERIDE PRINT TIMEOUT OF {timeout} seconds')
                 except:
                     timeout = DEFAULT_PRINT_TIMEOUT
                     print(f'USING TIMEOUT OF {timeout} seconds')
 
             # wait for page to load
-            start_time = time.time()
-            while (time.time() - start_time) < int(timeout):
-                time.sleep(1)
+            start_time = time.monotonic()
+            while (time.monotonic() - start_time) < timeout:
+                page.wait_for_timeout(1000)
                 try:
                     ready_finished = page.evaluate('''() => ready_finished''')
                     if ready_finished:
@@ -125,7 +189,7 @@ def print_url(url, output_type, timeout=None, orientation='landscape', force_sca
                 except:
                     pass
                 logging.info('.')
-            time.sleep(int(extra_delay))
+            page.wait_for_timeout(extra_delay * 1000)
 
             # handle png
             if output_type == 'png':
@@ -152,11 +216,12 @@ def print_url(url, output_type, timeout=None, orientation='landscape', force_sca
             else:
                 pdf_bytes = page.pdf(landscape=(orientation == 'landscape'))
             return pdf_bytes, 'application/pdf; charset="utf-8"'
-    except pw_Error:
-        raise RuntimeError("Playwright is not installed. Run `playwright install` to enable printing.")
+    except pw_Error as e:
+        raise RuntimeError(f'Printing failed: {e}') from e
     except Exception as e:
         traceback.print_exc()
         print(e)
+        raise
 
 
 def search_for_magic_function(func_name):
@@ -899,12 +964,15 @@ class MainHandler(BaseHandler):
         next_query = urlencode({'next': self.request.uri})
         self.redirect(f'/login?{next_query}')
 
-    def print_thread_worker(self, url, print_output_type='pdf', print_timeout=None, print_orientation='landscape', print_force_scale=None, print_force_fit=False,
+    async def print_thread_worker(self, url, print_output_type='pdf', print_timeout=None, print_orientation='landscape', print_force_scale=None, print_force_fit=False,
                             print_extra_delay=1):
         try:
-            print_bytes, content_type = print_url(url=url, output_type=print_output_type, timeout=print_timeout,
-                                                  orientation=print_orientation, force_scale=print_force_scale,
-                                                  force_fit=print_force_fit, extra_delay=print_extra_delay)
+            # Render off the IOLoop; write the response back on the IOLoop.
+            print_bytes, content_type = await IOLoop.current().run_in_executor(None, partial(
+                print_url, url=url, output_type=print_output_type, timeout=print_timeout,
+                orientation=print_orientation, force_scale=print_force_scale,
+                force_fit=print_force_fit, extra_delay=print_extra_delay,
+                allowed_origins=self.settings['print_allowed_origins']))
             self.set_header("Content-Type", content_type)
             self.set_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             self.write(print_bytes)
@@ -983,24 +1051,34 @@ class MainHandler(BaseHandler):
             if self.request.query_arguments.get('output', '')[0].lower() in [b'pdf', b'png']:
                 # build and remove pdf_arguments
                 pdf_kwargs = {}
-                uri = self.request.uri
                 for name in ['output', 'print_timeout', 'print_orientation', 'print_force_scale', 'print_force_fit', 'print_extra_delay']:
                     if name in self.request.query_arguments:
-                        pdf_kwargs[name] = self.request.query_arguments[name][0].decode()
-                        uri = uri.replace(f'{name}={pdf_kwargs[name]}', '')
-                url = self.request.protocol + "://" + self.request.host + uri
-
-                # special handling for apache rewrite proxy
-                if 'X-Forwarded-Host' in self.request.headers:
-                    url = self.request.protocol + "://" + self.request.host + ':' + str(self.application.settings['port']) + uri
+                        pdf_kwargs[name] = self.decode_argument(self.request.query_arguments[name][0], name=name)
+                if not self.request.path.startswith('/'):
+                    raise tornado.web.HTTPError(400)
+                query = urlencode([(name, value) for name, values in self.request.query_arguments.items()
+                                   if name not in pdf_kwargs for value in values])
+                # The app's listening port is trusted; Host and proxy headers are not.
+                url = urlunsplit(('http', f'127.0.0.1:{self.settings["port"]}', self.request.path, query, ''))
 
                 pdf_kwargs['url'] = url
                 pdf_kwargs['print_output_type'] = pdf_kwargs['output']
                 del pdf_kwargs['output']
 
-                # print to pdf in another thread
-                t = threading.Thread(target=self.print_thread_worker, kwargs=pdf_kwargs)
-                t.start()
+                try:
+                    for name, maximum in [('print_timeout', MAX_PRINT_TIMEOUT), ('print_extra_delay', MAX_PRINT_EXTRA_DELAY)]:
+                        if name in pdf_kwargs:
+                            pdf_kwargs[name] = _bounded_print_seconds(pdf_kwargs[name], maximum)
+                except (TypeError, ValueError, OverflowError):
+                    raise tornado.web.HTTPError(400, reason='Invalid print wait or delay')
+
+                slots = self.settings['print_job_slots']
+                if not slots.acquire(blocking=False):
+                    raise tornado.web.HTTPError(503, reason='Printing is busy; try again later')
+                try:
+                    await self.print_thread_worker(**pdf_kwargs)
+                finally:
+                    slots.release()
                 return
 
         # return 404 if file does not exist or is a directory
@@ -1340,6 +1418,8 @@ def run_pylinkjs_app(**kwargs):
                             instances to opt a callback into call_py_new_thread.
         max_background_callbacks - maximum concurrent callbacks allowed to use call_py_new_thread in high-security
                                    mode, default is 4
+        max_print_jobs - maximum concurrent HTTP-triggered PDF/PNG jobs, default is 2
+        print_allowed_origins - extra trusted asset origins for HTTP-triggered printing, defaults to jsDelivr
         cookie_secure - if True, mark authentication cookies Secure and send them only over HTTPS, default is False
         cookie_httponly - prevent JavaScript from reading authentication cookies, default is True
         cookie_samesite - SameSite attribute for authentication cookies, default is 'Lax'
@@ -1381,6 +1461,16 @@ def run_pylinkjs_app(**kwargs):
         kwargs['callback_registry'] = None
     if 'max_background_callbacks' not in kwargs:
         kwargs['max_background_callbacks'] = 4
+    kwargs.setdefault('max_print_jobs', 2)
+    if (isinstance(kwargs['max_print_jobs'], bool) or not isinstance(kwargs['max_print_jobs'], int)
+            or kwargs['max_print_jobs'] < 1):
+        raise ValueError('max_print_jobs must be a positive integer')
+    kwargs.setdefault('print_allowed_origins', DEFAULT_PRINT_ALLOWED_ORIGINS)
+    if (not isinstance(kwargs['print_allowed_origins'], (list, tuple))
+            or any(_print_origin(origin) is None or urlsplit(origin).scheme not in ('http', 'https')
+                   or urlsplit(origin).path not in ('', '/') or urlsplit(origin).query or urlsplit(origin).fragment
+                   for origin in kwargs['print_allowed_origins'])):
+        raise ValueError('print_allowed_origins must be a list or tuple of HTTP(S) origins without paths')
     if 'cookie_secure' not in kwargs:
         kwargs['cookie_secure'] = False
     if 'cookie_httponly' not in kwargs:
@@ -1471,6 +1561,9 @@ def run_pylinkjs_app(**kwargs):
         default_html=kwargs['default_html'],
         html_dir=kwargs['html_dir'],
         servable_file_regex=kwargs['servable_file_regex'],
+        print_job_slots=threading.BoundedSemaphore(kwargs['max_print_jobs']),
+        print_allowed_origins=kwargs['print_allowed_origins'],
+        port=kwargs['port'],
         cookie_secret=kwargs.get('cookie_secret'),
         on_404=kwargs.get('on_404', None),
         extra_settings=kwargs['extra_settings'],
