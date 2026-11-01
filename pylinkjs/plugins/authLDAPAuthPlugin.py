@@ -92,12 +92,7 @@ class LDAPAuthLoginHandler(LoginHandler):
 
         result = self._check_ldap_login(ldap_server, ldap_base, username, password, ldap_group)
         if not result:
-            filename = self.application.settings['login_html_page']
-            with open(filename, 'r') as f:
-                s = f.read()
-            s = s.replace('{next_url}', self.request.headers.get('Referer', '/'))
-            s = s.replace('{error_message}', 'Login Failed!')
-            self.write(s)
+            self._render_login('Login Failed!')
             return
         cookies = {
             self.settings['cookiename_user_auth_username']: self.request.arguments['username'][0],

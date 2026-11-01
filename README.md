@@ -1070,6 +1070,9 @@ provide a login implementation. For release, combine authentication with
 `high_security=True` and a callback registry. Custom
 route handlers must enforce their own access controls.
 
+After login, `next` redirects are restricted to local paths such as `/reports/`.
+External or malformed destinations fall back to `/`.
+
 A common strategy is to persist the cookie secret in a file in the same directory as the application, then read that
 file and pass its contents into `run_pylinkjs_app(..., cookie_secret=secret)`. This is useful for deployments because
 the secret remains stable across restarts, and in distributed deployments each instance should use the same secret.

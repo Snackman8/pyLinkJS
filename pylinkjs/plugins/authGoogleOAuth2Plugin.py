@@ -5,7 +5,7 @@ import secrets
 import requests
 import tornado.auth
 import tornado.web
-from pylinkjs.PyLinkJS import LoginHandler, LogoutHandler, set_auth_cookie
+from pylinkjs.PyLinkJS import LoginHandler, LogoutHandler, set_auth_cookie, _safe_next_url
 
 
 # --------------------------------------------------
@@ -66,9 +66,9 @@ class GoogleOAuth2LoginHandler(LoginHandler,
             # delegeate to the login hanlder get_handler which will set the cookies and display the login_html_page
             for k, v in cookies.items():
                 set_auth_cookie(self, k, v)
-            self.redirect(next_url.decode() if next_url is not None else '/')
+            self.redirect(_safe_next_url(next_url.decode() if next_url is not None else '/'))
         else:
-            next_url = self.get_argument('next', '/')
+            next_url = _safe_next_url(self.get_argument('next', '/'))
             state = secrets.token_urlsafe(32)
             set_auth_cookie(self, self._state_cookie_name, state)
             set_auth_cookie(self, self._next_cookie_name, next_url)

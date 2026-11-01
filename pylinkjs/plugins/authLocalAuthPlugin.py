@@ -205,14 +205,6 @@ class pluginLocalAuth:
 #    LoginHandler
 # --------------------------------------------------
 class LocalAuthLoginHandler(LoginHandler):
-    def _render_login(self, error_message=''):
-        filename = self.application.settings['login_html_page']
-        with open(filename, 'r') as f:
-            s = f.read()
-        s = s.replace('{next_url}', self.get_argument('next', '/'))
-        s = s.replace('{error_message}', error_message)
-        self.write(s)
-
     async def get(self):
         db_path = self.settings['local_auth_db_path']
         bootstrap_url = self.settings.get('local_auth_bootstrap_url')

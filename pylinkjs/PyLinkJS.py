@@ -5,6 +5,7 @@
 # --------------------------------------------------
 import asyncio
 import base64
+import html
 from  functools import partial
 import importlib
 import inspect
@@ -67,6 +68,14 @@ def backtick_if_string(p):
         return json.dumps(p)
     else:
         return p
+
+
+def _safe_next_url(url):
+    """Allow only local absolute paths for user-supplied post-login redirects."""
+    if (not isinstance(url, str) or not url.startswith('/') or url.startswith('//')
+            or re.search(r'[\x00-\x1f\x7f\\]', url)):
+        return '/'
+    return url
 
 
 def print_url(url, output_type, timeout=None, orientation='landscape', force_scale=None, force_fit=False, extra_delay=1):
@@ -854,13 +863,17 @@ class BaseHandler(tornado.web.RequestHandler):
 
 
 class LoginHandler(tornado.web.RequestHandler):
-    def get(self):
+    def _render_login(self, error_message=''):
         filename = self.application.settings['login_html_page']
         with open(filename, 'r') as f:
             s = f.read()
-        s = s.replace('{next_url}', self.request.headers.get('Referer', '/'))
-        s = s.replace('{error_message}', '')
+        next_url = self.get_argument('next', self.request.headers.get('Referer', '/'))
+        s = s.replace('{next_url}', html.escape(_safe_next_url(next_url), quote=True))
+        s = s.replace('{error_message}', html.escape(error_message, quote=True))
         self.write(s)
+
+    def get(self):
+        self._render_login()
 
     def post(self):
         raise NotImplementedError()
@@ -868,7 +881,7 @@ class LoginHandler(tornado.web.RequestHandler):
     def post_handler(self, cookies):
         for k, v in cookies.items():
             set_auth_cookie(self, k, v)
-        self.redirect(self.get_argument('next', '/'))
+        self.redirect(_safe_next_url(self.get_argument('next', '/')))
 
 
 class LogoutHandler(tornado.web.RequestHandler):
